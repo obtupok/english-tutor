@@ -484,7 +484,7 @@ function onReply(out, userText){
 const player = new Audio(); player.preload = 'auto';
 const SILENT = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
 let unlocked = false;
-function unlock(){ if(unlocked) return; unlocked = true; player.src = SILENT; player.play().catch(() => {}); }
+function unlock(){ sfxReady(); if(unlocked) return; unlocked = true; player.src = SILENT; player.play().catch(() => {}); }
 function playB64(b64, mime = 'audio/mpeg'){
   return new Promise(res => {
     if(!b64) return res();
@@ -514,6 +514,62 @@ async function sayText(text, lang = 'en', speaker = S.speaker){
 }
 function stopAudio(){ try{ player.pause(); }catch{} try{ speechSynthesis.cancel(); }catch{} mouth(false); }
 
+/* ---------- звуки кролика: синтез в браузере, без файлов; тихие и короткие ---------- */
+let sfxOn = store.get('yomi_sfx', true), sfxCtx = null;
+function sfxReady(){
+  if(!sfxOn) return null;
+  try{ sfxCtx ||= new (window.AudioContext || window.webkitAudioContext)(); if(sfxCtx.state === 'suspended') sfxCtx.resume(); }catch{ return null; }
+  return sfxCtx;
+}
+// тон: частота скользит по точкам [время, частота], громкость — мягкая атака и затухание
+function tone(c, t0, type, freqs, dur, vol = .12, lowpass = 0){
+  const o = c.createOscillator(), g = c.createGain();
+  o.type = type;
+  freqs.forEach(([t, f], i) => i ? o.frequency.exponentialRampToValueAtTime(f, t0 + t) : o.frequency.setValueAtTime(f, t0 + t));
+  g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(vol, t0 + .015); g.gain.exponentialRampToValueAtTime(.0001, t0 + dur);
+  let out = o;
+  if(lowpass){ const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lowpass; o.connect(f); out = f; }
+  out.connect(g); g.connect(c.destination);
+  o.start(t0); o.stop(t0 + dur + .02);
+}
+// шорох: короткий шум через полосовой фильтр
+function noise(c, t0, dur, freq, vol = .06){
+  const len = Math.ceil(c.sampleRate * dur), buf = c.createBuffer(1, len, c.sampleRate), d = buf.getChannelData(0);
+  for(let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+  const s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
+  s.buffer = buf; f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = 1.2;
+  g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(.0001, t0 + dur);
+  s.connect(f); f.connect(g); g.connect(c.destination); s.start(t0);
+}
+// каждый звук возвращает свою длину в секундах
+const SFX = {
+  hop:    (c, t) => { tone(c, t, 'triangle', [[0, 520], [.11, 1250]], .14, .1); return .15; },
+  boing:  (c, t) => { tone(c, t, 'sine', [[0, 180], [.08, 620], [.22, 330], [.38, 420]], .42, .16); return .42; },
+  ear:    (c, t) => { [0, .09, .18].forEach(d => noise(c, t + d, .05, 3800, .11)); return .25; },
+  heart:  (c, t) => { tone(c, t, 'sine', [[0, 760], [.14, 980], [.36, 640]], .4, .1); return .4; },
+  happy:  (c, t) => { tone(c, t, 'sine', [[0, 1046]], .18, .09); tone(c, t + .1, 'sine', [[0, 1568]], .3, .08); tone(c, t + .2, 'triangle', [[0, 2093]], .25, .035); return .45; },
+  oops:   (c, t) => { tone(c, t, 'triangle', [[0, 620], [.14, 520]], .16, .1); tone(c, t + .17, 'triangle', [[0, 470], [.2, 330]], .26, .1); return .45; },
+  angry:  (c, t) => { tone(c, t, 'sawtooth', [[0, 140], [.15, 110], [.3, 150], [.5, 95]], .55, .07, 600); return .55; },
+  funny:  (c, t) => { [0, .07, .14, .21, .28].forEach((d, i) => tone(c, t + d, 'sine', [[0, i % 2 ? 1180 : 980], [.05, i % 2 ? 1300 : 1080]], .06, .07)); return .36; },
+  sleepy: (c, t) => { tone(c, t, 'sine', [[0, 520], [.25, 620], [.8, 260]], .85, .07, 1200); return .85; },
+  cute:   (c, t) => { tone(c, t, 'sine', [[0, 880], [.12, 1175], [.3, 990]], .32, .08); return .32; },
+  sniff:  (c, t) => { noise(c, t, .07, 1800, .1); noise(c, t + .12, .07, 2000, .1); return .2; },
+};
+// играет звук и ждёт его конца, чтобы реакция не накладывалась на голос; пока Yomi слушает — молчит (иначе звук попадёт в микрофон)
+function sfx(name){
+  const c = sfxReady(), f = SFX[name];
+  if(!c || !f || state === 'listen') return Promise.resolve();
+  const dur = f(c, c.currentTime + .02);
+  return new Promise(r => setTimeout(r, dur * 1000 + 40));
+}
+// звук-реакция на ответ: злость, ошибка, смена настроения или радость за правильную фразу
+function replySound(out, before){
+  if(out.emotion === 'angry') return 'angry';
+  if(out.fix) return 'oops';
+  if(out.emotion !== before && ['cute', 'funny', 'sleepy'].includes(out.emotion)) return out.emotion;
+  return out.emotion === 'kind' || out.emotion === 'cute' ? 'happy' : '';
+}
+
 /* ---------- разговор «как звонок»: слушаем, ловим паузу, отправляем, слушаем ответ, снова слушаем ---------- */
 let state = 'idle', inCall = false, stream = null, actx = null, analyser = null, rec = null, chunks = [], vadTimer = 0;
 const STATUS = {idle:'Нажми и говори по-английски', listen:'Слушаю. Нажми, чтобы отправить сразу', think:'Думаю…', speak:'Говорю. Нажми, чтобы перебить'};
@@ -532,7 +588,7 @@ function hop(){ react('t-hop', 800); }
 // нажатие: каждый раз по-разному
 const TAPS = ['t-hop', 't-boing', 't-wiggle', 't-heart'];
 let tapPrev = '';
-$('#buddy').onclick = () => { let t; do { t = TAPS[Math.floor(Math.random() * TAPS.length)]; } while(t === tapPrev); tapPrev = t; react(t, 1300); };
+$('#buddy').onclick = () => { let t; do { t = TAPS[Math.floor(Math.random() * TAPS.length)]; } while(t === tapPrev); tapPrev = t; react(t, 1300); sfx({'t-hop': 'hop', 't-boing': 'boing', 't-wiggle': 'ear', 't-heart': 'heart'}[t]); };
 // сам по себе: раз в несколько секунд маленькое движение, пока он ждёт или слушает
 const FIDGETS = [['f-ear', 700], ['f-look', 1700], ['f-sniff', 800], ['f-stretch', 1200], ['f-tilt', 1500], ['f-hop', 800]];
 (function fidget(){
@@ -541,7 +597,7 @@ const FIDGETS = [['f-ear', 700], ['f-look', 1700], ['f-sniff', 800], ['f-stretch
     if(!b) return;
     if(!document.hidden && (b.dataset.s === 'idle' || b.dataset.s === 'listen') && !b.dataset.mood && !b.classList.contains('talking')){
       const [cls, ms] = FIDGETS[Math.floor(Math.random() * FIDGETS.length)];
-      if(!(b.dataset.s === 'listen' && (cls === 'f-hop' || cls === 'f-stretch'))) react(cls, ms);
+      if(!(b.dataset.s === 'listen' && (cls === 'f-hop' || cls === 'f-stretch'))){ react(cls, ms); const snd = {'f-sniff': 'sniff', 'f-ear': 'ear', 'f-hop': 'hop'}[cls]; if(snd && Math.random() < .5) sfx(snd); }
     }
     fidget();
   }, 3500 + Math.random() * 4000);
@@ -645,8 +701,10 @@ async function handleTalk(j, typed){
   if(j.plan !== undefined) S.plan = j.plan;
   if(j.stats) S.stats = j.stats;
   drawHead();
+  const before = $('#buddy')?.dataset.p;
   onReply(j.out, j.heard || typed);
   if(j.out.emotion !== 'angry') buddyMood(j.out.fix ? 'oops' : 'happy');   // злость — сама по себе реакция на ошибку
+  await sfx(replySound(j.out, before));
   setState('speak');
   await (j.out.audio ? playB64(j.out.audio, j.out.mime) : speakLocal(j.out.reply, j.out.english ? 'en' : 'ru'));
   if(state !== 'speak') return;           // перебили
@@ -757,6 +815,7 @@ function showProgress(){
     <div class="plan">${p ? `<h3>Мой план · ${esc(p.level)}</h3><p>${esc(p.summary || '')}</p><ol>${(p.plan || []).map(x => `<li>${esc(x)}</li>`).join('')}</ol>`
       : '<h3>Плана пока нет</h3><p>Пройди тест уровня или расскажи Yomi о своих целях — он составит план.</p>'}</div>
     <div class="actions"><button class="btn" data-go="test">Пройти тест уровня</button><button class="btn line" data-go="coach">Составить план</button></div>
+    <div class="plan" style="margin-top:22px"><h3>Звуки кролика</h3><p>Писк, «боинг», ворчание, хихиканье и другие звуки-реакции.</p><button class="btn${sfxOn ? ' line' : ''} sm" data-sfx style="margin-top:10px">${sfxOn ? 'Выключить звуки' : 'Включить звуки'}</button></div>
     <div class="plan" style="margin-top:22px"><h3>Голос Yomi</h3><p>Нажми, чтобы послушать. Выбранный голос будет и на сайте, и в боте.</p>
       <div class="voices">${VOICES.map(([k, n, g]) => `<div class="voice${S.speaker === k ? ' on' : ''}"><button class="ib" data-vp="${k}" aria-label="Послушать ${n}">${ICON.speak}</button>
         <div class="w"><b>${n}</b><span>${g}</span></div><button class="btn${S.speaker === k ? '' : ' line'} sm" data-vs="${k}">${S.speaker === k ? 'Выбран' : 'Выбрать'}</button></div>`).join('')}</div></div>`;
@@ -766,6 +825,7 @@ $('#progBox').onclick = async e => {
   const go = e.target.closest('[data-go]'), vp = e.target.closest('[data-vp]'), vs = e.target.closest('[data-vs]');
   if(go){ tab('talk'); switchMode(go.dataset.go); }
   if(vp) sayText("Hi, I'm Yomi. Let's practise English together. How was your day?", 'en', vp.dataset.vp);
+  if(e.target.closest('[data-sfx]')){ sfxOn = !sfxOn; store.set('yomi_sfx', sfxOn); showProgress(); if(sfxOn) sfx('happy'); }
   if(vs && vs.dataset.vs !== S.speaker){ const j = await api('speaker', {speaker: vs.dataset.vs}); if(j.ok){ S.speaker = j.speaker; showProgress(); } }
 };
 
