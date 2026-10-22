@@ -162,16 +162,19 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
 .lvl-badge small{font-size:10px;letter-spacing:.1em;text-transform:uppercase;opacity:.85}.lvl-badge b{font-family:var(--serif);font-size:28px;line-height:1}
 .lvl-info{flex:1;min-width:0}.lvl-info small{display:block;margin-top:6px;opacity:.8;font-size:13px}
 .xpbar{height:10px;border-radius:99px;background:color-mix(in srgb,var(--paper) 22%,transparent);overflow:hidden}.xpbar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--amber),var(--accent))}
-.path{position:relative;margin:4px 0 6px}
+.path{position:relative;height:140px;margin:4px 0 4px}
 .path-line{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 .path-line polyline{fill:none;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
 .pl-done{stroke:var(--accent)}.pl-todo{stroke:var(--line-2);stroke-dasharray:2 12}
-.pnode{position:absolute;width:52px;height:52px;margin:-26px 0 0 -26px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:17px;border:3px solid var(--line-2);background:var(--sheet);color:var(--muted)}
+.pnode{position:absolute;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:17px;border:3px solid var(--line-2);background:var(--sheet);color:var(--muted)}
 .pnode.past{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .pnode.now{background:var(--paper);border-color:var(--accent);color:var(--ink);box-shadow:0 0 0 6px color-mix(in srgb,var(--accent) 25%,transparent)}
 .pnode.chest:not(.past){font-size:24px;border-color:var(--amber);background:var(--amber-bg)}
-.pbunny{position:absolute;width:66px;margin-left:-33px;transition:left .6s ease,top .6s ease;pointer-events:none;z-index:2}
-.pbunny .buddy.mini{--bsize:66px}
+.pbunny{position:absolute;width:60px;margin-left:-30px;transition:left .6s ease,top .6s ease;pointer-events:none;z-index:2}
+.pbunny .buddy.mini{--bsize:60px}
+.howto{padding:14px;border:1px dashed var(--line-2);border-radius:14px;margin:6px 0 4px}.howto b{font-size:15px}
+.howto ul{list-style:none;margin:8px 0;padding:0;display:grid;gap:6px}.howto li{display:flex;align-items:center;gap:8px;font-size:14px}.howto li em{margin-left:auto;font-style:normal;font-weight:600;color:var(--accent);font-size:13px}
+.howto p{margin:0 0 10px;color:var(--muted);font-size:13px}
 .pbunny.jump{animation:p-jump .6s ease}
 @keyframes p-jump{30%{transform:translateY(-28px)}60%{transform:translateY(-6px)}}
 .qlist{display:flex;flex-direction:column;gap:8px}
@@ -203,6 +206,7 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
 .shop .item.on{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}.shop .item.on span{color:var(--green);font-weight:600}
 .shop .item[data-poor] span{color:var(--accent)}
 .toastx{position:fixed;left:50%;top:12px;z-index:60;transform:translate(-50%,-140%);max-width:min(92vw,420px);padding:10px 16px;border-radius:12px;background:var(--ink);color:var(--paper);font-size:14px;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.25);transition:transform .3s ease}
+.toastx:not(.on){visibility:hidden;opacity:0;transition:transform .3s ease,opacity .3s,visibility 0s .3s}
 .toastx.on{transform:translate(-50%,0)}
 .coinfx{position:fixed;z-index:61;transform:translate(-50%,0);font-weight:700;font-size:16px;color:var(--amber);pointer-events:none;animation:coinup 1.3s ease-out forwards;text-shadow:0 1px 0 var(--paper)}
 @keyframes coinup{to{transform:translate(-50%,-46px);opacity:0}}
@@ -1237,19 +1241,24 @@ function questCard(q){
 function showPath(){
   const g = G, box = $('#pathBox');
   if(!g){ box.innerHTML = '<div class="empty">Загружаю…</div>'; api('game').then(j => { if(j.game){ applyGame(j.game); showPath(); } }); return; }
-  const start = Math.max(1, g.level - 2), levels = [...Array(12)].map((_, i) => start + i), ROW = 84;
-  const pos = l => ({x: 50 + PATH_X[(l - 1) % PATH_X.length], y: (l - start) * ROW + 42});
+  // короткая тропинка в одну строку: прошлый уровень, текущий и 4 следующих
+  const start = Math.max(1, g.level - 1), levels = [...Array(6)].map((_, i) => start + i);
+  const pos = l => ({x: 8 + (l - start) * 16.8, y: (l - start) % 2 ? 112 : 96});
   const pts = levels.map(l => { const p = pos(l); return `${p.x},${p.y}`; });
-  const done = g.quests.filter(q => q.claimed).length;
+  const done = g.quests.filter(q => q.claimed).length, left = g.levelNeed - g.levelXp;
   box.innerHTML = `<div class="lvlcard"><div class="lvl-badge"><small>уровень</small><b>${g.level}</b></div>
-      <div class="lvl-info"><div class="xpbar"><i style="width:${Math.round(g.levelXp / g.levelNeed * 100)}%"></i></div><small>${g.levelXp} / ${g.levelNeed} XP · за следующий уровень +${g.nextReward} 🪙</small></div></div>
-    <div class="path" id="pathMap" style="height:${levels.length * ROW}px">
-      <svg class="path-line" viewBox="0 0 100 ${levels.length * ROW}" preserveAspectRatio="none" aria-hidden="true">
+      <div class="lvl-info"><div class="xpbar"><i style="width:${Math.round(g.levelXp / g.levelNeed * 100)}%"></i></div><small>Ещё ${left} XP до уровня ${g.level + 1} · награда +${g.nextReward} 🪙</small></div></div>
+    <div class="path" id="pathMap">
+      <svg class="path-line" viewBox="0 0 100 140" preserveAspectRatio="none" aria-hidden="true">
         <polyline points="${pts.slice(0, g.level - start + 1).join(' ')}" class="pl-done"/><polyline points="${pts.slice(g.level - start).join(' ')}" class="pl-todo"/></svg>
       ${levels.map(l => { const p = pos(l), chest = l % 5 === 0, cls = l < g.level ? 'past' : l === g.level ? 'now' : 'next';
         return `<div class="pnode ${cls}${chest ? ' chest' : ''}" style="left:${p.x}%;top:${p.y}px" title="Уровень ${l}">${chest && l > g.level ? '🎁' : l < g.level ? '✓' : l}</div>`; }).join('')}
       <div class="pbunny" id="pbunny">${miniBunny(g.equip.char, g.equip.color, g.equip.hat)}</div>
     </div>
+    <div class="howto"><b>Как прокачать уровень</b>
+      <ul><li><span>💬</span>Фраза на английском <em>+10 XP</em></li><li><span>✨</span>Без ошибок <em>+5 XP</em></li><li><span>🔁</span>Повтор слова <em>+3 XP</em></li><li><span>🎯</span>Задание ниже <em>+20 XP и монеты</em></li></ul>
+      <p>Новый уровень — монеты, каждый 5-й — сундук 🎁. Кролик прыгает на следующий кружок.</p>
+      <button class="btn sm" data-go="talk">Поговорить с Yomi</button></div>
     <h3 class="sub-h">Задания дня</h3>
     <div class="qlist">${g.quests.map(questCard).join('')}
       <div class="qcard chestcard${g.bonus.claimed ? ' done' : g.bonus.ready ? ' ready' : ''}"><div class="q-ico" aria-hidden="true">🎁</div>
@@ -1259,7 +1268,7 @@ function showPath(){
     <div class="qlist">${g.weekly.map(questCard).join('')}</div>`;
   // кролик стоит на своём уровне; если уровень вырос с прошлого раза — прыгает по кружкам до нового
   const pb = $('#pbunny'), seen = Math.max(start, Math.min(g.level, store.get('yomi_seenlvl', g.level)));
-  const put = l => { const p = pos(l); pb.style.left = p.x + '%'; pb.style.top = (p.y - 34) + 'px'; };
+  const put = l => { const p = pos(l); pb.style.left = p.x + '%'; pb.style.top = (p.y - 78) + 'px'; };
   put(seen);
   if(seen < g.level){
     let l = seen;
@@ -1267,9 +1276,9 @@ function showPath(){
       if(l < g.level) setTimeout(step, 650); else setTimeout(() => { sfx('happy'); store.set('yomi_seenlvl', g.level); }, 650); };
     setTimeout(step, 500);
   } else store.set('yomi_seenlvl', g.level);
-  setTimeout(() => pb.scrollIntoView({block: 'center', behavior: 'smooth'}), 50);
 }
 $('#pathBox').onclick = async e => {
+  if(e.target.closest('[data-go]')) return tab('talk');
   const claim = e.target.closest('[data-claim]'); if(!claim) return;
   unlock(); claim.disabled = true;
   const j = await api('claim', {quest: claim.dataset.claim});
