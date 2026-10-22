@@ -281,7 +281,7 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
 .b-zzz text{font:700 15px var(--sans);fill:var(--muted)}
 /* движения всего кролика — на самой картинке: так их рисует видеокарта, а не процессор */
 .buddy > svg{transform-origin:50% 96%;animation:b-breathe 3.2s ease-in-out infinite;will-change:transform}
-.b-head{transform-origin:50% 85%;transition:transform .35s ease}
+.b-head{transform-box:view-box!important;transform-origin:80px 120px;transition:transform .35s ease}
 .b-look{transform:translate(var(--ex),var(--ey));transition:transform .25s ease-out}
 .b-eyes{transform-origin:center;animation:b-blink 4.6s infinite}
 .b-foot{transform-origin:20% 100%}
@@ -502,8 +502,6 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
 </div>
 <div class="buddy" id="buddy" data-s="idle" data-p="kind" title="Yomi — погладь меня" aria-hidden="true"><svg viewBox="-14 -8 188 172">
           <g class="b-all">
-            <g class="b-ear l"><g class="e-bunny"><path class="b-line" d="M54 82 C42 34 44 7 58 5 C72 3 77 32 75 82 Z"/><path class="b-inner" d="M60 58 C52 36 53 15 59 13 C65 12 67 34 66 56 Z"/></g><g class="e-cat"><path class="b-line" d="M48 80 L54 38 L80 60 Z"/><path class="b-inner" d="M55 66 L57 48 L71 59 Z"/></g><g class="e-round"><circle class="b-line" cx="52" cy="60" r="15"/><circle class="b-inner" cx="52" cy="60" r="8"/></g><g class="e-fox"><path class="b-line" d="M45 82 L48 24 L82 60 Z"/><path class="b-inner" d="M53 67 L54 38 L72 59 Z"/></g></g>
-            <g class="b-ear r"><g class="e-bunny"><path class="b-line" d="M106 82 C118 34 116 7 102 5 C88 3 83 32 85 82 Z"/><path class="b-inner" d="M100 58 C108 36 107 15 101 13 C95 12 93 34 94 56 Z"/></g><g class="e-cat"><path class="b-line" d="M112 80 L106 38 L80 60 Z"/><path class="b-inner" d="M105 66 L103 48 L89 59 Z"/></g><g class="e-round"><circle class="b-line" cx="108" cy="60" r="15"/><circle class="b-inner" cx="108" cy="60" r="8"/></g><g class="e-fox"><path class="b-line" d="M115 82 L112 24 L78 60 Z"/><path class="b-inner" d="M107 67 L106 38 L88 59 Z"/></g></g>
             <g class="b-body">
               <ellipse class="b-line" cx="80" cy="132" rx="27" ry="16"/>
               <ellipse class="b-belly" cx="80" cy="136" rx="13" ry="9"/>
@@ -511,6 +509,8 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
               <g class="b-foot r"><ellipse class="b-line" cx="94" cy="145" rx="9" ry="5.5"/><path class="b-whisk" d="M93 148v-3M97 147.5v-3"/></g>
             </g>
             <g class="b-head">
+              <g class="b-ear l"><g class="e-bunny"><path class="b-line" d="M54 82 C42 34 44 7 58 5 C72 3 77 32 75 82 Z"/><path class="b-inner" d="M60 58 C52 36 53 15 59 13 C65 12 67 34 66 56 Z"/></g><g class="e-cat"><path class="b-line" d="M48 80 L54 38 L80 60 Z"/><path class="b-inner" d="M55 66 L57 48 L71 59 Z"/></g><g class="e-round"><circle class="b-line" cx="52" cy="60" r="15"/><circle class="b-inner" cx="52" cy="60" r="8"/></g><g class="e-fox"><path class="b-line" d="M45 82 L48 24 L82 60 Z"/><path class="b-inner" d="M53 67 L54 38 L72 59 Z"/></g></g>
+              <g class="b-ear r"><g class="e-bunny"><path class="b-line" d="M106 82 C118 34 116 7 102 5 C88 3 83 32 85 82 Z"/><path class="b-inner" d="M100 58 C108 36 107 15 101 13 C95 12 93 34 94 56 Z"/></g><g class="e-cat"><path class="b-line" d="M112 80 L106 38 L80 60 Z"/><path class="b-inner" d="M105 66 L103 48 L89 59 Z"/></g><g class="e-round"><circle class="b-line" cx="108" cy="60" r="15"/><circle class="b-inner" cx="108" cy="60" r="8"/></g><g class="e-fox"><path class="b-line" d="M115 82 L112 24 L78 60 Z"/><path class="b-inner" d="M107 67 L106 38 L88 59 Z"/></g></g>
               <ellipse class="b-line" cx="80" cy="92" rx="49" ry="40"/>
               <!-- узоры персонажей -->
               <path class="m-fox" fill="#FFF7EC" d="M47 100 Q80 84 113 100 Q106 129 80 131 Q54 129 47 100Z"/>
