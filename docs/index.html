@@ -187,9 +187,9 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
 /* Кролик Yomi: чиби, нарисован чернилами по бумаге.
    data-s — что происходит в разговоре (idle/listen/think/speak), data-p — настроение из ответа модели,
    data-mood — короткая реакция на реплику (happy/oops), классы f-* — случайные «живые» движения, t-* — реакция на нажатие. */
-.buddy{--lvl:0;--ex:0px;--ey:0px;--b-fur:#FBF8F2;--b-ink:#2A241D;--b-belly:#F1E6D6;--b-nose:#E79A97;--bsize:124px;width:var(--bsize);height:calc(var(--bsize) * .984);margin:-6px auto -8px;cursor:pointer;touch-action:manipulation;-webkit-user-select:none;user-select:none}
-.buddy svg{width:100%;height:100%;overflow:visible}
-.b-ear,.b-head,.b-look,.b-eyes,.b-foot,.b-body,.b-nose,.b-scarf-tail,.b-vein,.b-heart,.b-zzz text,.b-steam circle,.b-stars path{transform-box:fill-box}
+.buddy{--lvl:0;--ex:0px;--ey:0px;--b-fur:#FBF8F2;--b-ink:#2A241D;--b-belly:#F1E6D6;--b-nose:#E79A97;--bsize:124px;width:var(--bsize);height:calc(var(--bsize) * .915);margin:-6px auto -8px;cursor:pointer;touch-action:manipulation;-webkit-user-select:none;user-select:none}
+.buddy svg{width:100%;height:100%;overflow:hidden}
+.b-ear,.b-head,.b-look,.b-eyes,.b-foot,.b-body,.b-nose,.b-vein,.b-heart,.b-zzz text,.b-steam circle,.b-stars path{transform-box:fill-box}
 .b-line{fill:var(--b-fur);stroke:var(--b-ink);stroke-width:3;stroke-linejoin:round;stroke-linecap:round}
 .b-inner{fill:var(--accent);opacity:.3}
 .b-ink{fill:var(--b-ink)}
@@ -198,7 +198,9 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
 .b-nose{fill:var(--b-nose);stroke:var(--b-ink);stroke-width:1.3;stroke-linejoin:round;transform-origin:center}
 .b-whisk{fill:none;stroke:var(--b-ink);stroke-width:1.4;stroke-linecap:round;opacity:.55}
 .b-scarf{fill:var(--accent);stroke:var(--b-ink);stroke-width:2.2;stroke-linejoin:round}
-.b-scarf-tail{transform-origin:20% 0;animation:b-flutter 2.8s ease-in-out infinite}
+.b-scarf-stripe{fill:none;stroke:var(--b-fur);stroke-width:2;stroke-linecap:round;opacity:.55}
+.b-gloss{fill:none;stroke:#fff;stroke-width:3.2;stroke-linecap:round;opacity:.7}
+.b-fluff{stroke-width:2}
 .b-dots circle{fill:var(--muted)}
 .b-stroke{fill:none;stroke:var(--b-ink);stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
 .b-cheek{fill:var(--accent);opacity:.32;transition:opacity .3s,fill .3s}
@@ -266,8 +268,7 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
 .buddy[data-p="angry"] .b-closed{opacity:0}
 .buddy[data-p="angry"] .b-cheek{fill:#D24B3A;opacity:.5}
 .buddy[data-p="angry"] .b-ear.l{transform:rotate(-22deg)}.buddy[data-p="angry"] .b-ear.r{transform:rotate(26deg)}
-.buddy[data-p="angry"] .b-body{animation:b-stomp 1.8s infinite}
-.buddy[data-p="angry"] .b-vein{animation:b-pulse .9s ease-in-out infinite;transform-origin:center}
+.buddy[data-p="angry"] .b-body{animation:b-stomp 3.2s infinite}
 .buddy[data-p="angry"] .b-steam circle{animation:b-float 1.4s ease-out infinite}
 .buddy[data-p="angry"] .b-steam circle:nth-child(2){animation-delay:.45s}
 .buddy[data-p="angry"] .b-steam circle:nth-child(3){animation-delay:.9s}
@@ -315,7 +316,7 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
 .buddy.t-wiggle .b-ear.r{animation:b-twitch .5s ease-in-out 2}
 .buddy.t-heart .b-heart{opacity:1;animation:b-float 1.2s ease-out}
 .buddy.t-heart .b-happy{opacity:1}.buddy.t-heart .b-eyes{opacity:0}
-.dock:has(.typebox.on) .buddy{width:min(86px, var(--bsize));height:calc(min(86px, var(--bsize)) * .984)}
+.dock:has(.typebox.on) .buddy{width:min(86px, var(--bsize));height:calc(min(86px, var(--bsize)) * .915)}
 @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -329,7 +330,7 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
       <div class="scroll" id="chatWrap"><div class="chat" id="chat" aria-live="polite"></div></div>
       <div class="dock">
         <div class="grip" id="grip" title="Потяни, чтобы изменить размер кролика. Двойное нажатие — спрятать или показать"></div>
-        <div class="buddy" id="buddy" data-s="idle" title="Yomi" aria-hidden="true"><svg viewBox="0 0 160 158">
+        <div class="buddy" id="buddy" data-s="idle" title="Yomi" aria-hidden="true"><svg viewBox="-14 -8 188 172">
           <g class="b-all">
             <g class="b-ear l"><path class="b-line" d="M57 66 C43 34 44 7 58 5 C72 3 76 32 72 64 Z"/><path class="b-inner" d="M60 58 C52 36 53 15 59 13 C65 12 67 34 66 56 Z"/></g>
             <g class="b-ear r"><path class="b-line" d="M103 66 C117 34 116 7 102 5 C88 3 84 32 88 64 Z"/><path class="b-inner" d="M100 58 C108 36 107 15 101 13 C95 12 93 34 94 56 Z"/></g>
@@ -343,6 +344,8 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
               <ellipse class="b-line" cx="80" cy="92" rx="49" ry="40"/>
               <path class="b-stroke" stroke-width="2" d="M73 55 q3.5-6 7-1 q3.5-6 7 1"/>
               <ellipse class="b-shade" cx="80" cy="117" rx="36" ry="12"/>
+              <path class="b-gloss" d="M50 70 Q58 59 71 55"/>
+              <path class="b-stroke b-fluff" d="M33 95 l-4 3 4 3 M127 95 l4 3 -4 3"/>
               <circle class="b-cheek" cx="50" cy="103" r="7.5"/><circle class="b-cheek" cx="110" cy="103" r="7.5"/>
               <g class="b-look"><g class="b-eyes">
                 <ellipse class="b-ink" cx="63" cy="91" rx="6" ry="7.6"/><ellipse class="b-ink" cx="97" cy="91" rx="6" ry="7.6"/>
@@ -365,10 +368,13 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
               </g>
               <path class="b-sweat" fill="#8DB9D8" stroke="var(--b-ink)" stroke-width="1.5" d="M118 66 q5 8 0 11 q-5 -3 0 -11z"/>
               <path class="b-vein" fill="none" stroke="#D24B3A" stroke-width="2.4" stroke-linecap="round" d="M108 60 q4 2 4 6 M122 60 q-4 2 -4 6 M108 74 q4 -2 4 -6 M122 74 q-4 -2 -4 -6"/>
-            </g>
-            <g class="b-scarf-wrap">
-              <path class="b-scarf" d="M47 117 Q80 132 113 117 L111 127 Q80 141 49 127 Z"/>
-              <path class="b-scarf b-scarf-tail" d="M96 128 L107 147 L99 145 L95 150 L90 131 Z"/>
+              <g class="b-scarf-wrap">
+                <path class="b-scarf b-scarf-tail" d="M95 129 L106 149 L98 147 L94 152 L89 132 Z"/>
+                <path class="b-scarf-stripe" d="M95 138 L100 147"/>
+                <path class="b-scarf" d="M46 116 Q80 132 114 116 L112 127 Q80 142 48 127 Z"/>
+                <path class="b-scarf-stripe" d="M52 121.5 Q80 135 108 121.5"/>
+                <circle class="b-scarf" cx="93" cy="130" r="5.5"/>
+              </g>
             </g>
             <path class="b-heart" fill="var(--accent)" d="M130 46 c-2-5-10-4-8 2 c1 3 5 6 8 9 c3-3 7-6 8-9 c2-6-6-7-8-2z"/>
             <g class="b-zzz"><text x="118" y="46">z</text><text x="130" y="34">z</text></g>
