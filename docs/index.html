@@ -426,7 +426,8 @@ function gate(){
 
 /* ---------- состояние ---------- */
 let S = {mode:'free', scene:'smalltalk', history:[], stats:{}, plan:null, level:null, scenes:{}, due:0, words:0, stt:false, speaker:'hannah'};
-const VOICES = [['hannah','Hannah','женский'],['diana','Diana','женский'],['autumn','Autumn','женский'],['troy','Troy','мужской'],['austin','Austin','мужской'],['daniel','Daniel','мужской']];
+const VOICE_INFO = {hannah:['Hannah','женский'], diana:['Diana','женский'], autumn:['Autumn','женский'], troy:['Troy','мужской'], austin:['Austin','мужской'], daniel:['Daniel','мужской'],
+  leda:['Leda','юный, милый'], puck:['Puck','бодрый'], zephyr:['Zephyr','звонкий'], laomedeia:['Laomedeia','весёлый'], achernar:['Achernar','мягкий'], sadachbia:['Sadachbia','живой']};
 let chat = store.get('yomi_chat', []);       // что видно в ленте (с исправлениями и словами)
 let busy = false, errText = '';
 const saveChat = () => store.set('yomi_chat', chat.slice(-60));
@@ -507,9 +508,9 @@ function speakLocal(text, lang){
 const ttsCache = new Map();
 async function sayText(text, lang = 'en', speaker = S.speaker){
   stopAudio();
-  const key = [lang, speaker, text].join('|');
+  const key = [lang, speaker, $('#buddy')?.dataset.p || 'kind', text].join('|');
   let a = ttsCache.get(key);
-  if(!a){ const j = await api('tts', {text, lang, speaker}); if(j.audio){ a = {b: j.audio, mime: j.mime}; ttsCache.set(key, a); } }
+  if(!a){ const j = await api('tts', {text, lang, speaker, emotion: $('#buddy')?.dataset.p || 'kind'}); if(j.audio){ a = {b: j.audio, mime: j.mime}; ttsCache.set(key, a); } }
   return a ? playB64(a.b, a.mime) : speakLocal(text, lang);
 }
 function stopAudio(){ try{ player.pause(); }catch{} try{ speechSynthesis.cancel(); }catch{} mouth(false); }
@@ -817,14 +818,14 @@ function showProgress(){
     <div class="actions"><button class="btn" data-go="test">Пройти тест уровня</button><button class="btn line" data-go="coach">Составить план</button></div>
     <div class="plan" style="margin-top:22px"><h3>Звуки кролика</h3><p>Писк, «боинг», ворчание, хихиканье и другие звуки-реакции.</p><button class="btn${sfxOn ? ' line' : ''} sm" data-sfx style="margin-top:10px">${sfxOn ? 'Выключить звуки' : 'Включить звуки'}</button></div>
     <div class="plan" style="margin-top:22px"><h3>Голос Yomi</h3><p>Нажми, чтобы послушать. Выбранный голос будет и на сайте, и в боте.</p>
-      <div class="voices">${VOICES.map(([k, n, g]) => `<div class="voice${S.speaker === k ? ' on' : ''}"><button class="ib" data-vp="${k}" aria-label="Послушать ${n}">${ICON.speak}</button>
+      <div class="voices">${(S.speakers || Object.keys(VOICE_INFO).slice(0, 6)).filter(k => VOICE_INFO[k]).map(k => [k, ...VOICE_INFO[k]]).map(([k, n, g]) => `<div class="voice${S.speaker === k ? ' on' : ''}"><button class="ib" data-vp="${k}" aria-label="Послушать ${n}">${ICON.speak}</button>
         <div class="w"><b>${n}</b><span>${g}</span></div><button class="btn${S.speaker === k ? '' : ' line'} sm" data-vs="${k}">${S.speaker === k ? 'Выбран' : 'Выбрать'}</button></div>`).join('')}</div></div>`;
 }
 $('#progBox').onclick = async e => {
   unlock();
   const go = e.target.closest('[data-go]'), vp = e.target.closest('[data-vp]'), vs = e.target.closest('[data-vs]');
   if(go){ tab('talk'); switchMode(go.dataset.go); }
-  if(vp) sayText("Hi, I'm Yomi. Let's practise English together. How was your day?", 'en', vp.dataset.vp);
+  if(vp) sayText(S.engine === 'gemini' ? "Hi, I'm Yomi! Привет, я Йоми. Let's practise English together!" : "Hi, I'm Yomi. Let's practise English together. How was your day?", 'en', vp.dataset.vp);
   if(e.target.closest('[data-sfx]')){ sfxOn = !sfxOn; store.set('yomi_sfx', sfxOn); showProgress(); if(sfxOn) sfx('happy'); }
   if(vs && vs.dataset.vs !== S.speaker){ const j = await api('speaker', {speaker: vs.dataset.vs}); if(j.ok){ S.speaker = j.speaker; showProgress(); } }
 };

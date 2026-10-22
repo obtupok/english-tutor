@@ -217,15 +217,78 @@ function ttsChunks(text: string) {
   if (cur) out.push(cur);
   return out;
 }
-// Озвучка: английский — живой голос Orpheus в Groq (WAV), русский и запасной вариант — Google (MP3)
-const SPEAKERS = ['hannah', 'diana', 'autumn', 'troy', 'austin', 'daniel'];
-async function tts(text: string, lang: string, speaker = 'hannah'): Promise<{ data: Uint8Array; mime: string } | null> {
-  if (lang === 'en' && env('GROQ_API_KEY')) {
-    const wav = await orpheus(text, SPEAKERS.includes(speaker) ? speaker : 'hannah');
+// Озвучка. С ключом GEMINI_API_KEY — один милый голос Gemini и по-русски, и по-английски (даже вперемешку),
+// с интонацией по настроению. Без него: чисто английская фраза — Orpheus в Groq (WAV), остальное — Google (MP3),
+// причём русские и английские куски фразы читаются каждый своим произношением.
+const ORPHEUS = ['hannah', 'diana', 'autumn', 'troy', 'austin', 'daniel'];
+const GEMINI_VOICES = ['leda', 'puck', 'zephyr', 'laomedeia', 'achernar', 'sadachbia'];
+const useGemini = () => !!env('GEMINI_API_KEY');
+const speakersNow = () => (useGemini() ? GEMINI_VOICES : ORPHEUS);
+const SPEAKERS = [...ORPHEUS, ...GEMINI_VOICES];
+const TTS_STYLE: Record<string, string> = {
+  kind: 'a cute little cartoon bunny, warm, friendly and gentle',
+  cute: 'a super cute little cartoon bunny, sweet, bubbly and high-pitched',
+  angry: 'a cute little cartoon bunny who is comically grumpy and huffy',
+  funny: 'a cute little cartoon bunny, playful, giggly and teasing',
+  sleepy: 'a cute little cartoon bunny, sleepy, slow and yawning',
+};
+async function tts(text: string, lang: string, speaker = 'hannah', emotion = 'kind'): Promise<{ data: Uint8Array; mime: string } | null> {
+  if (useGemini()) {
+    const wav = await geminiTts(text, GEMINI_VOICES.includes(speaker) ? speaker : 'leda', TTS_STYLE[emotion] || TTS_STYLE.kind);
     if (wav) return { data: wav, mime: 'audio/wav' };
   }
-  const mp3 = await googleTts(text, lang);
-  return mp3 ? { data: mp3, mime: 'audio/mpeg' } : null;
+  const runs = langRuns(text);
+  if (runs.every((r) => r.lang === 'en') && env('GROQ_API_KEY')) {
+    const wav = await orpheus(text, ORPHEUS.includes(speaker) ? speaker : 'hannah');
+    if (wav) return { data: wav, mime: 'audio/wav' };
+  }
+  // русские и английские куски — каждый своим произношением, одним форматом (MP3 склеивается подряд)
+  const parts = await Promise.all((runs.length ? runs : [{ lang, text }]).map((r) => googleTts(r.text, r.lang)));
+  if (!parts.length || parts.some((p) => !p)) return null;
+  const out = new Uint8Array(parts.reduce((n, p) => n + p!.length, 0));
+  let at = 0; for (const p of parts) { out.set(p!, at); at += p!.length; }
+  return { data: out, mime: 'audio/mpeg' };
+}
+// разбивает фразу на куски по языку: слова с кириллицей — ru, с латиницей — en, цифры и знаки — к соседнему куску
+function langRuns(text: string) {
+  const runs: { lang: string; text: string }[] = [];
+  for (const w of text.replace(/\s+/g, ' ').trim().split(' ')) {
+    const lang = /[А-Яа-яЁё]/.test(w) ? 'ru' : /[A-Za-z]/.test(w) ? 'en' : '';
+    const last = runs[runs.length - 1];
+    if (last && (!lang || last.lang === lang)) last.text += ' ' + w;
+    else runs.push({ lang: lang || 'en', text: w });
+  }
+  return runs.filter((r) => /[\p{L}\p{N}]/u.test(r.text));
+}
+// Gemini TTS (Interactions API): ответ — WAV 24 кГц или «сырой» PCM, который оборачиваем в WAV
+async function geminiTts(text: string, voice: string, style: string) {
+  const r = await fetch('https://generativelanguage.googleapis.com/v1beta/interactions', {
+    method: 'POST',
+    headers: { 'x-goog-api-key': env('GEMINI_API_KEY'), 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'gemini-3.8-flash-tts',
+      input: [{ type: 'user_input', content: [{ type: 'text', text: text.slice(0, 1500), annotations: [{ type: 'speech_metadata', style }] }] }],
+      response_format: { type: 'audio' },
+      generation_config: { speech_config: [{ voice: voice[0].toUpperCase() + voice.slice(1) }] },
+    }),
+  });
+  const j = await r.json().catch(() => null);
+  const audio: string[] = [];
+  const walk = (o: any) => {
+    if (!o || typeof o !== 'object') return;
+    if (typeof o.data === 'string' && o.data.length > 100 && (/audio/.test(o.mime_type || o.mimeType || '') || o.type === 'audio')) audio.push(o.data);
+    for (const v of Object.values(o)) walk(v);
+  };
+  walk(j);
+  if (!r.ok || !audio.length) { console.error('gemini-tts', r.status, JSON.stringify(j).slice(0, 300)); return null; }
+  const bytes = Uint8Array.from(atob(audio[audio.length - 1]), (c) => c.charCodeAt(0));
+  if (String.fromCharCode(...bytes.subarray(0, 4)) === 'RIFF') return bytes;
+  const out = new Uint8Array(44 + bytes.length), dv = new DataView(out.buffer);   // PCM 16 бит, 24 кГц, моно
+  out.set(enc('RIFF'), 0); dv.setUint32(4, 36 + bytes.length, true); out.set(enc('WAVEfmt '), 8);
+  dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, 1, true); dv.setUint32(24, 24000, true);
+  dv.setUint32(28, 48000, true); dv.setUint16(32, 2, true); dv.setUint16(34, 16, true);
+  out.set(enc('data'), 36); dv.setUint32(40, bytes.length, true); out.set(bytes, 44);
+  return out;
 }
 async function orpheus(text: string, voice: string) {
   // подсказки по-русски в скобках английский голос читать не должен
@@ -354,7 +417,7 @@ async function talk(st: any, text: string, replyTo?: number, heard = '') {
   const words = (out.words || []).map((w: any) => `📝 <b>${esc(w.word)}</b> — ${esc(w.translation)}`).join('\n');
   const body = esc(out.reply) + (words ? '\n\n' + words : '');
   const markup = out.english !== false ? { inline_keyboard: [[{ text: '🌐 Перевод', callback_data: 'tr' }]] } : undefined;
-  const sound = st.voice ? await tts(out.reply, out.english !== false ? 'en' : 'ru', st.speaker) : null;
+  const sound = st.voice ? await tts(out.reply, out.english !== false ? 'en' : 'ru', st.speaker, out.emotion) : null;
   const audio = sound?.mime === 'audio/wav' ? await wavToMp3(sound.data).catch((e) => { console.error('mp3', e); return null; }) : sound?.data;
   if (audio && body.length <= 1000) {
     const fd = new FormData();
@@ -460,11 +523,11 @@ async function handle(upd: any) {
 /* ---------- API сайта ---------- */
 const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'content-type', 'Access-Control-Allow-Methods': 'POST, OPTIONS' };
 const json = (b: unknown, status = 200) => new Response(JSON.stringify(b), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
-const view = (st: any) => ({ mode: st.mode, scene: st.scene, level: st.level, plan: st.plan, history: st.history, stats: st.stats || {}, voice: st.voice, speaker: st.speaker || 'hannah', speakers: SPEAKERS });
+const view = (st: any) => ({ mode: st.mode, scene: st.scene, level: st.level, plan: st.plan, history: st.history, stats: st.stats || {}, voice: st.voice, speaker: speakersNow().includes(st.speaker) ? st.speaker : speakersNow()[0], speakers: speakersNow(), engine: useGemini() ? 'gemini' : 'orpheus' });
 const scenes = Object.fromEntries(Object.entries(SCENES).map(([k, [n]]) => [k, n]));
 
 async function reply(out: any, voice: boolean, speaker: string) {
-  const audio = voice ? await tts(out.reply, out.english !== false ? 'en' : 'ru', speaker) : null;
+  const audio = voice ? await tts(out.reply, out.english !== false ? 'en' : 'ru', speaker, out.emotion) : null;
   return { reply: out.reply, english: out.english !== false, emotion: MOODS[out.emotion] ? out.emotion : 'kind', fix: out.fix, words: out.words || [], assessment: out.assessment, audio: audio ? b64(audio.data) : null, mime: audio?.mime };
 }
 
@@ -499,11 +562,11 @@ async function web(req: Request) {
       return out ? json({ heard, level: st.level, plan: st.plan, stats: st.stats, out: await reply(out, voice, st.speaker) }) : json({ error: 'failed', heard }, 502);
     }
     case 'tts': {
-      const audio = await tts(String(b.text || '').slice(0, 1500), b.lang === 'ru' ? 'ru' : 'en', SPEAKERS.includes(b.speaker) ? b.speaker : st.speaker);
+      const audio = await tts(String(b.text || '').slice(0, 1500), b.lang === 'ru' ? 'ru' : 'en', SPEAKERS.includes(b.speaker) ? b.speaker : st.speaker, String(b.emotion || 'kind'));
       return json({ audio: audio ? b64(audio.data) : null, mime: audio?.mime });
     }
     case 'speaker': {
-      if (!SPEAKERS.includes(b.speaker)) return json({ error: 'bad' }, 400);
+      if (!speakersNow().includes(b.speaker)) return json({ error: 'bad' }, 400);
       st.speaker = b.speaker; await save(st);
       return json({ ok: true, speaker: st.speaker });
     }
