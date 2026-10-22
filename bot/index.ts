@@ -4,7 +4,7 @@
 // • Сайт (../docs, GitHub Pages): разговор «как звонок», слова с тренировкой, разбор ошибок, прогресс. Запросы — POST ?api=1.
 //   Вход: внутри Telegram — по подписи Mini App (initData), в браузере — по личному ключу из ссылки (команда /site).
 // • Разговор, уровень и план общие для бота и сайта; слова и ошибки копятся в english_words / english_mistakes.
-// Секреты (Supabase → Edge Functions → Secrets): TUTOR_BOT_TOKEN — токен бота от @BotFather; ANTHROPIC_API_KEY — уже есть;
+// Секреты (Supabase → Edge Functions → Secrets): TUTOR_BOT_TOKEN — токен бота от @BotFather; ANTHROPIC_API_KEY — необязательно (без него ответы через Groq, gpt-oss-120b);
 // GROQ_API_KEY — распознавание речи (Whisper) и живой голос (Orpheus) в Groq. Таблицы — english-tutor.sql.
 // Настройка (после того как секрет добавлен): открыть https://<проект>.supabase.co/functions/v1/english-tutor?setup=1
 // Проверка JWT выключена — Telegram не присылает JWT; вместо неё секретный заголовок вебхука и ключ/подпись у сайта.
@@ -137,6 +137,7 @@ async function askClaude(st: any, text: string) {
   push('user', text || '(Start the session.)');
   if (msgs[0].role !== 'user') msgs.unshift({ role: 'user', content: '(Start the session.)' });
   const answers = st.mode === 'test' ? st.history.filter((m: any) => m.role === 'user').length + (text ? 1 : 0) : 0;
+  if (!env('ANTHROPIC_API_KEY')) return askGroq(systemPrompt(st, answers), msgs);
   const r = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: { 'x-api-key': env('ANTHROPIC_API_KEY'), 'anthropic-version': '2023-06-01', 'content-type': 'application/json', ...(FALLBACK ? { 'anthropic-beta': 'server-side-fallback-2026-07-01' } : {}) },
@@ -151,6 +152,25 @@ async function askClaude(st: any, text: string) {
   const raw = (j?.content || []).filter((c: any) => c.type === 'text').map((c: any) => c.text).join('');
   try { const out = JSON.parse(raw); if (out?.reply) return out; } catch { /* ниже */ }
   console.error('anthropic', r.status, JSON.stringify(j).slice(0, 400));
+  return null;
+}
+// без ключа Claude — бесплатно через Groq (тот же ключ, что для голоса); ответ по той же JSON-схеме в строгом режиме
+const GROQ_MODEL = 'openai/gpt-oss-120b';
+async function askGroq(system: string, msgs: { role: string; content: string }[]) {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + env('GROQ_API_KEY'), 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: GROQ_MODEL, reasoning_effort: 'low', max_completion_tokens: 4000,
+        messages: [{ role: 'system', content: system }, ...msgs],
+        response_format: { type: 'json_schema', json_schema: { name: 'tutor_reply', strict: true, schema: SCHEMA } },
+      }),
+    });
+    const j = await r.json().catch(() => ({}));
+    try { const out = JSON.parse(j?.choices?.[0]?.message?.content || ''); if (out?.reply) return out; } catch { /* ниже */ }
+    console.error('groq', r.status, JSON.stringify(j).slice(0, 400));
+  }
   return null;
 }
 
