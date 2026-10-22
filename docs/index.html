@@ -56,6 +56,10 @@ nav .badge{position:absolute;top:6px;left:calc(50% + 7px);min-width:18px;padding
 
 /* Говорить */
 .modes{display:flex;gap:20px;overflow-x:auto;padding:0 20px;border-bottom:1px solid var(--line);scrollbar-width:none}
+.chats{display:flex;gap:4px;margin:4px 20px 2px;padding:3px;border:1px solid var(--line);border-radius:12px;background:var(--sheet)}
+.chats button{flex:1;min-height:40px;border-radius:9px;font-size:15px;font-weight:500;color:var(--muted)}
+.chats button.on{background:var(--ink);color:var(--paper)}
+.modes .hint{flex:none;align-self:center;font-size:14px;color:var(--muted)}
 .modes::-webkit-scrollbar{display:none}
 .modes button{flex:none;min-height:44px;font-size:15px;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
 .modes button.on{color:var(--ink);border-bottom-color:var(--ink);font-weight:500}
@@ -316,6 +320,7 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
   <header><div class="brand">Yomi<small>English</small></div><div class="meta"><span id="streak" hidden></span><span class="lv" id="lvl" hidden></span></div></header>
   <main id="main">
     <section class="view on" id="v-talk">
+      <div class="chats" id="chats" role="tablist"><button data-ch="learn" role="tab">Учёба</button><button data-ch="talk" role="tab">Болтовня</button></div>
       <div class="modes" id="modes" role="tablist"></div>
       <div class="scroll" id="chatWrap"><div class="chat" id="chat" aria-live="polite"></div></div>
       <div class="dock">
@@ -433,9 +438,12 @@ function gate(){
 let S = {mode:'free', scene:'smalltalk', history:[], stats:{}, plan:null, level:null, scenes:{}, due:0, words:0, stt:false, speaker:'hannah'};
 const VOICE_INFO = {hannah:['Hannah','женский'], diana:['Diana','женский'], autumn:['Autumn','женский'], troy:['Troy','мужской'], austin:['Austin','мужской'], daniel:['Daniel','мужской'],
   leda:['Leda','юный, милый'], puck:['Puck','бодрый'], zephyr:['Zephyr','звонкий'], laomedeia:['Laomedeia','весёлый'], achernar:['Achernar','мягкий'], sadachbia:['Sadachbia','живой']};
-let chat = store.get('yomi_chat', []);       // что видно в ленте (с исправлениями и словами)
+let CH = store.get('yomi_ch', 'learn') === 'talk' ? 'talk' : 'learn';   // какой чат открыт: «Учёба» или «Болтовня» (у каждого своя лента)
+const chatKey = () => CH === 'talk' ? 'yomi_chat_talk' : 'yomi_chat';
+let chat = store.get(chatKey(), []);       // что видно в ленте (с исправлениями и словами)
 let busy = false, errText = '';
-const saveChat = () => store.set('yomi_chat', chat.slice(-60));
+const saveChat = () => store.set(chatKey(), chat.slice(-60));
+const serverChat = () => (CH === 'talk' ? S.talk || [] : S.history || []).map(m => m.role === 'user' ? {role:'user', text:m.text} : {role:'tutor', text:m.text, en:true});
 
 function streak(){
   const days = S.stats?.days || {}; let n = 0;
@@ -452,6 +460,9 @@ function drawHead(){
 
 /* ---------- лента разговора ---------- */
 function drawModes(){
+  document.querySelectorAll('#chats [data-ch]').forEach(b => { b.classList.toggle('on', b.dataset.ch === CH); b.setAttribute('aria-selected', b.dataset.ch === CH); });
+  $('#typeIn').placeholder = CH === 'talk' ? 'Напиши что угодно…' : 'Type in English…';
+  if(CH === 'talk'){ $('#modes').innerHTML = '<span class="hint">Просто болтаем, без исправлений</span><button data-m="reset">Новый разговор</button>'; return; }
   $('#modes').innerHTML = MODES.map(([k, n]) => `<button role="tab" aria-selected="${S.mode === k}" data-m="${k}" class="${S.mode === k ? 'on' : ''}">${k === 'scenario' && S.mode === 'scenario' ? esc(plain(S.scenes[S.scene]) || n) : n}</button>`).join('')
     + `<button data-m="reset">Заново</button>`;
 }
@@ -583,7 +594,7 @@ function setState(s){
   state = s;
   const mic = $('#mic'); mic.className = 'mic' + (s === 'idle' ? '' : ' ' + s); mic.style.setProperty('--lvl', 0);
   mic.setAttribute('aria-label', {idle:'Говорить', listen:'Отправить', think:'Думаю', speak:'Перебить'}[s]);
-  $('#status').textContent = s === 'idle' && !canRecord() ? 'Микрофон недоступен — можно писать текстом' : STATUS[s];
+  $('#status').textContent = s === 'idle' && !canRecord() ? 'Микрофон недоступен — можно писать текстом' : s === 'idle' && CH === 'talk' ? 'Нажми и говори — по-русски или по-английски' : STATUS[s];
   $('#endBtn').style.visibility = inCall ? 'visible' : 'hidden';
   buddyState(s);
 }
@@ -686,7 +697,7 @@ async function sendRecording(){
   if(blob.size < 3000){ listen(); return; }
   setState('think'); busy = true; drawChat();
   const audio = await new Promise(res => { const fr = new FileReader(); fr.onload = () => res(String(fr.result).split(',')[1] || ''); fr.readAsDataURL(blob); });
-  const j = await api('talk', {audio, mime: blob.type}).catch(() => ({error:'failed'}));
+  const j = await api('talk', {audio, mime: blob.type, chat: CH}).catch(() => ({error:'failed'}));
   busy = false;
   await handleTalk(j);
 }
@@ -694,7 +705,7 @@ async function sendText(text){
   text = text.trim(); if(!text || busy) return;
   unlock(); stopAudio(); busy = true; errText = ''; setState('think');
   chat.push({role:'user', text, pending:true}); drawChat();
-  const j = await api('talk', {text}).catch(() => ({error:'failed'}));
+  const j = await api('talk', {text, chat: CH}).catch(() => ({error:'failed'}));
   chat = chat.filter(m => !m.pending); busy = false;
   if(j.error) chat.push({role:'user', text});
   await handleTalk(j, text);
@@ -724,10 +735,10 @@ async function handleTalk(j, typed){
 async function switchMode(mode, scene){
   stopAudio(); clearInterval(vadTimer); if(rec?.state === 'recording'){ rec.onstop = null; rec.stop(); }
   busy = true; errText = ''; chat = []; setState('think'); drawChat();
-  const j = await api('mode', {mode, scene}).catch(() => ({error:'failed'}));
+  const j = await api('mode', {mode, scene, chat: CH}).catch(() => ({error:'failed'}));
   busy = false;
   if(j.error){ errText = 'Не получилось начать. Попробуй ещё раз.'; drawChat(); setState('idle'); return; }
-  Object.assign(S, {mode: j.mode, scene: j.scene, level: j.level, plan: j.plan, stats: j.stats});
+  if(CH === 'learn') Object.assign(S, {mode: j.mode, scene: j.scene, level: j.level, plan: j.plan, stats: j.stats});
   drawModes(); drawHead();
   onReply(j.out);
   setState('speak');
@@ -849,6 +860,14 @@ function tab(v){
   if(v === 'mist') showMistakes();
   if(v === 'prog') showProgress();
 }
+// переключение «Учёба» ↔ «Болтовня»: у каждого чата своя лента и своя история на сервере
+$('#chats').onclick = e => {
+  const b = e.target.closest('[data-ch]'); if(!b || b.dataset.ch === CH || busy) return;
+  unlock(); if(inCall) endCall(); stopAudio();
+  saveChat(); CH = b.dataset.ch; store.set('yomi_ch', CH);
+  chat = store.get(chatKey(), []); if(!chat.length) chat = serverChat();
+  errText = ''; drawModes(); drawChat(); setState('idle');
+};
 $('#nav').onclick = e => { const b = e.target.closest('[data-v]'); if(b) tab(b.dataset.v); };
 
 (async () => {
@@ -858,8 +877,8 @@ $('#nav').onclick = e => { const b = e.target.closest('[data-v]'); if(b) tab(b.d
   if(j.error){ if(j.error !== 'auth'){ errText = 'Нет связи с сервером. Обнови страницу.'; drawChat(); } return; }
   Object.assign(S, j);
   // лента из браузера устарела (разговор шёл в боте) — показываем историю с сервера
-  const last = chat.filter(m => m.role === 'tutor').pop()?.text, srv = S.history.filter(m => m.role === 'assistant').pop()?.text;
-  if(last !== srv) chat = S.history.map(m => m.role === 'user' ? {role:'user', text:m.text} : {role:'tutor', text:m.text, en:true});
+  const last = chat.filter(m => m.role === 'tutor').pop()?.text, srv = (CH === 'talk' ? S.talk || [] : S.history).filter(m => m.role === 'assistant').pop()?.text;
+  if(last !== srv) chat = serverChat();
   saveChat(); drawModes(); drawHead(); drawChat(); setState('idle');
 })();
 </script>
