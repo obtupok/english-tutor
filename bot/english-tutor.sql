@@ -40,3 +40,6 @@ alter table public.english_mistakes enable row level security;
 
 -- Голос Yomi (Orpheus в Groq): hannah | diana | autumn | troy | austin | daniel
 alter table public.english_tutor add column if not exists speaker text not null default 'hannah';
+
+-- Характер Yomi: kind | cute | angry | funny | sleepy
+alter table public.english_tutor add column if not exists persona text not null default 'kind';

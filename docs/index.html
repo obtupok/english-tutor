@@ -221,6 +221,34 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
 .buddy[data-mood="oops"] .b-ear.l{transform:rotate(-34deg)}.buddy[data-mood="oops"] .b-ear.r{transform:rotate(34deg)}
 .buddy.hop .b-all{animation:b-hop .7s ease-out}
 .dock:has(.typebox.on) .buddy{width:84px;height:76px}
+/* характеры кролика: data-p на .buddy */
+.b-brows,.b-raise,.b-frown,.b-grin,.b-lids,.b-spark,.b-heart,.b-zzz{opacity:0;transition:opacity .2s}
+@keyframes b-float{0%{transform:translateY(4px);opacity:0}30%{opacity:1}100%{transform:translateY(-10px);opacity:0}}
+.buddy[data-p="angry"] .b-brows,.buddy[data-p="angry"] .b-frown{opacity:1}
+.buddy[data-p="angry"] .b-closed{opacity:0}
+.buddy[data-p="angry"] .b-cheek{fill:#D24B3A;opacity:.5}
+.buddy[data-p="angry"] .b-ear.l{transform:rotate(-22deg)}.buddy[data-p="angry"] .b-ear.r{transform:rotate(26deg)}
+.buddy[data-p="cute"] .b-spark{opacity:1}
+.buddy[data-p="cute"] .b-cheek{opacity:.6}
+.buddy[data-p="cute"] .b-heart{opacity:1;animation:b-float 2.4s ease-out infinite}
+.buddy[data-p="funny"] .b-grin,.buddy[data-p="funny"] .b-raise{opacity:1}
+.buddy[data-p="funny"] .b-closed{opacity:0}
+.buddy[data-p="sleepy"] .b-eyes{opacity:0}
+.buddy[data-p="sleepy"] .b-lids{opacity:1}
+.buddy[data-p="sleepy"] .b-zzz text{animation:b-float 2.6s ease-out infinite}
+.buddy[data-p="sleepy"] .b-zzz text+text{animation-delay:1.3s}
+.buddy[data-p="sleepy"] .b-zzz{opacity:1}
+.buddy[data-p="sleepy"] .b-all{animation-duration:5s}
+.buddy[data-p="sleepy"] .b-ear.l{transform:rotate(-30deg)}.buddy[data-p="sleepy"] .b-ear.r{transform:rotate(32deg)}
+.buddy.mo .b-frown,.buddy.mo .b-grin{opacity:0}
+.buddy[data-mood] .b-lids,.buddy[data-mood] .b-spark{opacity:0}
+.b-zzz text{font:700 15px var(--sans);fill:var(--muted)}
+.personas{display:flex;flex-direction:column}
+.personas button{display:flex;gap:12px;align-items:center;text-align:left;min-height:60px;padding:12px 0;border-bottom:1px solid var(--line)}
+.personas b{display:block;font-family:var(--serif);font-size:19px;font-weight:500}
+.personas span{display:block;color:var(--muted);font-size:14px}
+.personas .em{font-size:26px;width:36px;text-align:center}
+.personas button.on b::after{content:" · выбран";font-family:var(--sans);font-size:13px;color:var(--accent);font-weight:500}
 @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -246,10 +274,18 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
                 <circle fill="var(--b-fur)" cx="65" cy="87" r="1.8"/><circle fill="var(--b-fur)" cx="99" cy="87" r="1.8"/></g>
               <g class="b-happy"><path class="b-stroke" d="M57 92 Q63 84 69 92"/><path class="b-stroke" d="M91 92 Q97 84 103 92"/></g>
               <g class="b-oops"><path class="b-stroke" d="M58 85 L67 90 L58 95"/><path class="b-stroke" d="M102 85 L93 90 L102 95"/></g>
+              <g class="b-spark"><circle fill="var(--b-fur)" cx="61" cy="93.5" r="1.1"/><circle fill="var(--b-fur)" cx="95" cy="93.5" r="1.1"/></g>
+              <g class="b-lids"><path class="b-stroke" d="M57 90 Q63 94 69 90"/><path class="b-stroke" d="M91 90 Q97 94 103 90"/></g>
+              <g class="b-brows"><path class="b-stroke" d="M55 78 L70 84"/><path class="b-stroke" d="M105 78 L90 84"/></g>
+              <path class="b-stroke b-raise" d="M90 79 Q97 73 104 77"/>
+              <path class="b-stroke b-frown" d="M73 106 Q80 99 87 106"/>
+              <path class="b-grin" fill="var(--b-ink)" stroke="var(--b-ink)" stroke-width="2" stroke-linejoin="round" d="M71 99 Q80 112 89 99 Z"/>
               <path class="b-stroke b-closed" d="M74 101 Q77 105 80 101 Q83 105 86 101"/>
               <ellipse class="b-ink b-open" cx="80" cy="104" rx="5" ry="5.5"/>
               <path class="b-sweat" fill="#8DB9D8" stroke="var(--b-ink)" stroke-width="1.5" d="M117 66 q5 8 0 11 q-5 -3 0 -11z"/>
             </g>
+            <path class="b-heart" fill="var(--accent)" d="M128 44 c-2-5-10-4-8 2 c1 3 5 6 8 9 c3-3 7-6 8-9 c2-6-6-7-8-2z"/>
+            <g class="b-zzz"><text x="118" y="46">z</text><text x="130" y="34">z</text></g>
             <g class="b-dots"><circle cx="120" cy="40" r="3.4"/><circle cx="131" cy="32" r="3.4"/><circle cx="142" cy="24" r="3.4"/></g>
             <g class="b-waves"><path class="b-stroke" stroke="var(--accent)" d="M126 58 q7 7 0 14"/><path class="b-stroke" stroke="var(--accent)" d="M134 52 q12 13 0 26"/></g>
           </g>
@@ -313,7 +349,7 @@ function gate(){
 }
 
 /* ---------- состояние ---------- */
-let S = {mode:'free', scene:'smalltalk', history:[], stats:{}, plan:null, level:null, scenes:{}, due:0, words:0, stt:false, speaker:'hannah'};
+let S = {mode:'free', scene:'smalltalk', history:[], stats:{}, plan:null, level:null, scenes:{}, due:0, words:0, stt:false, speaker:'hannah', persona:'kind'};
 const VOICES = [['hannah','Hannah','женский'],['diana','Diana','женский'],['autumn','Autumn','женский'],['troy','Troy','мужской'],['austin','Austin','мужской'],['daniel','Daniel','мужской']];
 let chat = store.get('yomi_chat', []);       // что видно в ленте (с исправлениями и словами)
 let busy = false, errText = '';
@@ -418,7 +454,20 @@ function buddyState(s){
   if(s === 'speak'){ const flap = () => { b.classList.toggle('mo'); mouthTimer = setTimeout(flap, 90 + Math.random() * 140); }; flap(); }
 }
 function buddyMood(m){ const b = $('#buddy'); if(!b) return; clearTimeout(moodTimer); b.dataset.mood = m; moodTimer = setTimeout(() => { delete b.dataset.mood; }, 2200); }
-$('#buddy').onclick = () => { const b = $('#buddy'); b.classList.remove('hop'); void b.offsetWidth; b.classList.add('hop'); setTimeout(() => b.classList.remove('hop'), 700); };
+const PERSONA_INFO = {kind:['😊','Добрый','Мягко поправляет и хвалит'], cute:['🌸','Милый','Восторженный и ласковый, «yay!»'], angry:['😠','Злой','Ворчливый строгий учитель, придирается к каждой ошибке'], funny:['😄','Весёлый','Шутит и подкалывает'], sleepy:['😴','Сонный','Медленный и спокойный, всё время зевает']};
+function hop(){ const b = $('#buddy'); b.classList.remove('hop'); void b.offsetWidth; b.classList.add('hop'); setTimeout(() => b.classList.remove('hop'), 700); }
+$('#buddy').onclick = () => {
+  hop();
+  sheet(`<h2>Характер Yomi</h2><p class="lead">Меняется, как он говорит и как выглядит. Учит одинаково хорошо.</p><div class="personas">${Object.entries(PERSONA_INFO).map(([k, [e, n, d]]) =>
+    `<button data-pe="${k}" class="${S.persona === k ? 'on' : ''}"><span class="em" aria-hidden="true">${e}</span><div><b>${n}</b><span>${d}</span></div></button>`).join('')}</div>`);
+  $('#sheetIn').onclick = async e => {
+    const b = e.target.closest('[data-pe]'); if(!b) return;
+    closeSheet();
+    if(b.dataset.pe === S.persona) return;
+    const j = await api('persona', {persona: b.dataset.pe});
+    if(j.ok){ S.persona = j.persona; $('#buddy').dataset.p = j.persona; hop(); $('#status').textContent = `Теперь Yomi — ${PERSONA_INFO[j.persona][1].toLowerCase()}`; }
+  };
+};
 const canRecord = () => !!(navigator.mediaDevices?.getUserMedia && window.MediaRecorder && S.stt);
 
 async function startCall(){
@@ -641,6 +690,7 @@ $('#nav').onclick = e => { const b = e.target.closest('[data-v]'); if(b) tab(b.d
   // лента из браузера устарела (разговор шёл в боте) — показываем историю с сервера
   const last = chat.filter(m => m.role === 'tutor').pop()?.text, srv = S.history.filter(m => m.role === 'assistant').pop()?.text;
   if(last !== srv) chat = S.history.map(m => m.role === 'user' ? {role:'user', text:m.text} : {role:'tutor', text:m.text, en:true});
+  $('#buddy').dataset.p = S.persona || 'kind';
   saveChat(); drawModes(); drawHead(); drawChat(); setState('idle');
 })();
 </script>
