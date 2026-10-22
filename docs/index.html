@@ -153,6 +153,25 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
 .plan ol{margin:10px 0 0;padding-left:20px}
 .plan li{margin-bottom:6px}
 .actions{display:flex;gap:10px;flex-wrap:wrap}
+.coins{display:inline-flex;align-items:center;gap:4px;padding:2px 10px;border:1px solid var(--line-2);border-radius:99px;background:var(--sheet);color:var(--ink);font-size:14px;font-weight:600}
+.badge.dot{min-width:10px;height:10px;padding:0;top:7px}
+.ysub{margin:0 0 16px}
+.sub-h{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:18px 0 8px;font-weight:600}
+.quests{display:flex;flex-direction:column;gap:10px}
+.quest{padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--sheet);display:flex;flex-direction:column;gap:8px}
+.quest.done{opacity:.6}
+.q-t{display:flex;justify-content:space-between;gap:10px}.q-t b{font-family:var(--serif);font-size:18px;font-weight:500}.q-t span{color:var(--muted)}
+.q-bar{height:8px;border-radius:99px;background:var(--line)}.q-bar i{display:block;height:100%;border-radius:99px;background:var(--accent)}
+.quest small{color:var(--muted)}.quest .q-ok{color:var(--green)}.quest .btn{align-self:flex-start}
+.shop{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.shop .item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px 10px;border:1px solid var(--line);border-radius:12px;background:var(--sheet)}
+.shop .item b{font-size:13px;font-weight:600;text-align:center}.shop .item span{font-size:12px;color:var(--muted)}
+.shop .item.on{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}.shop .item.on span{color:var(--green);font-weight:600}
+.shop .item[data-poor] span{color:var(--accent)}
+.toastx{position:fixed;left:50%;top:12px;z-index:60;transform:translate(-50%,-140%);max-width:min(92vw,420px);padding:10px 16px;border-radius:12px;background:var(--ink);color:var(--paper);font-size:14px;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.25);transition:transform .3s ease}
+.toastx.on{transform:translate(-50%,0)}
+.coinfx{position:fixed;z-index:61;transform:translate(-50%,0);font-weight:700;font-size:16px;color:var(--amber);pointer-events:none;animation:coinup 1.3s ease-out forwards;text-shadow:0 1px 0 var(--paper)}
+@keyframes coinup{to{transform:translate(-50%,-46px);opacity:0}}
 .setrow{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px;border-bottom:1px solid var(--line)}
 .setrow input[type=range]{flex:1;max-width:220px;accent-color:var(--accent)}
 .emos{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
@@ -388,12 +407,32 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
 .buddy.t-heart :is(.b-hearts){opacity:1}
 .buddy.t-heart .b-hearts path{animation:b-float 1.2s ease-out}
 .buddy.t-heart .b-happy{opacity:1}.buddy.t-heart :is(.b-eyes,.b-wide,.b-star,.b-heye,.b-swirl,.b-half,.b-glasses,.b-lids){opacity:0}
+/* ---------- скины: персонаж (уши и узор), окрас (мех), шапка ---------- */
+.b-ear > g,.m-panda,.m-fox,.m-bear,.m-cat,.h-bow,.h-flower,.h-cap,.h-headphones,.h-wizard,.h-crown{display:none}
+.buddy:not([data-char]) .e-bunny,.buddy[data-char="bunny"] .e-bunny,.buddy[data-char="cat"] .e-cat,.buddy[data-char="bear"] .e-round,.buddy[data-char="panda"] .e-round,.buddy[data-char="fox"] .e-fox{display:inline}
+.buddy[data-char="panda"] .m-panda,.buddy[data-char="fox"] .m-fox,.buddy[data-char="bear"] .m-bear,.buddy[data-char="cat"] .m-cat{display:inline}
+.buddy[data-char="panda"] .e-round .b-line{fill:#3B342D}.buddy[data-char="panda"] .e-round .b-inner{opacity:0}
+.buddy[data-char="panda"] .b-eyes .b-ink{fill:#000}
+.buddy[data-char="cat"]{--b-fur:#E9E3DA;--b-belly:#F6F1EA}
+.buddy[data-char="bear"]{--b-fur:#B98559;--b-belly:#E3C29C}
+.buddy[data-char="fox"]{--b-fur:#F0A35E;--b-belly:#FFF1E2}
+.buddy[data-color="choco"]{--b-fur:#B88A62;--b-belly:#DDBE9C}
+.buddy[data-color="gray"]{--b-fur:#C9C4BC;--b-belly:#E4E0DA}
+.buddy[data-color="pink"]{--b-fur:#F7CCD5;--b-belly:#FCE6EA}
+.buddy[data-color="mint"]{--b-fur:#CBEBDD;--b-belly:#E7F6EF}
+.buddy[data-color="sky"]{--b-fur:#CFE2F5;--b-belly:#E8F1FB}
+.buddy[data-color="gold"]{--b-fur:#F2D07A;--b-belly:#F9E7B5}
+.buddy[data-hat="bow"] .h-bow,.buddy[data-hat="flower"] .h-flower,.buddy[data-hat="cap"] .h-cap,.buddy[data-hat="headphones"] .h-headphones,.buddy[data-hat="wizard"] .h-wizard,.buddy[data-hat="crown"] .h-crown{display:inline}
+/* превью в магазине: неподвижные маленькие копии */
+.buddy.mini{position:relative;left:auto;top:auto;--bsize:66px;cursor:default;pointer-events:none;margin:0 auto}
+.buddy.mini::after{display:none}
+.buddy.mini > svg,.buddy.mini *{animation:none!important;filter:none}
 @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
 <div class="app">
-  <header><div class="brand">Yomi<small>English</small></div><div class="meta"><span id="streak" hidden></span><span class="lv" id="lvl" hidden></span></div></header>
+  <header><div class="brand">Yomi<small>English</small></div><div class="meta"><button class="coins" id="coins" hidden title="Монетки и задания">🪙 <b>0</b></button><span id="streak" hidden></span><span class="lv" id="lvl" hidden></span></div></header>
   <main id="main">
     <section class="view on" id="v-talk">
       <div class="chats" id="chats" role="tablist"><button data-ch="learn" role="tab">Учёба</button><button data-ch="talk" role="tab">Болтовня</button></div>
@@ -419,13 +458,13 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
     <button data-v="words"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/></svg>Слова<span class="badge" id="dueBadge" hidden></span></button>
     <button data-v="mist"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>Ошибки</button>
     <button data-v="prog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg>Прогресс</button>
-    <button data-v="yomi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 9.5C7 6 7.2 2.5 8.6 2.4S10.8 5.8 10.6 9M15.5 9.5C17 6 16.8 2.5 15.4 2.4S13.2 5.8 13.4 9"/><ellipse cx="12" cy="15" rx="7.5" ry="6.5"/><path d="M9.6 14.6h.01M14.4 14.6h.01M11 17.2q1 .8 2 0"/></svg>Yomi</button>
+    <button data-v="yomi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 9.5C7 6 7.2 2.5 8.6 2.4S10.8 5.8 10.6 9M15.5 9.5C17 6 16.8 2.5 15.4 2.4S13.2 5.8 13.4 9"/><ellipse cx="12" cy="15" rx="7.5" ry="6.5"/><path d="M9.6 14.6h.01M14.4 14.6h.01M11 17.2q1 .8 2 0"/></svg>Yomi<span class="badge dot" id="yomiDot" hidden></span></button>
   </nav>
 </div>
 <div class="buddy" id="buddy" data-s="idle" data-p="kind" title="Yomi — погладь меня" aria-hidden="true"><svg viewBox="-14 -8 188 172">
           <g class="b-all">
-            <g class="b-ear l"><path class="b-line" d="M54 82 C42 34 44 7 58 5 C72 3 77 32 75 82 Z"/><path class="b-inner" d="M60 58 C52 36 53 15 59 13 C65 12 67 34 66 56 Z"/></g>
-            <g class="b-ear r"><path class="b-line" d="M106 82 C118 34 116 7 102 5 C88 3 83 32 85 82 Z"/><path class="b-inner" d="M100 58 C108 36 107 15 101 13 C95 12 93 34 94 56 Z"/></g>
+            <g class="b-ear l"><g class="e-bunny"><path class="b-line" d="M54 82 C42 34 44 7 58 5 C72 3 77 32 75 82 Z"/><path class="b-inner" d="M60 58 C52 36 53 15 59 13 C65 12 67 34 66 56 Z"/></g><g class="e-cat"><path class="b-line" d="M48 80 L54 38 L80 60 Z"/><path class="b-inner" d="M55 66 L57 48 L71 59 Z"/></g><g class="e-round"><circle class="b-line" cx="52" cy="60" r="15"/><circle class="b-inner" cx="52" cy="60" r="8"/></g><g class="e-fox"><path class="b-line" d="M45 82 L48 24 L82 60 Z"/><path class="b-inner" d="M53 67 L54 38 L72 59 Z"/></g></g>
+            <g class="b-ear r"><g class="e-bunny"><path class="b-line" d="M106 82 C118 34 116 7 102 5 C88 3 83 32 85 82 Z"/><path class="b-inner" d="M100 58 C108 36 107 15 101 13 C95 12 93 34 94 56 Z"/></g><g class="e-cat"><path class="b-line" d="M112 80 L106 38 L80 60 Z"/><path class="b-inner" d="M105 66 L103 48 L89 59 Z"/></g><g class="e-round"><circle class="b-line" cx="108" cy="60" r="15"/><circle class="b-inner" cx="108" cy="60" r="8"/></g><g class="e-fox"><path class="b-line" d="M115 82 L112 24 L78 60 Z"/><path class="b-inner" d="M107 67 L106 38 L88 59 Z"/></g></g>
             <g class="b-body">
               <ellipse class="b-line" cx="80" cy="132" rx="27" ry="16"/>
               <ellipse class="b-belly" cx="80" cy="136" rx="13" ry="9"/>
@@ -434,6 +473,11 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
             </g>
             <g class="b-head">
               <ellipse class="b-line" cx="80" cy="92" rx="49" ry="40"/>
+              <!-- узоры персонажей -->
+              <path class="m-fox" fill="#FFF7EC" d="M47 100 Q80 84 113 100 Q106 129 80 131 Q54 129 47 100Z"/>
+              <ellipse class="m-bear" fill="#E7CDAA" cx="80" cy="104" rx="16" ry="11"/>
+              <g class="m-panda" fill="#4A4038"><ellipse cx="62" cy="92" rx="11" ry="13" transform="rotate(20 62 92)"/><ellipse cx="98" cy="92" rx="11" ry="13" transform="rotate(-20 98 92)"/></g>
+              <path class="m-cat" fill="none" stroke="var(--b-ink)" stroke-width="2.2" stroke-linecap="round" d="M74 60 l2 6 M80 58 v7 M86 60 l-2 6"/>
               <path class="b-stroke" stroke-width="2" d="M73 55 q3.5-6 7-1 q3.5-6 7 1"/>
               <ellipse class="b-shade" cx="80" cy="117" rx="36" ry="12"/>
               <path class="b-gloss" d="M50 70 Q58 59 71 55"/>
@@ -504,6 +548,13 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
                 <path class="b-scarf-stripe" d="M52 121.5 Q80 135 108 121.5"/>
                 <circle class="b-scarf" cx="93" cy="130" r="5.5"/>
               </g>
+              <!-- шапки -->
+              <g class="h-bow"><path fill="#E86A8A" stroke="var(--b-ink)" stroke-width="2" stroke-linejoin="round" d="M60 57 l-13 -8 v16z M60 57 l13 -8 v16z"/><circle fill="#E86A8A" stroke="var(--b-ink)" stroke-width="2" cx="60" cy="57" r="4"/></g>
+              <g class="h-flower"><g fill="#F7B6C8" stroke="var(--b-ink)" stroke-width="1.6"><circle cx="104" cy="52" r="5"/><circle cx="112" cy="57" r="5"/><circle cx="110" cy="66" r="5"/><circle cx="100" cy="66" r="5"/><circle cx="97" cy="57" r="5"/></g><circle fill="#F2C94C" stroke="var(--b-ink)" stroke-width="1.6" cx="104.5" cy="60" r="3.6"/></g>
+              <g class="h-cap"><path fill="#3E6FB0" stroke="var(--b-ink)" stroke-width="2.4" stroke-linejoin="round" d="M46 66 Q50 34 80 34 Q110 34 114 66 Q80 56 46 66Z"/><path fill="#3E6FB0" stroke="var(--b-ink)" stroke-width="2.4" stroke-linejoin="round" d="M104 62 Q126 58 134 66 Q120 72 106 68Z"/><circle fill="#fff" stroke="var(--b-ink)" stroke-width="1.6" cx="80" cy="35" r="3"/></g>
+              <g class="h-headphones"><path fill="none" stroke="var(--b-ink)" stroke-width="6" stroke-linecap="round" d="M33 86 Q33 44 80 42 Q127 44 127 86"/><path fill="none" stroke="#7A6FE0" stroke-width="3" stroke-linecap="round" d="M33 86 Q33 44 80 42 Q127 44 127 86"/><rect x="25" y="78" width="15" height="25" rx="6" fill="#7A6FE0" stroke="var(--b-ink)" stroke-width="2.4"/><rect x="120" y="78" width="15" height="25" rx="6" fill="#7A6FE0" stroke="var(--b-ink)" stroke-width="2.4"/></g>
+              <g class="h-wizard"><path fill="#6B5BD6" stroke="var(--b-ink)" stroke-width="2.4" stroke-linejoin="round" d="M58 58 L82 2 L102 58 Z"/><ellipse fill="#6B5BD6" stroke="var(--b-ink)" stroke-width="2.4" cx="80" cy="58" rx="30" ry="6"/><path fill="#F2C94C" d="M80 26 l2 5 5 1 -4 3 1 5 -4-3 -4 3 1-5 -4-3 5-1z"/></g>
+              <g class="h-crown"><path fill="#F2C94C" stroke="var(--b-ink)" stroke-width="2.4" stroke-linejoin="round" d="M60 58 L62 38 L71 49 L80 34 L89 49 L98 38 L100 58 Z"/><circle fill="#D9475A" cx="80" cy="50" r="3"/><circle fill="#5BA4D9" cx="68" cy="53" r="2.2"/><circle fill="#5BA4D9" cx="92" cy="53" r="2.2"/></g>
             </g>
             <!-- значки над головой -->
             <text class="b-mark b-excl" x="124" y="48">!</text>
@@ -522,6 +573,7 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
             </g>
           </g>
         </svg></div>
+<div class="toastx" id="toastx" role="status"></div>
 <div class="sheet" id="sheet"><div class="in" id="sheetIn" role="dialog"></div></div>
 
 <script>
@@ -698,6 +750,7 @@ const SFX = {
   sleepy: (c, t) => { tone(c, t, 'sine', [[0, 520], [.25, 620], [.8, 260]], .85, .07, 1200); return .85; },
   cute:   (c, t) => { tone(c, t, 'sine', [[0, 880], [.12, 1175], [.3, 990]], .32, .08); return .32; },
   sniff:  (c, t) => { noise(c, t, .07, 1800, .1); noise(c, t + .12, .07, 2000, .1); return .2; },
+  coin:   (c, t) => { tone(c, t, 'square', [[0, 988]], .08, .05, 3000); tone(c, t + .08, 'square', [[0, 1319]], .28, .05, 3000); return .36; },
 };
 // играет звук и ждёт его конца, чтобы реакция не накладывалась на голос; пока Yomi слушает — молчит (иначе звук попадёт в микрофон)
 function sfx(name){
@@ -785,7 +838,7 @@ function tapReact(){ let t; do { t = TAPS[Math.floor(Math.random() * TAPS.length
       react('t-boing', 800);
     } else if(g.pet){
       b.classList.remove('petting');
-      if(g.dist > 80 || g.turns >= 1){ b.dataset.p = 'love'; react('t-heart', 1300); sfx('heart'); }   // погладили — млеет
+      if(g.dist > 80 || g.turns >= 1){ b.dataset.p = 'love'; react('t-heart', 1300); sfx('heart'); api('pet').then(j => j.game && applyGame(j.game)); }   // погладили — млеет
     } else tapReact();
     g = null;
   };
@@ -908,6 +961,7 @@ async function handleTalk(j, typed){
   if(j.level !== undefined) S.level = j.level;
   if(j.plan !== undefined) S.plan = j.plan;
   if(j.stats) S.stats = j.stats;
+  if(j.game) applyGame(j.game);
   drawHead();
   const before = $('#buddy')?.dataset.p;
   onReply(j.out, j.heard || typed);
@@ -989,7 +1043,7 @@ function train(list){
     sayText(w.word);
     $('#card').onclick = () => { $('#cardTr').hidden = false; $('#cardHint').hidden = true; $('#grades').hidden = false; };
     $('#grades').onclick = e => { const b = e.target.closest('[data-g]'); if(!b) return;
-      api('review', {id: w.id, grade: +b.dataset.g});
+      api('review', {id: w.id, grade: +b.dataset.g}).then(j => j?.game && applyGame(j.game));
       if(b.dataset.g === '0') queue.push(w);          // забытое — ещё раз в конце
       next(); };
   };
@@ -1033,9 +1087,88 @@ $('#progBox').onclick = async e => {
   if(vs && vs.dataset.vs !== S.speaker){ const j = await api('speaker', {speaker: vs.dataset.vs}); if(j.ok){ S.speaker = j.speaker; showProgress(); } }
 };
 
-/* ---------- вкладка «Yomi»: кролик на экране, эмоции, звуки, голос ---------- */
+/* ---------- игра: монетки, задания дня, магазин скинов ---------- */
+const SKINS = {
+  char: [['bunny', 'Кролик'], ['cat', 'Котик'], ['bear', 'Медвежонок'], ['fox', 'Лисёнок'], ['panda', 'Панда']],
+  color: [['classic', 'Родной'], ['choco', 'Шоколадный'], ['gray', 'Серый'], ['pink', 'Розовый'], ['mint', 'Мятный'], ['sky', 'Голубой'], ['gold', 'Золотой']],
+  hat: [['none', 'Без шапки'], ['bow', 'Бантик'], ['flower', 'Цветочек'], ['cap', 'Кепка'], ['headphones', 'Наушники'], ['wizard', 'Шляпа волшебника'], ['crown', 'Корона']],
+};
+const SLOT_NAMES = {char: 'Персонажи', color: 'Окрас', hat: 'Шапки'};
+let G = null, ySub = 'quests';
+const questReady = g => (g?.quests || []).some(q => !q.claimed && q.progress >= q.goal);
+function applyGame(g){
+  if(!g) return;
+  const before = G; G = g;
+  $('#coins').hidden = false; $('#coins b').textContent = g.coins;
+  const b = $('#buddy'); if(b){ b.dataset.char = g.equip.char; b.dataset.color = g.equip.color; b.dataset.hat = g.equip.hat; }
+  $('#yomiDot').hidden = !questReady(g);
+  if(!before) return;
+  const gained = g.coins - before.coins;
+  if(gained > 0) coinFx(gained);
+  const doneNow = g.quests.filter(q => q.progress >= q.goal && !q.claimed && !(before.quests.find(x => x.id === q.id)?.progress >= q.goal));
+  if(doneNow.length) notify(`Задание выполнено: ${doneNow[0].title}! Забери награду во вкладке Yomi`);
+}
+// «+N 🪙» взлетает над кроликом (или над счётчиком, если кролик спрятан)
+function coinFx(n){
+  const b = $('#buddy'), r = (b && !b.hidden ? b : $('#coins')).getBoundingClientRect();
+  const el = document.createElement('div'); el.className = 'coinfx'; el.textContent = `+${n} 🪙`;
+  el.style.left = (r.left + r.width / 2) + 'px'; el.style.top = (r.top + 6) + 'px';
+  document.body.append(el); setTimeout(() => el.remove(), 1300);
+  sfx('coin');
+}
+function notify(text){
+  const t = $('#toastx'); t.textContent = text; t.classList.add('on');
+  clearTimeout(notify.t); notify.t = setTimeout(() => t.classList.remove('on'), 3200);
+}
+$('#coins').onclick = () => { ySub = 'quests'; tab('yomi'); };
+function miniBunny(char, color, hat){
+  const svg = $('#buddy svg').cloneNode(true);
+  const d = document.createElement('div'); d.className = 'buddy mini'; Object.assign(d.dataset, {char, color, hat, p: 'kind', s: 'idle'});
+  d.append(svg); return d.outerHTML;
+}
+function questsHtml(){
+  const g = G; if(!g) return '<div class="empty">Загружаю…</div>';
+  return `<div class="cta"><div><b>${g.coins} 🪙</b><small>монетки · серия входов ${g.loginStreak} ${plural(g.loginStreak, 'день', 'дня', 'дней')}</small></div><button class="btn line sm" data-ysub="shop">В магазин</button></div>
+    <p class="lead">Монетка за каждую фразу, ещё одна — если без ошибок, и за каждое повторённое слово. Заходи каждый день — подарок за вход растёт.</p>
+    <h3 class="sub-h">Задания на сегодня</h3>
+    <div class="quests">${g.quests.map(q => `<div class="quest${q.claimed ? ' done' : ''}"><div class="q-t"><b>${esc(q.title)}</b><span>${q.progress} / ${q.goal}</span></div>
+      <div class="q-bar"><i style="width:${Math.round(q.progress / q.goal * 100)}%"></i></div>
+      ${q.claimed ? '<small class="q-ok">Получено ✓</small>' : q.progress >= q.goal ? `<button class="btn sm" data-claim="${q.id}">Забрать +${q.reward} 🪙</button>` : `<small>Награда: ${q.reward} 🪙</small>`}</div>`).join('')}</div>
+    <p class="lead" style="margin-top:14px">Новые задания — завтра.</p>`;
+}
+function shopHtml(){
+  const g = G; if(!g) return '<div class="empty">Загружаю…</div>';
+  const e = g.equip;
+  return `<div class="cta"><div><b>${g.coins} 🪙</b><small>трать на скины для Yomi</small></div></div>` + Object.entries(SKINS).map(([slot, list]) => `<h3 class="sub-h">${SLOT_NAMES[slot]}</h3><div class="shop">${list.map(([id, name]) => {
+    const key = slot + ':' + id, price = g.prices[key] ?? 0, owned = g.owned.includes(key), on = e[slot] === id;
+    const look = {char: e.char, color: e.color, hat: e.hat, [slot]: id};
+    return `<button class="item${on ? ' on' : ''}" data-item="${key}" ${!owned && price > g.coins ? 'data-poor="1"' : ''}>${miniBunny(look.char, look.color, look.hat)}<b>${name}</b><span>${on ? 'Надето' : owned ? 'Надеть' : price + ' 🪙'}</span></button>`;
+  }).join('')}</div>`).join('');
+}
+async function gameClick(e){
+  const sub = e.target.closest('[data-ysub]'), claim = e.target.closest('[data-claim]'), item = e.target.closest('[data-item]');
+  if(sub){ ySub = sub.dataset.ysub; showYomi(); return true; }
+  if(claim){ claim.disabled = true; const j = await api('claim', {quest: claim.dataset.claim}); if(j.game) applyGame(j.game); if(j.ok){ react('t-heart', 1300); notify(`+${j.reward} 🪙 — молодец!`); } showYomi(); return true; }
+  if(item){
+    if(item.classList.contains('on')) return true;
+    if(item.dataset.poor){ const need = G.prices[item.dataset.item] - G.coins; notify(`Не хватает ${need} 🪙 — поговори с Yomi ещё немного`); sfx('oops'); return true; }
+    const j = await api('buy', {item: item.dataset.item});
+    if(j.game){ applyGame(j.game); if(j.ok){ hop(); sfx('happy'); } }
+    showYomi(); return true;
+  }
+  return false;
+}
 function showYomi(){
-  $('#yomiBox').innerHTML = `<h2>Yomi</h2><p class="lead">Твой кролик-помощник ходит за тобой по всему сайту. Зажми его на мгновение и перетащи куда удобно, води по нему пальцем — погладишь.</p>
+  const box = $('#yomiBox');
+  box.innerHTML = `<h2>Yomi</h2><div class="chats ysub" role="tablist">${[['quests', 'Задания'], ['shop', 'Магазин'], ['settings', 'Настройки']].map(([k, n]) => `<button role="tab" data-ysub="${k}" class="${ySub === k ? 'on' : ''}">${n}${k === 'quests' && questReady(G) ? ' •' : ''}</button>`).join('')}</div><div id="ySubBox"></div>`;
+  const sb = $('#ySubBox');
+  if(ySub === 'settings') return showYomiSettings(sb);
+  sb.innerHTML = ySub === 'shop' ? shopHtml() : questsHtml();
+  if(!G) api('game').then(j => { if(j.game){ applyGame(j.game); showYomi(); } });
+}
+/* ---------- вкладка «Yomi»: кролик на экране, эмоции, звуки, голос ---------- */
+function showYomiSettings(box){
+  box.innerHTML = `<p class="lead">Твой кролик-помощник ходит за тобой по всему сайту. Зажми его на мгновение и перетащи куда удобно, води по нему пальцем — погладишь.</p>
     <div class="plan"><h3>Кролик на экране</h3>
       <div class="setrow"><span>${bunnyOn ? 'Показан' : 'Спрятан'}</span><button class="btn sm${bunnyOn ? ' line' : ''}" data-bon>${bunnyOn ? 'Спрятать' : 'Показать'}</button></div>
       <label class="setrow"><span>Размер</span><input type="range" id="bsizeIn" min="60" max="180" step="2" value="${bsize}" aria-label="Размер кролика"></label>
@@ -1050,6 +1183,7 @@ function showYomi(){
 }
 $('#yomiBox').onclick = async e => {
   unlock();
+  if(await gameClick(e)) return;
   const vp = e.target.closest('[data-vp]'), vs = e.target.closest('[data-vs]'), emo = e.target.closest('[data-emo]');
   if(e.target.closest('[data-bon]')){ bunnyOn = !bunnyOn; store.set('yomi_bunny', bunnyOn); placeBunny(); showYomi(); if(bunnyOn) hop(); }
   if(e.target.closest('[data-bpos]')){ bpos = null; store.set('yomi_bpos', null); placeBunny(); hop(); }
@@ -1086,6 +1220,8 @@ $('#nav').onclick = e => { const b = e.target.closest('[data-v]'); if(b) tab(b.d
   const j = await api('state').catch(() => ({error:'failed'}));
   if(j.error){ if(j.error !== 'auth'){ errText = 'Нет связи с сервером. Обнови страницу.'; drawChat(); } return; }
   Object.assign(S, j);
+  if(j.game) applyGame(j.game);
+  if(j.gift) setTimeout(() => { coinFx(j.gift); notify(`Подарок за вход: +${j.gift} 🪙 · серия ${j.game?.loginStreak || 1} ${plural(j.game?.loginStreak || 1, 'день', 'дня', 'дней')}`); }, 900);
   // лента из браузера устарела (разговор шёл в боте) — показываем историю с сервера
   const last = chat.filter(m => m.role === 'tutor').pop()?.text, srv = (CH === 'talk' ? S.talk || [] : S.history).filter(m => m.role === 'assistant').pop()?.text;
   if(last !== srv) chat = serverChat();

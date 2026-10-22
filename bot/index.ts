@@ -427,7 +427,7 @@ async function translate(text: string) {
 /* ---------- Состояние и ход разговора (общие для бота и сайта) ---------- */
 async function load(chat: number) {
   const { data } = await admin.from('english_tutor').select('*').eq('chat_id', chat).maybeSingle();
-  return data || { chat_id: chat, mode: 'free', scene: 'smalltalk', level: null, voice: true, history: [], plan: null, stats: {}, speaker: 'hannah' };
+  return data || { chat_id: chat, mode: 'free', scene: 'smalltalk', level: null, voice: true, history: [], plan: null, stats: {}, speaker: 'hannah', game: {} };
 }
 const save = (st: any) => admin.from('english_tutor').upsert({ ...st, history: st.history.slice(-HISTORY), updated_at: new Date().toISOString() });
 
@@ -447,11 +447,18 @@ async function turn(st: any, text: string) {
   st.history.push({ role: 'assistant', text: out.reply });
   out.fix = out.correction?.fixed && out.correction.fixed.trim().toLowerCase() !== text.trim().toLowerCase() ? out.correction : null;
   if (out.fix) out.emotion = 'angry';   // ошибка — Yomi всегда злится (так просил владелец)
+  if (text && st.mode !== 'friend') {
+    gameEvent(st, 'phrases');
+    if (!out.fix && /[a-z]/i.test(text)) gameEvent(st, 'clean');
+    if (st.mode === 'scenario') gameEvent(st, 'scene');
+  }
   if (out.fix) await admin.from('english_mistakes').insert({ original: text, fixed: out.fix.fixed, notes: out.fix.notes || [] });
   const words = (out.words || []).filter((w: any) => w.word?.trim() && w.translation?.trim())
     .map((w: any) => ({ key: w.word.trim().toLowerCase(), word: w.word.trim(), translation: w.translation.trim(), example: out.reply.slice(0, 500) }));
   if (words.length) await admin.from('english_words').upsert(words, { onConflict: 'key', ignoreDuplicates: true });
+  if (words.length && st.mode !== 'friend') gameEvent(st, 'newwords', words.length);
   const a = out.assessment;
+  if (a && st.mode === 'test') gameEvent(st, 'test');
   if (a) {
     st.level = a.level;
     st.plan = { level: a.level, summary: a.summary, strengths: a.strengths, weaknesses: a.weaknesses, plan: a.plan, at: new Date().toISOString() };
@@ -581,6 +588,69 @@ async function handle(upd: any) {
   }
 }
 
+/* ---------- Игра: монетки, задания дня, магазин скинов (данные — в english_tutor.game у владельца) ---------- */
+// цены — только здесь (сайт показывает, сервер решает)
+const SHOP: Record<string, number> = {
+  'char:bunny': 0, 'char:cat': 150, 'char:bear': 200, 'char:fox': 250, 'char:panda': 300,
+  'color:classic': 0, 'color:choco': 60, 'color:gray': 60, 'color:pink': 80, 'color:mint': 80, 'color:sky': 100, 'color:gold': 250,
+  'hat:none': 0, 'hat:bow': 40, 'hat:flower': 50, 'hat:cap': 80, 'hat:headphones': 120, 'hat:wizard': 180, 'hat:crown': 200,
+};
+const QUESTS = [
+  { id: 'talk10', metric: 'phrases', goal: 10, reward: 15, title: 'Скажи 10 фраз' },
+  { id: 'talk25', metric: 'phrases', goal: 25, reward: 35, title: 'Скажи 25 фраз' },
+  { id: 'clean3', metric: 'clean', goal: 3, reward: 15, title: '3 фразы без ошибок' },
+  { id: 'clean8', metric: 'clean', goal: 8, reward: 30, title: '8 фраз без ошибок' },
+  { id: 'review5', metric: 'reviews', goal: 5, reward: 10, title: 'Повтори 5 слов' },
+  { id: 'review15', metric: 'reviews', goal: 15, reward: 25, title: 'Повтори 15 слов' },
+  { id: 'scene3', metric: 'scene', goal: 3, reward: 15, title: '3 реплики в сценарии' },
+  { id: 'chat5', metric: 'friend', goal: 5, reward: 10, title: '5 фраз в «Болтовне»' },
+  { id: 'pet', metric: 'pet', goal: 1, reward: 5, title: 'Погладь Yomi' },
+  { id: 'words3', metric: 'newwords', goal: 3, reward: 10, title: 'Узнай 3 новых слова' },
+  { id: 'test', metric: 'test', goal: 1, reward: 30, title: 'Пройди тест уровня' },
+];
+// 3 задания на день с разными метриками; выбор зависит только от даты
+function dailyQuests(day: string) {
+  let h = 0; for (const c of day) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  const pool = [...QUESTS], out: typeof QUESTS = [], used = new Set<string>();
+  while (out.length < 3 && pool.length) {
+    h = (Math.imul(h, 1103515245) + 12345) >>> 0;
+    const q = pool.splice(h % pool.length, 1)[0];
+    if (!used.has(q.metric)) { used.add(q.metric); out.push(q); }
+  }
+  return out;
+}
+function game(st: any) {
+  const g = st.game || (st.game = {});
+  g.coins ??= 0; g.owned ??= ['char:bunny', 'color:classic', 'hat:none']; g.equip ??= { char: 'bunny', color: 'classic', hat: 'none' };
+  if (g.day !== today()) { g.day = today(); g.counts = {}; g.claimed = []; }
+  return g;
+}
+// событие: фраза, фраза без ошибок, повтор слова и т. д.; за некоторые сразу монетка
+const COIN_FOR: Record<string, number> = { phrases: 1, clean: 1, reviews: 1 };
+function gameEvent(st: any, metric: string, n = 1) {
+  const g = game(st);
+  g.counts[metric] = (g.counts[metric] || 0) + n;
+  g.coins += (COIN_FOR[metric] || 0) * n;
+}
+// подарок за вход раз в день: 5 монеток + 2 за каждый день серии (до 7 дней)
+function loginGift(st: any) {
+  const g = game(st);
+  if (g.lastLogin === today()) return 0;
+  const yesterday = new Date(Date.now() - 864e5).toISOString().slice(0, 10);
+  g.loginStreak = g.lastLogin === yesterday ? (g.loginStreak || 0) + 1 : 1;
+  g.lastLogin = today();
+  const gift = 5 + 2 * Math.min(7, g.loginStreak);
+  g.coins += gift;
+  return gift;
+}
+function gameView(st: any) {
+  const g = game(st);
+  return {
+    coins: g.coins, owned: g.owned, equip: g.equip, loginStreak: g.loginStreak || 0, prices: SHOP,
+    quests: dailyQuests(g.day).map((q) => ({ ...q, progress: Math.min(q.goal, g.counts[q.metric] || 0), claimed: g.claimed.includes(q.id) })),
+  };
+}
+
 /* ---------- API сайта ---------- */
 const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'content-type', 'Access-Control-Allow-Methods': 'POST, OPTIONS' };
 const json = (b: unknown, status = 200) => new Response(JSON.stringify(b), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
@@ -604,7 +674,8 @@ async function web(req: Request) {
     case 'state': {
       const { count } = await admin.from('english_words').select('id', { count: 'exact', head: true }).lte('due', new Date().toISOString());
       const { count: total } = await admin.from('english_words').select('id', { count: 'exact', head: true });
-      return json({ ...view(owner), talk: (await load(-OWNER)).history, scenes, due: count || 0, words: total || 0, stt: !!env('GROQ_API_KEY') });
+      const gift = loginGift(owner); if (gift) await save(owner);
+      return json({ ...view(owner), talk: (await load(-OWNER)).history, scenes, due: count || 0, words: total || 0, stt: !!env('GROQ_API_KEY'), game: gameView(owner), gift });
     }
     case 'mode': {
       if (!friend) {
@@ -625,8 +696,8 @@ async function web(req: Request) {
       }
       if (!text) return json({ error: 'empty' }, 400);
       const out = await turn(st, text);
-      if (out && friend) { bumpStats(owner); await save(owner); }   // фразы из «Болтовни» тоже идут в прогресс
-      return out ? json({ heard, level: owner.level, plan: owner.plan, stats: owner.stats, out: await reply(out, voice, owner.speaker) }) : json({ error: 'failed', heard }, 502);
+      if (out && friend) { bumpStats(owner); gameEvent(owner, 'phrases'); gameEvent(owner, 'friend'); await save(owner); }   // фразы из «Болтовни» тоже идут в прогресс и монетки
+      return out ? json({ heard, level: owner.level, plan: owner.plan, stats: owner.stats, out: await reply(out, voice, owner.speaker), game: gameView(owner) }) : json({ error: 'failed', heard }, 502);
     }
     case 'tts': {
       const audio = await tts(String(b.text || '').slice(0, 1500), b.lang === 'ru' ? 'ru' : 'en', SPEAKERS.includes(b.speaker) ? b.speaker : st.speaker, String(b.emotion || 'kind'));
@@ -652,7 +723,27 @@ async function web(req: Request) {
       else { ivl = ivl < 1 ? 1 : ivl < 3 ? 3 : ivl * ease; ease = Math.min(3, ease + 0.05); }
       const due = new Date(Date.now() + (ivl ? ivl * 864e5 : 10 * 60e3)).toISOString();
       await admin.from('english_words').update({ ivl, ease, due, reps: w.reps + 1 }).eq('id', w.id);
-      return json({ ok: true, due });
+      gameEvent(owner, 'reviews'); await save(owner);
+      return json({ ok: true, due, game: gameView(owner) });
+    }
+    // игра: погладить, забрать награду за задание, купить и надеть скин
+    case 'game': return json({ game: gameView(owner) });
+    case 'pet': { gameEvent(owner, 'pet'); await save(owner); return json({ game: gameView(owner) }); }
+    case 'claim': {
+      const g = game(owner), q = dailyQuests(g.day).find((x) => x.id === b.quest);
+      if (!q || g.claimed.includes(q.id) || (g.counts[q.metric] || 0) < q.goal) return json({ error: 'not_ready', game: gameView(owner) });
+      g.claimed.push(q.id); g.coins += q.reward; await save(owner);
+      return json({ ok: true, reward: q.reward, game: gameView(owner) });
+    }
+    case 'buy': {
+      const g = game(owner), id = String(b.item || ''), price = SHOP[id];
+      if (price === undefined) return json({ error: 'bad' }, 400);
+      if (!g.owned.includes(id)) {
+        if (g.coins < price) return json({ error: 'no_coins', game: gameView(owner) });
+        g.coins -= price; g.owned.push(id);
+      }
+      const [slot, val] = id.split(':'); g.equip[slot] = val; await save(owner);
+      return json({ ok: true, game: gameView(owner) });
     }
     case 'delword': await admin.from('english_words').delete().eq('id', b.id); return json({ ok: true });
     case 'mistakes': {

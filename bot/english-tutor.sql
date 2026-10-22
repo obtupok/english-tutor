@@ -43,3 +43,6 @@ alter table public.english_tutor add column if not exists speaker text not null 
 
 -- Характер Yomi: kind | cute | angry | funny | sleepy
 alter table public.english_tutor add column if not exists persona text not null default 'kind';
+
+-- Игра: монетки, задания дня, купленные и надетые скины, серия входов
+alter table public.english_tutor add column if not exists game jsonb not null default '{}';
