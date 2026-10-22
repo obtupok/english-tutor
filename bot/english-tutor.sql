@@ -37,3 +37,6 @@ create table if not exists public.english_mistakes (
   at       timestamptz not null default now()
 );
 alter table public.english_mistakes enable row level security;
+
+-- Голос Yomi (Orpheus в Groq): hannah | diana | autumn | troy | austin | daniel
+alter table public.english_tutor add column if not exists speaker text not null default 'hannah';

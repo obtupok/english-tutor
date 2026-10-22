@@ -5,7 +5,7 @@
 //   Вход: внутри Telegram — по подписи Mini App (initData), в браузере — по личному ключу из ссылки (команда /site).
 // • Разговор, уровень и план общие для бота и сайта; слова и ошибки копятся в english_words / english_mistakes.
 // Секреты (Supabase → Edge Functions → Secrets): TUTOR_BOT_TOKEN — токен бота от @BotFather; ANTHROPIC_API_KEY — уже есть;
-// GROQ_API_KEY — распознавание речи (Whisper в Groq). Таблицы — english-tutor.sql.
+// GROQ_API_KEY — распознавание речи (Whisper) и живой голос (Orpheus) в Groq. Таблицы — english-tutor.sql.
 // Настройка (после того как секрет добавлен): открыть https://<проект>.supabase.co/functions/v1/english-tutor?setup=1
 // Проверка JWT выключена — Telegram не присылает JWT; вместо неё секретный заголовок вебхука и ключ/подпись у сайта.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -182,7 +182,71 @@ function ttsChunks(text: string) {
   if (cur) out.push(cur);
   return out;
 }
-async function tts(text: string, lang: string) {
+// Озвучка: английский — живой голос Orpheus в Groq (WAV), русский и запасной вариант — Google (MP3)
+const SPEAKERS = ['hannah', 'diana', 'autumn', 'troy', 'austin', 'daniel'];
+async function tts(text: string, lang: string, speaker = 'hannah'): Promise<{ data: Uint8Array; mime: string } | null> {
+  if (lang === 'en' && env('GROQ_API_KEY')) {
+    const wav = await orpheus(text, SPEAKERS.includes(speaker) ? speaker : 'hannah');
+    if (wav) return { data: wav, mime: 'audio/wav' };
+  }
+  const mp3 = await googleTts(text, lang);
+  return mp3 ? { data: mp3, mime: 'audio/mpeg' } : null;
+}
+async function orpheus(text: string, voice: string) {
+  // подсказки по-русски в скобках английский голос читать не должен
+  const clean = text.replace(/[[(][^\])]*[А-Яа-яЁё][^\])]*[\])]/g, ' ').replace(/[\[\]]/g, '').trim();
+  if (!clean) return null;
+  const parts = await Promise.all(ttsChunks(clean).map(async (input) => {
+    const r = await fetch('https://api.groq.com/openai/v1/audio/speech', {
+      method: 'POST', headers: { Authorization: 'Bearer ' + env('GROQ_API_KEY'), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'canopylabs/orpheus-v1-english', input, voice, response_format: 'wav' }),
+    });
+    if (!r.ok) { console.error('orpheus', r.status, (await r.text()).slice(0, 300)); return null; }
+    return wavParts(new Uint8Array(await r.arrayBuffer()));
+  }));
+  if (!parts.length || parts.some((p) => !p)) return null;
+  // склеиваем куски в один WAV: заголовок первого куска + все аудиоданные подряд
+  const fmt = parts[0]!.fmt, len = parts.reduce((n, p) => n + p!.data.length, 0);
+  const out = new Uint8Array(12 + 8 + fmt.length + 8 + len), dv = new DataView(out.buffer);
+  out.set(enc('RIFF'), 0); dv.setUint32(4, out.length - 8, true); out.set(enc('WAVE'), 8);
+  out.set(enc('fmt '), 12); dv.setUint32(16, fmt.length, true); out.set(fmt, 20);
+  let at = 20 + fmt.length; out.set(enc('data'), at); dv.setUint32(at + 4, len, true); at += 8;
+  for (const p of parts) { out.set(p!.data, at); at += p!.data.length; }
+  return out;
+}
+function wavParts(buf: Uint8Array) {
+  const dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+  let p = 12, fmt: Uint8Array | null = null;
+  while (p + 8 <= buf.length) {
+    const id = String.fromCharCode(...buf.subarray(p, p + 4));
+    let size = dv.getUint32(p + 4, true);
+    if (id === 'fmt ') fmt = buf.subarray(p + 8, p + 8 + size);
+    if (id === 'data') {
+      if (!size || size === 0xffffffff || p + 8 + size > buf.length) size = buf.length - p - 8;   // потоковый WAV без длины
+      return fmt ? { fmt, data: buf.subarray(p + 8, p + 8 + size) } : null;
+    }
+    p += 8 + size + (size & 1);
+  }
+  return null;
+}
+// для голосовых в Telegram нужен MP3: WAV (16 бит) → MP3 через lamejs
+async function wavToMp3(wav: Uint8Array) {
+  const w = wavParts(wav);
+  if (!w) return null;
+  const fd = new DataView(w.fmt.buffer, w.fmt.byteOffset, w.fmt.byteLength);
+  const channels = fd.getUint16(2, true), rate = fd.getUint32(4, true), bits = fd.getUint16(14, true);
+  if (bits !== 16) return null;
+  const { Mp3Encoder } = await import('https://esm.sh/@breezystack/lamejs@1.2.7');
+  const pcm = new Int16Array(w.data.buffer.slice(w.data.byteOffset, w.data.byteOffset + (w.data.byteLength & ~1)));
+  const mono = channels === 1 ? pcm : pcm.filter((_, i) => i % channels === 0);
+  const e = new Mp3Encoder(1, rate, 64), chunks: Uint8Array[] = [];
+  for (let i = 0; i < mono.length; i += 1152) { const b = e.encodeBuffer(mono.subarray(i, i + 1152)); if (b.length) chunks.push(new Uint8Array(b)); }
+  const end = e.flush(); if (end.length) chunks.push(new Uint8Array(end));
+  const out = new Uint8Array(chunks.reduce((n, c) => n + c.length, 0));
+  let at = 0; for (const c of chunks) { out.set(c, at); at += c.length; }
+  return out;
+}
+async function googleTts(text: string, lang: string) {
   const parts = await Promise.all(ttsChunks(text).map(async (q) => {
     for (const host of ['translate.google.com', 'translate.googleapis.com']) {
       try {
@@ -209,7 +273,7 @@ async function translate(text: string) {
 /* ---------- Состояние и ход разговора (общие для бота и сайта) ---------- */
 async function load(chat: number) {
   const { data } = await admin.from('english_tutor').select('*').eq('chat_id', chat).maybeSingle();
-  return data || { chat_id: chat, mode: 'free', scene: 'smalltalk', level: null, voice: true, history: [], plan: null, stats: {} };
+  return data || { chat_id: chat, mode: 'free', scene: 'smalltalk', level: null, voice: true, history: [], plan: null, stats: {}, speaker: 'hannah' };
 }
 const save = (st: any) => admin.from('english_tutor').upsert({ ...st, history: st.history.slice(-HISTORY), updated_at: new Date().toISOString() });
 
@@ -255,7 +319,8 @@ async function talk(st: any, text: string, replyTo?: number, heard = '') {
   const words = (out.words || []).map((w: any) => `📝 <b>${esc(w.word)}</b> — ${esc(w.translation)}`).join('\n');
   const body = esc(out.reply) + (words ? '\n\n' + words : '');
   const markup = out.english !== false ? { inline_keyboard: [[{ text: '🌐 Перевод', callback_data: 'tr' }]] } : undefined;
-  const audio = st.voice ? await tts(out.reply, out.english !== false ? 'en' : 'ru') : null;
+  const sound = st.voice ? await tts(out.reply, out.english !== false ? 'en' : 'ru', st.speaker) : null;
+  const audio = sound?.mime === 'audio/wav' ? await wavToMp3(sound.data).catch((e) => { console.error('mp3', e); return null; }) : sound?.data;
   if (audio && body.length <= 1000) {
     const fd = new FormData();
     fd.append('chat_id', String(st.chat_id));
@@ -360,12 +425,12 @@ async function handle(upd: any) {
 /* ---------- API сайта ---------- */
 const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'content-type', 'Access-Control-Allow-Methods': 'POST, OPTIONS' };
 const json = (b: unknown, status = 200) => new Response(JSON.stringify(b), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
-const view = (st: any) => ({ mode: st.mode, scene: st.scene, level: st.level, plan: st.plan, history: st.history, stats: st.stats || {}, voice: st.voice });
+const view = (st: any) => ({ mode: st.mode, scene: st.scene, level: st.level, plan: st.plan, history: st.history, stats: st.stats || {}, voice: st.voice, speaker: st.speaker || 'hannah', speakers: SPEAKERS });
 const scenes = Object.fromEntries(Object.entries(SCENES).map(([k, [n]]) => [k, n]));
 
-async function reply(out: any, voice: boolean) {
-  const audio = voice ? await tts(out.reply, out.english !== false ? 'en' : 'ru') : null;
-  return { reply: out.reply, english: out.english !== false, fix: out.fix, words: out.words || [], assessment: out.assessment, audio: audio ? b64(audio) : null };
+async function reply(out: any, voice: boolean, speaker: string) {
+  const audio = voice ? await tts(out.reply, out.english !== false ? 'en' : 'ru', speaker) : null;
+  return { reply: out.reply, english: out.english !== false, fix: out.fix, words: out.words || [], assessment: out.assessment, audio: audio ? b64(audio.data) : null, mime: audio?.mime };
 }
 
 async function web(req: Request) {
@@ -384,7 +449,7 @@ async function web(req: Request) {
       st.mode = b.mode; if (SCENES[b.scene]) st.scene = b.scene;
       st.history = [];
       const out = await turn(st, '');
-      return out ? json({ ...view(st), out: await reply(out, voice) }) : json({ error: 'failed' }, 502);
+      return out ? json({ ...view(st), out: await reply(out, voice, st.speaker) }) : json({ error: 'failed' }, 502);
     }
     case 'talk': {
       let text = String(b.text || '').slice(0, 1500).trim(), heard = '';
@@ -396,11 +461,16 @@ async function web(req: Request) {
       }
       if (!text) return json({ error: 'empty' }, 400);
       const out = await turn(st, text);
-      return out ? json({ heard, level: st.level, plan: st.plan, stats: st.stats, out: await reply(out, voice) }) : json({ error: 'failed', heard }, 502);
+      return out ? json({ heard, level: st.level, plan: st.plan, stats: st.stats, out: await reply(out, voice, st.speaker) }) : json({ error: 'failed', heard }, 502);
     }
     case 'tts': {
-      const audio = await tts(String(b.text || '').slice(0, 1500), b.lang === 'ru' ? 'ru' : 'en');
-      return json({ audio: audio ? b64(audio) : null });
+      const audio = await tts(String(b.text || '').slice(0, 1500), b.lang === 'ru' ? 'ru' : 'en', SPEAKERS.includes(b.speaker) ? b.speaker : st.speaker);
+      return json({ audio: audio ? b64(audio.data) : null, mime: audio?.mime });
+    }
+    case 'speaker': {
+      if (!SPEAKERS.includes(b.speaker)) return json({ error: 'bad' }, 400);
+      st.speaker = b.speaker; await save(st);
+      return json({ ok: true, speaker: st.speaker });
     }
     case 'translate': return json({ text: await translate(String(b.text || '')) });
     case 'words': {
