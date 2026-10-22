@@ -176,6 +176,51 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
 .g0{background:var(--red-bg);color:var(--accent)}.g1{background:var(--amber-bg);color:var(--amber)}.g2{background:var(--green-bg);color:var(--green)}
 .gate{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;height:100%;padding:32px;text-align:center;color:var(--muted)}
 .gate b{color:var(--ink);font-family:var(--serif);font-size:26px;font-weight:600}
+/* Кролик Yomi: чиби, нарисован чернилами по бумаге. data-s — что происходит в разговоре, data-mood — реакция на реплику */
+.buddy{--lvl:0;--b-fur:#FBF8F2;--b-ink:#2A241D;width:120px;height:108px;margin:-4px auto -6px;cursor:pointer;touch-action:manipulation}
+.buddy svg{width:100%;height:100%;overflow:visible}
+.buddy *{transform-box:fill-box}
+.b-line{fill:var(--b-fur);stroke:var(--b-ink);stroke-width:3;stroke-linejoin:round;stroke-linecap:round}
+.b-inner{fill:var(--accent);opacity:.28}
+.b-ink{fill:var(--b-ink)}
+.b-dots circle{fill:var(--muted)}
+.b-stroke{fill:none;stroke:var(--b-ink);stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.b-cheek{fill:var(--accent);opacity:.32}
+.b-shadow{fill:var(--ink);opacity:.1}
+.b-all{transform-origin:50% 100%;animation:b-breathe 3.2s ease-in-out infinite}
+.b-ear{transform-origin:50% 100%;transition:transform .35s cubic-bezier(.3,1.6,.5,1)}
+.b-ear.l{transform:rotate(-8deg)}.b-ear.r{transform:rotate(14deg)}
+.b-head{transform-origin:50% 80%;transition:transform .35s ease}
+.b-eyes{transform-origin:center;animation:b-blink 4.6s infinite;transition:transform .3s ease}
+.b-happy,.b-oops,.b-sweat,.b-dots,.b-waves,.b-open{opacity:0;transition:opacity .15s}
+@keyframes b-breathe{50%{transform:translateY(1.5px) scaleY(.985)}}
+@keyframes b-blink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+@keyframes b-hop{0%,100%{transform:translateY(0)}35%{transform:translateY(-12px)}60%{transform:translateY(0)}75%{transform:translateY(-4px)}}
+@keyframes b-dot{0%,100%{opacity:.15}50%{opacity:1}}
+@keyframes b-wave{0%{opacity:0}40%{opacity:1}100%{opacity:0}}
+/* слушает: уши торчком и подёргиваются в такт голосу, голова набок, волны у уха */
+.buddy[data-s="listen"] .b-ear.l{transform:rotate(calc(-2deg - var(--lvl) * 10deg))}
+.buddy[data-s="listen"] .b-ear.r{transform:rotate(calc(2deg + var(--lvl) * 10deg))}
+.buddy[data-s="listen"] .b-head{transform:rotate(-5deg)}
+.buddy[data-s="listen"] .b-waves{opacity:1}
+.buddy[data-s="listen"] .b-waves path{animation:b-wave 1.2s infinite}
+.buddy[data-s="listen"] .b-waves path+path{animation-delay:.3s}
+/* думает: глаза вверх, «…» над головой */
+.buddy[data-s="think"] .b-eyes{transform:translate(3px,-4px)}
+.buddy[data-s="think"] .b-head{transform:rotate(4deg)}
+.buddy[data-s="think"] .b-dots{opacity:1}
+.buddy[data-s="think"] .b-dots circle{animation:b-dot 1s infinite}
+.buddy[data-s="think"] .b-dots circle:nth-child(2){animation-delay:.2s}
+.buddy[data-s="think"] .b-dots circle:nth-child(3){animation-delay:.4s}
+/* говорит: рот открывается (класс .mo ставит скрипт) */
+.buddy.mo .b-open{opacity:1}.buddy.mo .b-closed{opacity:0}
+/* реакции: радость (без ошибок) и смущение (была ошибка) */
+.buddy[data-mood="happy"] .b-all{animation:b-hop .7s ease-out}
+.buddy[data-mood="happy"] .b-eyes{opacity:0}.buddy[data-mood="happy"] .b-happy{opacity:1}
+.buddy[data-mood="oops"] .b-eyes{opacity:0}.buddy[data-mood="oops"] .b-oops,.buddy[data-mood="oops"] .b-sweat{opacity:1}
+.buddy[data-mood="oops"] .b-ear.l{transform:rotate(-34deg)}.buddy[data-mood="oops"] .b-ear.r{transform:rotate(34deg)}
+.buddy.hop .b-all{animation:b-hop .7s ease-out}
+.dock:has(.typebox.on) .buddy{width:84px;height:76px}
 @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -187,6 +232,28 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
       <div class="modes" id="modes" role="tablist"></div>
       <div class="scroll" id="chatWrap"><div class="chat" id="chat" aria-live="polite"></div></div>
       <div class="dock">
+        <div class="buddy" id="buddy" data-s="idle" title="Yomi" aria-hidden="true"><svg viewBox="0 0 160 150">
+          <ellipse class="b-shadow" cx="80" cy="146" rx="36" ry="4"/>
+          <g class="b-all">
+            <g class="b-ear l"><path class="b-line" d="M57 66 C44 34 45 8 58 6 C71 4 75 32 72 64 Z"/><path class="b-inner" d="M60 58 C52 36 53 16 59 14 C65 13 67 34 66 56 Z"/></g>
+            <g class="b-ear r"><path class="b-line" d="M103 66 C116 34 115 8 102 6 C89 4 85 32 88 64 Z"/><path class="b-inner" d="M100 58 C108 36 107 16 101 14 C95 13 93 34 94 56 Z"/></g>
+            <ellipse class="b-line" cx="80" cy="128" rx="26" ry="15"/>
+            <ellipse class="b-line" cx="67" cy="137" rx="8" ry="5"/><ellipse class="b-line" cx="93" cy="137" rx="8" ry="5"/>
+            <g class="b-head">
+              <ellipse class="b-line" cx="80" cy="90" rx="49" ry="40"/>
+              <circle class="b-cheek" cx="51" cy="101" r="7"/><circle class="b-cheek" cx="109" cy="101" r="7"/>
+              <g class="b-eyes"><ellipse class="b-ink" cx="63" cy="90" rx="5.2" ry="6.6"/><ellipse class="b-ink" cx="97" cy="90" rx="5.2" ry="6.6"/>
+                <circle fill="var(--b-fur)" cx="65" cy="87" r="1.8"/><circle fill="var(--b-fur)" cx="99" cy="87" r="1.8"/></g>
+              <g class="b-happy"><path class="b-stroke" d="M57 92 Q63 84 69 92"/><path class="b-stroke" d="M91 92 Q97 84 103 92"/></g>
+              <g class="b-oops"><path class="b-stroke" d="M58 85 L67 90 L58 95"/><path class="b-stroke" d="M102 85 L93 90 L102 95"/></g>
+              <path class="b-stroke b-closed" d="M74 101 Q77 105 80 101 Q83 105 86 101"/>
+              <ellipse class="b-ink b-open" cx="80" cy="104" rx="5" ry="5.5"/>
+              <path class="b-sweat" fill="#8DB9D8" stroke="var(--b-ink)" stroke-width="1.5" d="M117 66 q5 8 0 11 q-5 -3 0 -11z"/>
+            </g>
+            <g class="b-dots"><circle cx="120" cy="40" r="3.4"/><circle cx="131" cy="32" r="3.4"/><circle cx="142" cy="24" r="3.4"/></g>
+            <g class="b-waves"><path class="b-stroke" stroke="var(--accent)" d="M126 58 q7 7 0 14"/><path class="b-stroke" stroke="var(--accent)" d="M134 52 q12 13 0 26"/></g>
+          </g>
+        </svg></div>
         <div class="status" id="status">Нажми и говори по-английски</div>
         <div class="dock-row">
           <button class="side" id="kbBtn" aria-label="Написать текстом"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M6 9h.01M10 9h.01M14 9h.01M18 9h.01M7 15h10"/></svg></button>
@@ -341,7 +408,17 @@ function setState(s){
   mic.setAttribute('aria-label', {idle:'Говорить', listen:'Отправить', think:'Думаю', speak:'Перебить'}[s]);
   $('#status').textContent = s === 'idle' && !canRecord() ? 'Микрофон недоступен — можно писать текстом' : STATUS[s];
   $('#endBtn').style.visibility = inCall ? 'visible' : 'hidden';
+  buddyState(s);
 }
+/* ---------- кролик ---------- */
+let mouthTimer = 0, moodTimer = 0;
+function buddyState(s){
+  const b = $('#buddy'); if(!b) return; b.dataset.s = s; b.style.setProperty('--lvl', 0);
+  clearTimeout(mouthTimer); b.classList.remove('mo');
+  if(s === 'speak'){ const flap = () => { b.classList.toggle('mo'); mouthTimer = setTimeout(flap, 90 + Math.random() * 140); }; flap(); }
+}
+function buddyMood(m){ const b = $('#buddy'); if(!b) return; clearTimeout(moodTimer); b.dataset.mood = m; moodTimer = setTimeout(() => { delete b.dataset.mood; }, 2200); }
+$('#buddy').onclick = () => { const b = $('#buddy'); b.classList.remove('hop'); void b.offsetWidth; b.classList.add('hop'); setTimeout(() => b.classList.remove('hop'), 700); };
 const canRecord = () => !!(navigator.mediaDevices?.getUserMedia && window.MediaRecorder && S.stt);
 
 async function startCall(){
@@ -382,7 +459,7 @@ function listen(){
     const rms = Math.sqrt(sum / buf.length), now = Date.now();
     if(now - t0 < 400) floor = Math.max(floor, rms * 0.9);           // первые 0.4 с — уровень шума
     const loud = rms > Math.max(0.02, floor * 2.5);
-    $('#mic').style.setProperty('--lvl', Math.min(1, rms * 8).toFixed(2));
+    const lvl = Math.min(1, rms * 8).toFixed(2); $('#mic').style.setProperty('--lvl', lvl); $('#buddy').style.setProperty('--lvl', lvl);
     if(loud){ spoke = spoke || (speechMs += 50) > 250; lastLoud = now; }
     if((spoke && now - lastLoud > 1200) || now - t0 > 45000) finishUtterance();
   }, 50);
@@ -421,6 +498,7 @@ async function handleTalk(j, typed){
   if(j.stats) S.stats = j.stats;
   drawHead();
   onReply(j.out, j.heard || typed);
+  buddyMood(j.out.fix ? 'oops' : 'happy');
   setState('speak');
   await (j.out.audio ? playB64(j.out.audio, j.out.mime) : speakLocal(j.out.reply, j.out.english ? 'en' : 'ru'));
   if(state !== 'speak') return;           // перебили
