@@ -227,9 +227,9 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
 .voice .w span{font-size:13px;color:var(--muted)}
 
 /* листы: сценарии и тренировка */
-.sheet{position:fixed;inset:0;z-index:20;display:none;background:rgba(20,16,12,.45);align-items:flex-end;justify-content:center}
+.sheet{position:fixed;inset:0;z-index:45;display:none;background:rgba(20,16,12,.45);align-items:flex-end;justify-content:center}
 .sheet.on{display:flex}
-.sheet .in{width:100%;max-width:560px;max-height:90dvh;overflow-y:auto;background:var(--paper);border-radius:16px 16px 0 0;padding:10px 20px calc(20px + var(--safe-b));animation:up .2s ease-out}
+.sheet .in{width:100%;max-width:560px;max-height:90dvh;overflow-y:auto;background:var(--paper);border-top:1px solid var(--line);box-shadow:0 -10px 32px rgba(0,0,0,.35);border-radius:16px 16px 0 0;padding:10px 20px calc(20px + var(--safe-b));animation:up .2s ease-out}
 .sheet .in::before{content:"";display:block;width:40px;height:4px;border-radius:2px;background:var(--line-2);margin:0 auto 8px}
 @keyframes up{from{transform:translateY(30px);opacity:0}}
 .scenes{display:flex;flex-direction:column}
@@ -468,7 +468,7 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
 .buddy[data-wear="bowtie"] .w-bowtie,.buddy[data-wear="bell"] .w-bell,.buddy[data-wear="tie"] .w-tie,.buddy[data-wear="medal"] .w-medal,.buddy[data-wear="sweater"] .w-sweater,.buddy[data-wear="overalls"] .w-overalls,.buddy[data-wear="cape"] .w-cape,.buddy[data-glasses="round"] .g-round,.buddy[data-glasses="sun"] .g-sun,.buddy[data-glasses="heart"] .g-heart,.buddy[data-glasses="star"] .g-star,.buddy[data-glasses="monocle"] .g-monocle,.buddy[data-hat="beanie"] .h-beanie,.buddy[data-hat="party"] .h-party,.buddy[data-hat="beret"] .h-beret,.buddy[data-hat="santa"] .h-santa,.buddy[data-hat="chef"] .h-chef,.buddy[data-hat="halo"] .h-halo{display:inline}
 .buddy[data-wear]:not([data-wear="scarf"]) .b-scarf-wrap{display:none}
 /* превью в магазине: неподвижные маленькие копии */
-.buddy.mini{position:relative;left:auto;top:auto;--bsize:66px;cursor:default;pointer-events:none;margin:0 auto}
+.buddy.mini{position:relative;z-index:auto;left:auto;top:auto;--bsize:66px;cursor:default;pointer-events:none;margin:0 auto}
 .buddy.mini::after{display:none}
 .buddy.mini > svg,.buddy.mini *{animation:none!important;filter:none}
 @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
