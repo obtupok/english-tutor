@@ -1,4 +1,5 @@
--- Личный бот-репетитор английского: состояние разговора. Выполнить один раз в Supabase → SQL Editor.
+-- Личный бот-репетитор английского. Выполнить в Supabase → SQL Editor (можно повторно — ничего не сломается).
+-- Состояние разговора (одна строка — владелец; общая для бота и сайта)
 create table if not exists public.english_tutor (
   chat_id    bigint primary key,
   mode       text not null default 'free',        -- free | test | coach | scenario
@@ -9,4 +10,30 @@ create table if not exists public.english_tutor (
   plan       jsonb,                                -- {level, summary, plan[], at}
   updated_at timestamptz not null default now()
 );
+alter table public.english_tutor add column if not exists stats jsonb not null default '{}';   -- {days: {'2026-10-22': 14}}
 alter table public.english_tutor enable row level security;   -- доступ только у функции (service role)
+
+-- Новые слова из разговоров + интервальное повторение
+create table if not exists public.english_words (
+  id          bigserial primary key,
+  key         text not null unique,                -- слово в нижнем регистре
+  word        text not null,
+  translation text not null,
+  example     text,
+  added       timestamptz not null default now(),
+  due         timestamptz not null default now(),
+  ivl         real not null default 0,             -- интервал в днях
+  ease        real not null default 2.5,
+  reps        int  not null default 0
+);
+alter table public.english_words enable row level security;
+
+-- Исправленные ошибки
+create table if not exists public.english_mistakes (
+  id       bigserial primary key,
+  original text not null,
+  fixed    text not null,
+  notes    jsonb not null default '[]',
+  at       timestamptz not null default now()
+);
+alter table public.english_mistakes enable row level security;

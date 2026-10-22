@@ -1,10 +1,13 @@
-// Supabase Edge Function «english-tutor»: личный бот-репетитор английского (только для владельца).
-// • Пишешь текстом или голосовым → бот исправляет ошибки, отвечает по-английски текстом и голосом, подсказывает новые слова.
-// • Режимы (кнопки внизу): Разговор, Тест уровня (6 вопросов → уровень и план), Как учить (личный план), Сценарии (ролевые сцены).
+// Supabase Edge Function «english-tutor»: личный репетитор английского (только для владельца) — Telegram-бот и API для сайта.
+// • Бот: пишешь текстом или голосовым → исправляет ошибки, отвечает по-английски текстом и голосом, подсказывает новые слова.
+//   Режимы (кнопки внизу): Разговор, Тест уровня (6 вопросов → уровень и план), Как учить (личный план), Сценарии (ролевые сцены).
+// • Сайт (../docs, GitHub Pages): разговор «как звонок», слова с тренировкой, разбор ошибок, прогресс. Запросы — POST ?api=1.
+//   Вход: внутри Telegram — по подписи Mini App (initData), в браузере — по личному ключу из ссылки (команда /site).
+// • Разговор, уровень и план общие для бота и сайта; слова и ошибки копятся в english_words / english_mistakes.
 // Секреты (Supabase → Edge Functions → Secrets): TUTOR_BOT_TOKEN — токен бота от @BotFather; ANTHROPIC_API_KEY — уже есть;
-// GROQ_API_KEY — для голосовых (распознавание речи, Whisper в Groq). Таблица — english-tutor.sql.
+// GROQ_API_KEY — распознавание речи (Whisper в Groq). Таблицы — english-tutor.sql.
 // Настройка (после того как секрет добавлен): открыть https://<проект>.supabase.co/functions/v1/english-tutor?setup=1
-// Проверка JWT выключена — Telegram не присылает JWT; вместо неё секретный заголовок вебхука.
+// Проверка JWT выключена — Telegram не присылает JWT; вместо неё секретный заголовок вебхука и ключ/подпись у сайта.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 declare const EdgeRuntime: { waitUntil(p: Promise<unknown>): void };
@@ -12,6 +15,7 @@ const env = (k: string) => (Deno.env.get(k) || '').trim().replace(/^['"]|['"]$/g
 const TOKEN = env('TUTOR_BOT_TOKEN');
 const API = `https://api.telegram.org/bot${TOKEN}`;
 const OWNER = 6712257660;
+const SITE = 'https://obtupok.github.io/english-tutor/';
 const MODEL = 'claude-opus-5-5';   // дешевле в ~40 раз: 'claude-haiku-5-5'
 const FALLBACK = !MODEL.includes('haiku');   // у Haiku нет запасной модели при отказе — параметр fallbacks он не принимает
 const TEST_QUESTIONS = 6, HISTORY = 30;
@@ -19,10 +23,27 @@ const admin = createClient(env('SUPABASE_URL'), env('SUPABASE_SERVICE_ROLE_KEY')
 const tg = (method: string, body: unknown) =>
   fetch(`${API}/${method}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then((r) => r.json());
 const esc = (s: string) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const enc = (s: string) => new TextEncoder().encode(s);
+const hex = (b: ArrayBuffer | Uint8Array) => [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, '0')).join('');
+const sha = async (s: string) => hex(await crypto.subtle.digest('SHA-256', enc(s)));
+const b64 = (u: Uint8Array) => { let s = ''; for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode(...u.subarray(i, i + 0x8000)); return btoa(s); };
+const today = () => new Date().toISOString().slice(0, 10);
 
-async function hookSecret() {
-  const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('english-tutor:' + TOKEN));
-  return [...new Uint8Array(h)].map((b) => b.toString(16).padStart(2, '0')).join('').slice(0, 48);
+const hookSecret = async () => (await sha('english-tutor:' + TOKEN)).slice(0, 48);
+const webKey = async () => (await sha('english-tutor-web:' + TOKEN)).slice(0, 40);
+async function hmac(key: string | Uint8Array, data: string) {
+  const k = await crypto.subtle.importKey('raw', typeof key === 'string' ? enc(key) : key, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  return new Uint8Array(await crypto.subtle.sign('HMAC', k, enc(data)));
+}
+// подпись Telegram Mini App: https://core.telegram.org/bots/webapps#validating-data-received-via-the-mini-app
+async function ownerInitData(initData: string) {
+  const p = new URLSearchParams(initData), hash = p.get('hash');
+  if (!hash) return false;
+  p.delete('hash');
+  const check = [...p.entries()].sort(([a], [b]) => (a < b ? -1 : 1)).map(([k, v]) => `${k}=${v}`).join('\n');
+  if (hex(await hmac(await hmac('WebAppData', TOKEN), check)) !== hash) return false;
+  if (Date.now() / 1000 - Number(p.get('auth_date') || 0) > 7 * 86400) return false;
+  try { return JSON.parse(p.get('user') || '{}').id === OWNER; } catch { return false; }
 }
 
 /* ---------- Режимы и кнопки ---------- */
@@ -134,19 +155,23 @@ async function askClaude(st: any, text: string) {
 }
 
 /* ---------- Голос: распознавание (Groq Whisper) и озвучка (Google) ---------- */
-async function transcribe(fileId: string, lang: string) {
-  const f = await tg('getFile', { file_id: fileId });
-  if (!f.ok) return '';
-  const audio = await fetch(`https://api.telegram.org/file/bot${TOKEN}/${f.result.file_path}`).then((r) => r.blob());
+async function transcribe(audio: Blob, name: string, lang: string) {
   const fd = new FormData();
-  fd.append('file', new Blob([audio], { type: 'audio/ogg' }), 'voice.ogg');
+  fd.append('file', audio, name);
   fd.append('model', 'whisper-large-v3-turbo');
   if (lang) fd.append('language', lang);
   const r = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', { method: 'POST', headers: { Authorization: 'Bearer ' + env('GROQ_API_KEY') }, body: fd });
   const j = await r.json().catch(() => ({}));
   if (!r.ok) console.error('stt', r.status, JSON.stringify(j).slice(0, 300));
-  return String(j.text || '').trim();
+  return String(j.text || '').trim().slice(0, 1500);
 }
+async function tgVoiceText(fileId: string, lang: string) {
+  const f = await tg('getFile', { file_id: fileId });
+  if (!f.ok) return '';
+  const audio = await fetch(`https://api.telegram.org/file/bot${TOKEN}/${f.result.file_path}`).then((r) => r.blob());
+  return transcribe(new Blob([audio], { type: 'audio/ogg' }), 'voice.ogg', lang);
+}
+const sttLang = (st: any) => (st.mode === 'coach' ? '' : 'en');   // в «Как учить» говорят и по-русски — язык определит сам Whisper
 
 function ttsChunks(text: string) {
   const out: string[] = []; let cur = '';
@@ -158,18 +183,19 @@ function ttsChunks(text: string) {
   return out;
 }
 async function tts(text: string, lang: string) {
-  const parts: Uint8Array[] = [];
-  for (const q of ttsChunks(text)) {
-    let ok = false;
+  const parts = await Promise.all(ttsChunks(text).map(async (q) => {
     for (const host of ['translate.google.com', 'translate.googleapis.com']) {
       try {
         const r = await fetch(`https://${host}/translate_tts?ie=UTF-8&client=${host.startsWith('translate.google.') ? 'tw-ob' : 'gtx'}&tl=${lang}&q=${encodeURIComponent(q)}`, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' } });
-        if (r.ok && (r.headers.get('content-type') || '').includes('audio')) { parts.push(new Uint8Array(await r.arrayBuffer())); ok = true; break; }
+        if (r.ok && (r.headers.get('content-type') || '').includes('audio')) return new Uint8Array(await r.arrayBuffer());
       } catch { /* следующий адрес */ }
     }
-    if (!ok) return null;
-  }
-  return parts.length ? new Blob(parts, { type: 'audio/mpeg' }) : null;
+    return null;
+  }));
+  if (!parts.length || parts.some((p) => !p)) return null;
+  const out = new Uint8Array(parts.reduce((n, p) => n + p!.length, 0));
+  let at = 0; for (const p of parts) { out.set(p!, at); at += p!.length; }
+  return out;
 }
 
 async function translate(text: string) {
@@ -180,27 +206,48 @@ async function translate(text: string) {
   } catch { return ''; }
 }
 
-/* ---------- Состояние ---------- */
+/* ---------- Состояние и ход разговора (общие для бота и сайта) ---------- */
 async function load(chat: number) {
   const { data } = await admin.from('english_tutor').select('*').eq('chat_id', chat).maybeSingle();
-  return data || { chat_id: chat, mode: 'free', scene: 'smalltalk', level: null, voice: true, history: [], plan: null };
+  return data || { chat_id: chat, mode: 'free', scene: 'smalltalk', level: null, voice: true, history: [], plan: null, stats: {} };
 }
 const save = (st: any) => admin.from('english_tutor').upsert({ ...st, history: st.history.slice(-HISTORY), updated_at: new Date().toISOString() });
 
-/* ---------- Ответ ученику ---------- */
+// один ход: ответ Claude + история, статистика, слова, ошибки, уровень и план
+async function turn(st: any, text: string) {
+  const out = await askClaude(st, text);
+  if (!out) return null;
+  if (text) {
+    st.history.push({ role: 'user', text });
+    const days = { ...(st.stats?.days || {}) }; days[today()] = (days[today()] || 0) + 1;
+    st.stats = { ...(st.stats || {}), days: Object.fromEntries(Object.entries(days).sort().slice(-120)) };
+  }
+  st.history.push({ role: 'assistant', text: out.reply });
+  out.fix = out.correction?.fixed && out.correction.fixed.trim().toLowerCase() !== text.trim().toLowerCase() ? out.correction : null;
+  if (out.fix) await admin.from('english_mistakes').insert({ original: text, fixed: out.fix.fixed, notes: out.fix.notes || [] });
+  const words = (out.words || []).filter((w: any) => w.word?.trim() && w.translation?.trim())
+    .map((w: any) => ({ key: w.word.trim().toLowerCase(), word: w.word.trim(), translation: w.translation.trim(), example: out.reply.slice(0, 500) }));
+  if (words.length) await admin.from('english_words').upsert(words, { onConflict: 'key', ignoreDuplicates: true });
+  const a = out.assessment;
+  if (a) {
+    st.level = a.level;
+    st.plan = { level: a.level, summary: a.summary, strengths: a.strengths, weaknesses: a.weaknesses, plan: a.plan, at: new Date().toISOString() };
+  }
+  await save(st);
+  return out;
+}
+
+/* ---------- Telegram-бот ---------- */
 async function talk(st: any, text: string, replyTo?: number, heard = '') {
   await tg('sendChatAction', { chat_id: st.chat_id, action: st.voice ? 'record_voice' : 'typing' });
-  const out = await askClaude(st, text);
+  const out = await turn(st, text);
   if (!out) return tg('sendMessage', { chat_id: st.chat_id, text: 'Не получилось получить ответ. Попробуй ещё раз.' });
-  if (text) st.history.push({ role: 'user', text });
-  st.history.push({ role: 'assistant', text: out.reply });
 
   // исправление — отдельным сообщением в ответ на реплику ученика
-  const fix = out.correction?.fixed && out.correction.fixed.trim().toLowerCase() !== text.trim().toLowerCase() ? out.correction : null;
-  if (heard || fix) {
+  if (heard || out.fix) {
     const lines = [];
     if (heard) lines.push(`🎙 <i>${esc(heard)}</i>`);
-    if (fix) lines.push(`✅ <b>${esc(fix.fixed)}</b>`, ...(fix.notes || []).map((n: string) => `• ${esc(n)}`));
+    if (out.fix) lines.push(`✅ <b>${esc(out.fix.fixed)}</b>`, ...(out.fix.notes || []).map((n: string) => `• ${esc(n)}`));
     await tg('sendMessage', { chat_id: st.chat_id, parse_mode: 'HTML', text: lines.join('\n'), reply_parameters: replyTo ? { message_id: replyTo, allow_sending_without_reply: true } : undefined });
   }
 
@@ -212,7 +259,7 @@ async function talk(st: any, text: string, replyTo?: number, heard = '') {
   if (audio && body.length <= 1000) {
     const fd = new FormData();
     fd.append('chat_id', String(st.chat_id));
-    fd.append('voice', audio, 'yomi.mp3');
+    fd.append('voice', new Blob([audio], { type: 'audio/mpeg' }), 'yomi.mp3');
     fd.append('caption', body); fd.append('parse_mode', 'HTML');
     if (markup) fd.append('reply_markup', JSON.stringify(markup));
     const r = await fetch(`${API}/sendVoice`, { method: 'POST', body: fd }).then((r) => r.json());
@@ -220,15 +267,7 @@ async function talk(st: any, text: string, replyTo?: number, heard = '') {
   } else {
     await tg('sendMessage', { chat_id: st.chat_id, parse_mode: 'HTML', text: body, reply_markup: markup });
   }
-
-  // итог теста или плана
-  const a = out.assessment;
-  if (a) {
-    st.level = a.level;
-    st.plan = { level: a.level, summary: a.summary, strengths: a.strengths, weaknesses: a.weaknesses, plan: a.plan, at: new Date().toISOString() };
-    await tg('sendMessage', { chat_id: st.chat_id, parse_mode: 'HTML', text: planText(st.plan) });
-  }
-  await save(st);
+  if (out.assessment) await tg('sendMessage', { chat_id: st.chat_id, parse_mode: 'HTML', text: planText(st.plan) });
 }
 
 function planText(p: any) {
@@ -244,15 +283,21 @@ async function setMode(st: any, mode: string, scene?: string) {
   await talk(st, '');
 }
 
+async function siteButtons(chat: number) {
+  return tg('sendMessage', { chat_id: chat, text: 'Сайт для разговора «как звонок», тренировки слов и разбора ошибок.\n\nВ Telegram — первая кнопка. Для браузера — вторая (это твоя личная ссылка с ключом, никому её не отправляй).',
+    reply_markup: { inline_keyboard: [[{ text: '📱 Открыть здесь', web_app: { url: SITE } }], [{ text: '🌐 Ссылка для браузера', url: SITE + '#k=' + await webKey() }]] } });
+}
+
 async function onMessage(m: any) {
   const st = await load(m.chat.id);
   const text = (m.text || '').trim();
   if (/^\/start\b/.test(text)) {
     await tg('sendMessage', { chat_id: st.chat_id, reply_markup: keyboard(st.voice), text:
       'Привет! Я Yomi — твой репетитор английского 👋\n\nПиши мне или отправляй голосовые по-английски: я отвечу текстом и голосом, исправлю ошибки и подскажу новые слова.\n\n' +
-      '💬 Разговор — болтаем о чём угодно\n🎯 Тест уровня — 6 вопросов, потом уровень и план\n🧭 Как учить — составим личный план\n🎭 Сценарии — кафе, аэропорт, собеседование…\n\nМожно спрашивать и по-русски: «как сказать…», «что значит…».' });
+      '💬 Разговор — болтаем о чём угодно\n🎯 Тест уровня — 6 вопросов, потом уровень и план\n🧭 Как учить — составим личный план\n🎭 Сценарии — кафе, аэропорт, собеседование…\n\nМожно спрашивать и по-русски: «как сказать…», «что значит…».\nСайт для разговора голосом — /site' });
     return st.history.length ? save(st) : talk(st, '');
   }
+  if (text === '/site') return siteButtons(st.chat_id);
   if (text === BTN.free || text === '/chat') return setMode(st, 'free');
   if (text === BTN.test || text === '/test') return setMode(st, 'test');
   if (text === BTN.coach || text === '/coach') return setMode(st, 'coach');
@@ -273,7 +318,7 @@ async function onMessage(m: any) {
     if (!env('GROQ_API_KEY')) return tg('sendMessage', { chat_id: st.chat_id, text: 'Голосовые пока не подключены (нужен секрет GROQ_API_KEY). Напиши текстом 🙂' });
     if ((voice.duration || 0) > 180) return tg('sendMessage', { chat_id: st.chat_id, text: 'Слишком длинное голосовое — давай до 3 минут.' });
     await tg('sendChatAction', { chat_id: st.chat_id, action: 'typing' });
-    const heard = (await transcribe(voice.file_id, st.mode === 'coach' ? '' : 'en')).slice(0, 1500);
+    const heard = await tgVoiceText(voice.file_id, sttLang(st));
     if (!heard) return tg('sendMessage', { chat_id: st.chat_id, text: 'Не расслышал 🙈 Попробуй ещё раз.' });
     return talk(st, heard, m.message_id, heard);
   }
@@ -312,6 +357,77 @@ async function handle(upd: any) {
   }
 }
 
+/* ---------- API сайта ---------- */
+const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'content-type', 'Access-Control-Allow-Methods': 'POST, OPTIONS' };
+const json = (b: unknown, status = 200) => new Response(JSON.stringify(b), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
+const view = (st: any) => ({ mode: st.mode, scene: st.scene, level: st.level, plan: st.plan, history: st.history, stats: st.stats || {}, voice: st.voice });
+const scenes = Object.fromEntries(Object.entries(SCENES).map(([k, [n]]) => [k, n]));
+
+async function reply(out: any, voice: boolean) {
+  const audio = voice ? await tts(out.reply, out.english !== false ? 'en' : 'ru') : null;
+  return { reply: out.reply, english: out.english !== false, fix: out.fix, words: out.words || [], assessment: out.assessment, audio: audio ? b64(audio) : null };
+}
+
+async function web(req: Request) {
+  const b = await req.json().catch(() => ({}));
+  const ok = (b.key && b.key === await webKey()) || (b.initData && await ownerInitData(String(b.initData)));
+  if (!ok) return json({ error: 'auth' }, 401);
+  const st = await load(OWNER), voice = b.voice !== false;
+  switch (b.action) {
+    case 'state': {
+      const { count } = await admin.from('english_words').select('id', { count: 'exact', head: true }).lte('due', new Date().toISOString());
+      const { count: total } = await admin.from('english_words').select('id', { count: 'exact', head: true });
+      return json({ ...view(st), scenes, due: count || 0, words: total || 0, stt: !!env('GROQ_API_KEY') });
+    }
+    case 'mode': {
+      if (!['free', 'test', 'coach', 'scenario'].includes(b.mode)) return json({ error: 'bad' }, 400);
+      st.mode = b.mode; if (SCENES[b.scene]) st.scene = b.scene;
+      st.history = [];
+      const out = await turn(st, '');
+      return out ? json({ ...view(st), out: await reply(out, voice) }) : json({ error: 'failed' }, 502);
+    }
+    case 'talk': {
+      let text = String(b.text || '').slice(0, 1500).trim(), heard = '';
+      if (!text && b.audio) {
+        if (!env('GROQ_API_KEY')) return json({ error: 'no_stt' });
+        const mime = String(b.mime || 'audio/webm'), ext = /mp4|m4a|aac/.test(mime) ? 'm4a' : /ogg/.test(mime) ? 'ogg' : /wav/.test(mime) ? 'wav' : 'webm';
+        heard = text = await transcribe(new Blob([Uint8Array.from(atob(String(b.audio)), (c) => c.charCodeAt(0))], { type: mime }), 'speech.' + ext, sttLang(st));
+        if (!text) return json({ error: 'not_heard' });
+      }
+      if (!text) return json({ error: 'empty' }, 400);
+      const out = await turn(st, text);
+      return out ? json({ heard, level: st.level, plan: st.plan, stats: st.stats, out: await reply(out, voice) }) : json({ error: 'failed', heard }, 502);
+    }
+    case 'tts': {
+      const audio = await tts(String(b.text || '').slice(0, 1500), b.lang === 'ru' ? 'ru' : 'en');
+      return json({ audio: audio ? b64(audio) : null });
+    }
+    case 'translate': return json({ text: await translate(String(b.text || '')) });
+    case 'words': {
+      const { data } = await admin.from('english_words').select('*').order('added', { ascending: false }).limit(1000);
+      return json({ words: data || [] });
+    }
+    case 'review': {
+      const { data: w } = await admin.from('english_words').select('*').eq('id', b.id).maybeSingle();
+      if (!w) return json({ error: 'not_found' }, 404);
+      const g = Number(b.grade);   // 0 — забыл, 1 — трудно, 2 — знаю
+      let ivl = w.ivl, ease = w.ease;
+      if (g === 0) { ivl = 0; ease = Math.max(1.3, ease - 0.2); }
+      else if (g === 1) { ivl = Math.max(1, ivl * 1.2); ease = Math.max(1.3, ease - 0.15); }
+      else { ivl = ivl < 1 ? 1 : ivl < 3 ? 3 : ivl * ease; ease = Math.min(3, ease + 0.05); }
+      const due = new Date(Date.now() + (ivl ? ivl * 864e5 : 10 * 60e3)).toISOString();
+      await admin.from('english_words').update({ ivl, ease, due, reps: w.reps + 1 }).eq('id', w.id);
+      return json({ ok: true, due });
+    }
+    case 'delword': await admin.from('english_words').delete().eq('id', b.id); return json({ ok: true });
+    case 'mistakes': {
+      const { data } = await admin.from('english_mistakes').select('*').order('at', { ascending: false }).limit(200);
+      return json({ mistakes: data || [] });
+    }
+  }
+  return json({ error: 'bad' }, 400);
+}
+
 async function setup() {
   const url = `${env('SUPABASE_URL')}/functions/v1/english-tutor`;
   const res: Record<string, unknown> = {};
@@ -321,7 +437,9 @@ async function setup() {
     { command: 'test', description: 'Тест уровня' }, { command: 'coach', description: 'Как учить английский' },
     { command: 'scene', description: 'Ролевые сценарии' }, { command: 'plan', description: 'Мой план' },
     { command: 'new', description: 'Начать разговор заново' }, { command: 'voice', description: 'Голос вкл/выкл' },
+    { command: 'site', description: 'Сайт: разговор голосом, слова, ошибки' },
   ] });
+  res.menu = await tg('setChatMenuButton', { chat_id: OWNER, menu_button: { type: 'web_app', text: 'Говорить', web_app: { url: SITE } } });
   await tg('setMyShortDescription', { short_description: 'Личный репетитор английского: разговор, исправление ошибок, тест уровня и план.' });
   res.me = (await tg('getMe', {})).result?.username;
   res.voice = env('GROQ_API_KEY') ? 'on' : 'GROQ_API_KEY is not set — voice messages are off';
@@ -330,8 +448,12 @@ async function setup() {
 
 Deno.serve(async (req) => {
   const u = new URL(req.url);
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
   if (!TOKEN) return new Response(JSON.stringify({ error: 'TUTOR_BOT_TOKEN is not set' }), { status: 500 });
   if (req.method === 'GET' && u.searchParams.has('setup')) return new Response(JSON.stringify(await setup()), { headers: { 'Content-Type': 'application/json' } });
+  if (req.method === 'POST' && u.searchParams.has('api')) {
+    try { return await web(req); } catch (e) { console.error(e); return json({ error: 'failed' }, 500); }
+  }
   if (req.method !== 'POST' || req.headers.get('x-telegram-bot-api-secret-token') !== await hookSecret()) return new Response('ok');
   // отвечаем Telegram сразу, а Claude и озвучку делаем в фоне — иначе долгий ответ Telegram пришлёт повторно
   const upd = await req.json().catch(() => null);
