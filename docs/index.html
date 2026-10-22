@@ -176,73 +176,134 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
 .g0{background:var(--red-bg);color:var(--accent)}.g1{background:var(--amber-bg);color:var(--amber)}.g2{background:var(--green-bg);color:var(--green)}
 .gate{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;height:100%;padding:32px;text-align:center;color:var(--muted)}
 .gate b{color:var(--ink);font-family:var(--serif);font-size:26px;font-weight:600}
-/* Кролик Yomi: чиби, нарисован чернилами по бумаге. data-s — что происходит в разговоре, data-mood — реакция на реплику */
-.buddy{--lvl:0;--b-fur:#FBF8F2;--b-ink:#2A241D;width:120px;height:108px;margin:-4px auto -6px;cursor:pointer;touch-action:manipulation}
+/* Кролик Yomi: чиби, нарисован чернилами по бумаге.
+   data-s — что происходит в разговоре (idle/listen/think/speak), data-p — настроение из ответа модели,
+   data-mood — короткая реакция на реплику (happy/oops), классы f-* — случайные «живые» движения, t-* — реакция на нажатие. */
+.buddy{--lvl:0;--ex:0px;--ey:0px;--b-fur:#FBF8F2;--b-ink:#2A241D;--b-belly:#F1E6D6;--b-nose:#E79A97;width:124px;height:122px;margin:-6px auto -8px;cursor:pointer;touch-action:manipulation;-webkit-user-select:none;user-select:none}
 .buddy svg{width:100%;height:100%;overflow:visible}
 .buddy *{transform-box:fill-box}
 .b-line{fill:var(--b-fur);stroke:var(--b-ink);stroke-width:3;stroke-linejoin:round;stroke-linecap:round}
-.b-inner{fill:var(--accent);opacity:.28}
+.b-inner{fill:var(--accent);opacity:.3}
 .b-ink{fill:var(--b-ink)}
+.b-belly{fill:var(--b-belly)}
+.b-shade{fill:var(--b-ink);opacity:.045}
+.b-nose{fill:var(--b-nose);stroke:var(--b-ink);stroke-width:1.3;stroke-linejoin:round;transform-origin:center}
+.b-whisk{fill:none;stroke:var(--b-ink);stroke-width:1.4;stroke-linecap:round;opacity:.55}
+.b-scarf{fill:var(--accent);stroke:var(--b-ink);stroke-width:2.2;stroke-linejoin:round}
+.b-scarf-tail{transform-origin:20% 0;animation:b-flutter 2.8s ease-in-out infinite}
 .b-dots circle{fill:var(--muted)}
 .b-stroke{fill:none;stroke:var(--b-ink);stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
-.b-cheek{fill:var(--accent);opacity:.32}
-.b-shadow{fill:var(--ink);opacity:.1}
+.b-cheek{fill:var(--accent);opacity:.32;transition:opacity .3s,fill .3s}
+.b-shadow{fill:var(--ink);opacity:.1;transform-origin:center;animation:b-shadow 3.2s ease-in-out infinite}
 .b-all{transform-origin:50% 100%;animation:b-breathe 3.2s ease-in-out infinite}
 .b-ear{transform-origin:50% 100%;transition:transform .35s cubic-bezier(.3,1.6,.5,1)}
 .b-ear.l{transform:rotate(-8deg)}.b-ear.r{transform:rotate(14deg)}
-.b-head{transform-origin:50% 80%;transition:transform .35s ease}
-.b-eyes{transform-origin:center;animation:b-blink 4.6s infinite;transition:transform .3s ease}
-.b-happy,.b-oops,.b-sweat,.b-dots,.b-waves,.b-open{opacity:0;transition:opacity .15s}
-@keyframes b-breathe{50%{transform:translateY(1.5px) scaleY(.985)}}
-@keyframes b-blink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
-@keyframes b-hop{0%,100%{transform:translateY(0)}35%{transform:translateY(-12px)}60%{transform:translateY(0)}75%{transform:translateY(-4px)}}
+.b-head{transform-origin:50% 85%;transition:transform .35s ease}
+.b-look{transform:translate(var(--ex),var(--ey));transition:transform .25s ease-out}
+.b-eyes{transform-origin:center;animation:b-blink 4.6s infinite}
+.b-foot{transform-origin:20% 100%}
+.b-happy,.b-oops,.b-sweat,.b-dots,.b-waves,.b-open,.b-stars,.b-steam,.b-vein{opacity:0;transition:opacity .15s}
+.b-brows,.b-raise,.b-frown,.b-grin,.b-lids,.b-spark,.b-heart,.b-zzz{opacity:0;transition:opacity .2s}
+.b-zzz text{font:700 15px var(--sans);fill:var(--muted)}
+
+@keyframes b-breathe{50%{transform:translateY(1.5px) scaleY(.982)}}
+@keyframes b-shadow{50%{transform:scaleX(1.04)}}
+@keyframes b-blink{0%,91%,100%{transform:scaleY(1)}94%{transform:scaleY(.08)}97%{transform:scaleY(1)}}
+@keyframes b-flutter{0%,100%{transform:rotate(0)}50%{transform:rotate(9deg)}}
+@keyframes b-hop{0%,100%{transform:translateY(0) scale(1)}15%{transform:translateY(0) scale(1.06,.92)}40%{transform:translateY(-16px) scale(.95,1.06)}65%{transform:translateY(0) scale(1.05,.95)}80%{transform:translateY(-3px)}}
+@keyframes b-boing{0%,100%{transform:scale(1)}20%{transform:scale(1.14,.84)}45%{transform:scale(.9,1.12)}65%{transform:scale(1.05,.96)}85%{transform:scale(.98,1.02)}}
 @keyframes b-dot{0%,100%{opacity:.15}50%{opacity:1}}
 @keyframes b-wave{0%{opacity:0}40%{opacity:1}100%{opacity:0}}
-/* слушает: уши торчком и подёргиваются в такт голосу, голова набок, волны у уха */
-.buddy[data-s="listen"] .b-ear.l{transform:rotate(calc(-2deg - var(--lvl) * 10deg))}
-.buddy[data-s="listen"] .b-ear.r{transform:rotate(calc(2deg + var(--lvl) * 10deg))}
-.buddy[data-s="listen"] .b-head{transform:rotate(-5deg)}
+@keyframes b-float{0%{transform:translateY(4px) scale(.7);opacity:0}30%{opacity:1}100%{transform:translateY(-14px) scale(1);opacity:0}}
+@keyframes b-bob{0%,100%{transform:rotate(0) translateY(0)}30%{transform:rotate(-2.5deg) translateY(1px)}70%{transform:rotate(2deg) translateY(-1px)}}
+@keyframes b-tap{0%,100%{transform:rotate(0)}50%{transform:rotate(-14deg)}}
+@keyframes b-stomp{0%,70%,100%{transform:translate(0)}74%{transform:translate(-2px,0)}78%{transform:translate(2px,0)}82%{transform:translate(-2px,0)}86%{transform:translate(1px,0)}}
+@keyframes b-sway{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+@keyframes b-nod{0%,55%,100%{transform:rotate(0) translateY(0)}75%{transform:rotate(7deg) translateY(4px)}82%{transform:rotate(-1deg) translateY(-1px)}}
+@keyframes b-giggle{0%,60%,100%{transform:rotate(0)}64%{transform:rotate(-4deg)}68%{transform:rotate(4deg)}72%{transform:rotate(-4deg)}76%{transform:rotate(3deg)}80%{transform:rotate(0)}}
+@keyframes b-shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-3px)}40%{transform:translateX(3px)}60%{transform:translateX(-2px)}80%{transform:translateX(2px)}}
+@keyframes b-pop{0%{transform:scale(0) rotate(0);opacity:0}30%{transform:scale(1.2) rotate(20deg);opacity:1}100%{transform:scale(.6) rotate(45deg);opacity:0}}
+@keyframes b-pulse{50%{transform:scale(1.25)}}
+@keyframes b-twitch{0%,100%{transform:rotate(14deg)}20%{transform:rotate(26deg)}40%{transform:rotate(6deg)}60%{transform:rotate(22deg)}}
+@keyframes b-lookaround{0%,100%{transform:translate(0,0)}25%,40%{transform:translate(-3.5px,0)}60%,80%{transform:translate(3.5px,-.5px)}}
+@keyframes b-sniff{0%,100%{transform:translateY(0) scale(1)}20%,60%{transform:translateY(-1px) scale(1.15,.9)}40%,80%{transform:translateY(0) scale(1)}}
+@keyframes b-stretch{0%,100%{transform:scale(1)}40%,60%{transform:scale(.96,1.08)}}
+@keyframes b-tilt{0%,100%{transform:rotate(0)}30%,70%{transform:rotate(-9deg)}}
+
+/* говорит: рот (класс .mo) и кивки головой, пока звучит голос (класс .talking) */
+.buddy.mo .b-open{opacity:1}.buddy.mo .b-closed{opacity:0}
+.buddy.talking .b-head{animation:b-bob .55s ease-in-out infinite}
+/* слушает: уши торчком и подёргиваются в такт голосу, голова набок и вперёд, волны у уха */
+.buddy[data-s="listen"] .b-ear.l{transform:rotate(calc(-2deg - var(--lvl) * 12deg))}
+.buddy[data-s="listen"] .b-ear.r{transform:rotate(calc(2deg + var(--lvl) * 12deg))}
+.buddy[data-s="listen"] .b-head{transform:rotate(-6deg) translateY(2px)}
 .buddy[data-s="listen"] .b-waves{opacity:1}
 .buddy[data-s="listen"] .b-waves path{animation:b-wave 1.2s infinite}
 .buddy[data-s="listen"] .b-waves path+path{animation-delay:.3s}
-/* думает: глаза вверх, «…» над головой */
-.buddy[data-s="think"] .b-eyes{transform:translate(3px,-4px)}
-.buddy[data-s="think"] .b-head{transform:rotate(4deg)}
+/* думает: глаза вверх, голова набок, «…» над головой, постукивает лапкой */
+.buddy[data-s="think"] .b-look{transform:translate(3px,-4px)}
+.buddy[data-s="think"] .b-head{transform:rotate(5deg)}
 .buddy[data-s="think"] .b-dots{opacity:1}
 .buddy[data-s="think"] .b-dots circle{animation:b-dot 1s infinite}
 .buddy[data-s="think"] .b-dots circle:nth-child(2){animation-delay:.2s}
 .buddy[data-s="think"] .b-dots circle:nth-child(3){animation-delay:.4s}
-/* говорит: рот открывается (класс .mo ставит скрипт) */
-.buddy.mo .b-open{opacity:1}.buddy.mo .b-closed{opacity:0}
-/* реакции: радость (без ошибок) и смущение (была ошибка) */
-.buddy[data-mood="happy"] .b-all{animation:b-hop .7s ease-out}
-.buddy[data-mood="happy"] .b-eyes{opacity:0}.buddy[data-mood="happy"] .b-happy{opacity:1}
-.buddy[data-mood="oops"] .b-eyes{opacity:0}.buddy[data-mood="oops"] .b-oops,.buddy[data-mood="oops"] .b-sweat{opacity:1}
-.buddy[data-mood="oops"] .b-ear.l{transform:rotate(-34deg)}.buddy[data-mood="oops"] .b-ear.r{transform:rotate(34deg)}
-.buddy.hop .b-all{animation:b-hop .7s ease-out}
-.dock:has(.typebox.on) .buddy{width:84px;height:76px}
-/* характеры кролика: data-p на .buddy */
-.b-brows,.b-raise,.b-frown,.b-grin,.b-lids,.b-spark,.b-heart,.b-zzz{opacity:0;transition:opacity .2s}
-@keyframes b-float{0%{transform:translateY(4px);opacity:0}30%{opacity:1}100%{transform:translateY(-10px);opacity:0}}
-.buddy[data-p="angry"] .b-brows,.buddy[data-p="angry"] .b-frown{opacity:1}
+.buddy[data-s="think"] .b-foot.r{animation:b-tap .45s ease-in-out infinite}
+
+/* настроения из ответа */
+.buddy[data-p="angry"] .b-brows,.buddy[data-p="angry"] .b-frown,.buddy[data-p="angry"] .b-vein,.buddy[data-p="angry"] .b-steam{opacity:1}
 .buddy[data-p="angry"] .b-closed{opacity:0}
 .buddy[data-p="angry"] .b-cheek{fill:#D24B3A;opacity:.5}
 .buddy[data-p="angry"] .b-ear.l{transform:rotate(-22deg)}.buddy[data-p="angry"] .b-ear.r{transform:rotate(26deg)}
+.buddy[data-p="angry"] .b-body{animation:b-stomp 1.8s infinite}
+.buddy[data-p="angry"] .b-vein{animation:b-pulse .9s ease-in-out infinite;transform-origin:center}
+.buddy[data-p="angry"] .b-steam circle{animation:b-float 1.4s ease-out infinite}
+.buddy[data-p="angry"] .b-steam circle:nth-child(2){animation-delay:.45s}
+.buddy[data-p="angry"] .b-steam circle:nth-child(3){animation-delay:.9s}
 .buddy[data-p="cute"] .b-spark{opacity:1}
-.buddy[data-p="cute"] .b-cheek{opacity:.6}
+.buddy[data-p="cute"] .b-cheek{opacity:.62}
 .buddy[data-p="cute"] .b-heart{opacity:1;animation:b-float 2.4s ease-out infinite}
+.buddy[data-p="cute"] .b-all{animation:b-sway 2.6s ease-in-out infinite}
 .buddy[data-p="funny"] .b-grin,.buddy[data-p="funny"] .b-raise{opacity:1}
 .buddy[data-p="funny"] .b-closed{opacity:0}
+.buddy[data-p="funny"] .b-all{animation:b-giggle 2.2s ease-in-out infinite}
 .buddy[data-p="sleepy"] .b-eyes{opacity:0}
 .buddy[data-p="sleepy"] .b-lids{opacity:1}
+.buddy[data-p="sleepy"] .b-zzz{opacity:1}
 .buddy[data-p="sleepy"] .b-zzz text{animation:b-float 2.6s ease-out infinite}
 .buddy[data-p="sleepy"] .b-zzz text+text{animation-delay:1.3s}
-.buddy[data-p="sleepy"] .b-zzz{opacity:1}
 .buddy[data-p="sleepy"] .b-all{animation-duration:5s}
+.buddy[data-p="sleepy"] .b-head{animation:b-nod 4.5s ease-in-out infinite}
 .buddy[data-p="sleepy"] .b-ear.l{transform:rotate(-30deg)}.buddy[data-p="sleepy"] .b-ear.r{transform:rotate(32deg)}
 .buddy.mo .b-frown,.buddy.mo .b-grin{opacity:0}
+
+/* реакции на реплику: радость (без ошибок) и смущение (была ошибка) */
+.buddy[data-mood="happy"] .b-all{animation:b-hop .75s ease-out}
+.buddy[data-mood="happy"] .b-eyes{opacity:0}.buddy[data-mood="happy"] .b-happy{opacity:1}
+.buddy[data-mood="happy"] .b-stars{opacity:1}
+.buddy[data-mood="happy"] .b-stars path{animation:b-pop .9s ease-out both}
+.buddy[data-mood="happy"] .b-stars path:nth-child(2){animation-delay:.12s}
+.buddy[data-mood="happy"] .b-stars path:nth-child(3){animation-delay:.24s}
+.buddy[data-mood="happy"] .b-stars path:nth-child(4){animation-delay:.36s}
+.buddy[data-mood="oops"] .b-eyes{opacity:0}.buddy[data-mood="oops"] .b-oops,.buddy[data-mood="oops"] .b-sweat{opacity:1}
+.buddy[data-mood="oops"] .b-ear.l{transform:rotate(-34deg)}.buddy[data-mood="oops"] .b-ear.r{transform:rotate(34deg)}
+.buddy[data-mood="oops"] .b-all{animation:b-shake .5s ease-in-out}
 .buddy[data-mood] .b-lids,.buddy[data-mood] .b-spark{opacity:0}
-.b-zzz text{font:700 15px var(--sans);fill:var(--muted)}
+
+/* сам по себе: ухо дёргается, оглядывается, нюхает, потягивается, наклоняет голову, подпрыгивает */
+.buddy.f-ear .b-ear.r{animation:b-twitch .6s ease-in-out}
+.buddy.f-look .b-look{animation:b-lookaround 1.6s ease-in-out}
+.buddy.f-sniff .b-nose{animation:b-sniff .7s ease-in-out}
+.buddy.f-stretch .b-all{animation:b-stretch 1.1s ease-in-out}
+.buddy.f-tilt .b-head{animation:b-tilt 1.4s ease-in-out}
+.buddy.f-hop .b-all{animation:b-hop .75s ease-out}
+/* нажатие */
+.buddy.t-hop .b-all{animation:b-hop .75s ease-out}
+.buddy.t-boing .b-all{animation:b-boing .8s ease-out}
+.buddy.t-wiggle .b-ear.l{animation:b-tap .25s ease-in-out 3}
+.buddy.t-wiggle .b-ear.r{animation:b-twitch .5s ease-in-out 2}
+.buddy.t-heart .b-heart{opacity:1;animation:b-float 1.2s ease-out}
+.buddy.t-heart .b-happy{opacity:1}.buddy.t-heart .b-eyes{opacity:0}
+.dock:has(.typebox.on) .buddy{width:86px;height:85px}
 @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -254,34 +315,55 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
       <div class="modes" id="modes" role="tablist"></div>
       <div class="scroll" id="chatWrap"><div class="chat" id="chat" aria-live="polite"></div></div>
       <div class="dock">
-        <div class="buddy" id="buddy" data-s="idle" title="Yomi" aria-hidden="true"><svg viewBox="0 0 160 150">
-          <ellipse class="b-shadow" cx="80" cy="146" rx="36" ry="4"/>
+        <div class="buddy" id="buddy" data-s="idle" title="Yomi" aria-hidden="true"><svg viewBox="0 0 160 158">
+          <ellipse class="b-shadow" cx="80" cy="152" rx="36" ry="4.5"/>
           <g class="b-all">
-            <g class="b-ear l"><path class="b-line" d="M57 66 C44 34 45 8 58 6 C71 4 75 32 72 64 Z"/><path class="b-inner" d="M60 58 C52 36 53 16 59 14 C65 13 67 34 66 56 Z"/></g>
-            <g class="b-ear r"><path class="b-line" d="M103 66 C116 34 115 8 102 6 C89 4 85 32 88 64 Z"/><path class="b-inner" d="M100 58 C108 36 107 16 101 14 C95 13 93 34 94 56 Z"/></g>
-            <ellipse class="b-line" cx="80" cy="128" rx="26" ry="15"/>
-            <ellipse class="b-line" cx="67" cy="137" rx="8" ry="5"/><ellipse class="b-line" cx="93" cy="137" rx="8" ry="5"/>
-            <g class="b-head">
-              <ellipse class="b-line" cx="80" cy="90" rx="49" ry="40"/>
-              <circle class="b-cheek" cx="51" cy="101" r="7"/><circle class="b-cheek" cx="109" cy="101" r="7"/>
-              <g class="b-eyes"><ellipse class="b-ink" cx="63" cy="90" rx="5.2" ry="6.6"/><ellipse class="b-ink" cx="97" cy="90" rx="5.2" ry="6.6"/>
-                <circle fill="var(--b-fur)" cx="65" cy="87" r="1.8"/><circle fill="var(--b-fur)" cx="99" cy="87" r="1.8"/></g>
-              <g class="b-happy"><path class="b-stroke" d="M57 92 Q63 84 69 92"/><path class="b-stroke" d="M91 92 Q97 84 103 92"/></g>
-              <g class="b-oops"><path class="b-stroke" d="M58 85 L67 90 L58 95"/><path class="b-stroke" d="M102 85 L93 90 L102 95"/></g>
-              <g class="b-spark"><circle fill="var(--b-fur)" cx="61" cy="93.5" r="1.1"/><circle fill="var(--b-fur)" cx="95" cy="93.5" r="1.1"/></g>
-              <g class="b-lids"><path class="b-stroke" d="M57 90 Q63 94 69 90"/><path class="b-stroke" d="M91 90 Q97 94 103 90"/></g>
-              <g class="b-brows"><path class="b-stroke" d="M55 78 L70 84"/><path class="b-stroke" d="M105 78 L90 84"/></g>
-              <path class="b-stroke b-raise" d="M90 79 Q97 73 104 77"/>
-              <path class="b-stroke b-frown" d="M73 106 Q80 99 87 106"/>
-              <path class="b-grin" fill="var(--b-ink)" stroke="var(--b-ink)" stroke-width="2" stroke-linejoin="round" d="M71 99 Q80 112 89 99 Z"/>
-              <path class="b-stroke b-closed" d="M74 101 Q77 105 80 101 Q83 105 86 101"/>
-              <ellipse class="b-ink b-open" cx="80" cy="104" rx="5" ry="5.5"/>
-              <path class="b-sweat" fill="#8DB9D8" stroke="var(--b-ink)" stroke-width="1.5" d="M117 66 q5 8 0 11 q-5 -3 0 -11z"/>
+            <g class="b-ear l"><path class="b-line" d="M57 66 C43 34 44 7 58 5 C72 3 76 32 72 64 Z"/><path class="b-inner" d="M60 58 C52 36 53 15 59 13 C65 12 67 34 66 56 Z"/></g>
+            <g class="b-ear r"><path class="b-line" d="M103 66 C117 34 116 7 102 5 C88 3 84 32 88 64 Z"/><path class="b-inner" d="M100 58 C108 36 107 15 101 13 C95 12 93 34 94 56 Z"/></g>
+            <g class="b-body">
+              <ellipse class="b-line" cx="80" cy="132" rx="27" ry="16"/>
+              <ellipse class="b-belly" cx="80" cy="136" rx="13" ry="9"/>
+              <g class="b-foot l"><ellipse class="b-line" cx="66" cy="145" rx="9" ry="5.5"/><path class="b-whisk" d="M63 147.5v-3M67 148v-3"/></g>
+              <g class="b-foot r"><ellipse class="b-line" cx="94" cy="145" rx="9" ry="5.5"/><path class="b-whisk" d="M93 148v-3M97 147.5v-3"/></g>
             </g>
-            <path class="b-heart" fill="var(--accent)" d="M128 44 c-2-5-10-4-8 2 c1 3 5 6 8 9 c3-3 7-6 8-9 c2-6-6-7-8-2z"/>
+            <g class="b-head">
+              <ellipse class="b-line" cx="80" cy="92" rx="49" ry="40"/>
+              <path class="b-stroke" stroke-width="2" d="M73 55 q3.5-6 7-1 q3.5-6 7 1"/>
+              <ellipse class="b-shade" cx="80" cy="117" rx="36" ry="12"/>
+              <circle class="b-cheek" cx="50" cy="103" r="7.5"/><circle class="b-cheek" cx="110" cy="103" r="7.5"/>
+              <g class="b-look"><g class="b-eyes">
+                <ellipse class="b-ink" cx="63" cy="91" rx="6" ry="7.6"/><ellipse class="b-ink" cx="97" cy="91" rx="6" ry="7.6"/>
+                <circle fill="var(--b-fur)" cx="65.2" cy="87.6" r="2.3"/><circle fill="var(--b-fur)" cx="99.2" cy="87.6" r="2.3"/>
+                <circle fill="var(--b-fur)" cx="61" cy="94.6" r="1.1"/><circle fill="var(--b-fur)" cx="95" cy="94.6" r="1.1"/>
+              </g></g>
+              <g class="b-happy"><path class="b-stroke" d="M56 93 Q63 84 70 93"/><path class="b-stroke" d="M90 93 Q97 84 104 93"/></g>
+              <g class="b-oops"><path class="b-stroke" d="M57 86 L67 91 L57 96"/><path class="b-stroke" d="M103 86 L93 91 L103 96"/></g>
+              <g class="b-spark"><path fill="var(--b-fur)" d="M68 84 l1 2.2 2.2 1 -2.2 1 -1 2.2 -1-2.2 -2.2-1 2.2-1z"/><path fill="var(--b-fur)" d="M102 84 l1 2.2 2.2 1 -2.2 1 -1 2.2 -1-2.2 -2.2-1 2.2-1z"/></g>
+              <g class="b-lids"><path class="b-stroke" d="M56 91 Q63 95 70 91"/><path class="b-stroke" d="M90 91 Q97 95 104 91"/></g>
+              <g class="b-brows"><path class="b-stroke" d="M54 78 L70 84"/><path class="b-stroke" d="M106 78 L90 84"/></g>
+              <path class="b-stroke b-raise" d="M89 79 Q97 72 105 77"/>
+              <path class="b-nose" d="M76.5 99 Q80 103.5 83.5 99 Q80 97 76.5 99Z"/>
+              <path class="b-whisk" d="M43 99 L32 96 M43 103 L32 104 M117 99 L128 96 M117 103 L128 104"/>
+              <path class="b-stroke b-frown" d="M74 110 Q80 104 86 110"/>
+              <path class="b-grin" fill="var(--b-ink)" stroke="var(--b-ink)" stroke-width="2" stroke-linejoin="round" d="M72 104 Q80 116 88 104 Z"/>
+              <path class="b-stroke b-closed" d="M75 105 Q77.5 108.5 80 105 Q82.5 108.5 85 105"/>
+              <ellipse class="b-ink b-open" cx="80" cy="108" rx="5" ry="5.5"/>
+              <path class="b-sweat" fill="#8DB9D8" stroke="var(--b-ink)" stroke-width="1.5" d="M118 66 q5 8 0 11 q-5 -3 0 -11z"/>
+              <path class="b-vein" fill="none" stroke="#D24B3A" stroke-width="2.4" stroke-linecap="round" d="M108 60 q4 2 4 6 M122 60 q-4 2 -4 6 M108 74 q4 -2 4 -6 M122 74 q-4 -2 -4 -6"/>
+            </g>
+            <g class="b-scarf-wrap">
+              <path class="b-scarf" d="M47 117 Q80 132 113 117 L111 127 Q80 141 49 127 Z"/>
+              <path class="b-scarf b-scarf-tail" d="M96 128 L107 147 L99 145 L95 150 L90 131 Z"/>
+            </g>
+            <path class="b-heart" fill="var(--accent)" d="M130 46 c-2-5-10-4-8 2 c1 3 5 6 8 9 c3-3 7-6 8-9 c2-6-6-7-8-2z"/>
             <g class="b-zzz"><text x="118" y="46">z</text><text x="130" y="34">z</text></g>
             <g class="b-dots"><circle cx="120" cy="40" r="3.4"/><circle cx="131" cy="32" r="3.4"/><circle cx="142" cy="24" r="3.4"/></g>
             <g class="b-waves"><path class="b-stroke" stroke="var(--accent)" d="M126 58 q7 7 0 14"/><path class="b-stroke" stroke="var(--accent)" d="M134 52 q12 13 0 26"/></g>
+            <g class="b-steam" fill="var(--muted)"><circle cx="46" cy="40" r="4"/><circle cx="112" cy="36" r="3.5"/><circle cx="52" cy="30" r="3"/></g>
+            <g class="b-stars" fill="var(--accent)">
+              <path d="M24 70 l2 5 5 2 -5 2 -2 5 -2-5 -5-2 5-2z"/><path d="M136 66 l2 5 5 2 -5 2 -2 5 -2-5 -5-2 5-2z"/>
+              <path d="M34 38 l1.5 3.5 3.5 1.5 -3.5 1.5 -1.5 3.5 -1.5-3.5 -3.5-1.5 3.5-1.5z"/><path d="M128 30 l1.5 3.5 3.5 1.5 -3.5 1.5 -1.5 3.5 -1.5-3.5 -3.5-1.5 3.5-1.5z"/>
+            </g>
           </g>
         </svg></div>
         <div class="status" id="status">Нажми и говори по-английски</div>
@@ -445,15 +527,41 @@ function setState(s){
 }
 /* ---------- кролик ---------- */
 let mouthTimer = 0, moodTimer = 0;
-function hop(){ const b = $('#buddy'); b.classList.remove('hop'); void b.offsetWidth; b.classList.add('hop'); setTimeout(() => b.classList.remove('hop'), 700); }
-$('#buddy').onclick = hop;
+function react(cls, ms){ const b = $('#buddy'); if(!b) return; b.classList.remove(cls); void b.offsetWidth; b.classList.add(cls); setTimeout(() => b.classList.remove(cls), ms); }
+function hop(){ react('t-hop', 800); }
+// нажатие: каждый раз по-разному
+const TAPS = ['t-hop', 't-boing', 't-wiggle', 't-heart'];
+let tapPrev = '';
+$('#buddy').onclick = () => { let t; do { t = TAPS[Math.floor(Math.random() * TAPS.length)]; } while(t === tapPrev); tapPrev = t; react(t, 1300); };
+// сам по себе: раз в несколько секунд маленькое движение, пока он ждёт или слушает
+const FIDGETS = [['f-ear', 700], ['f-look', 1700], ['f-sniff', 800], ['f-stretch', 1200], ['f-tilt', 1500], ['f-hop', 800]];
+(function fidget(){
+  setTimeout(() => {
+    const b = $('#buddy');
+    if(!b) return;
+    if(!document.hidden && (b.dataset.s === 'idle' || b.dataset.s === 'listen') && !b.dataset.mood && !b.classList.contains('talking')){
+      const [cls, ms] = FIDGETS[Math.floor(Math.random() * FIDGETS.length)];
+      if(!(b.dataset.s === 'listen' && (cls === 'f-hop' || cls === 'f-stretch'))) react(cls, ms);
+    }
+    fidget();
+  }, 3500 + Math.random() * 4000);
+})();
+// глаза следят за пальцем или мышкой
+function lookAt(e){
+  const b = $('#buddy'); if(!b) return;
+  const r = b.getBoundingClientRect(), dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height * .45), d = Math.hypot(dx, dy) || 1;
+  b.style.setProperty('--ex', (dx / d * Math.min(3.5, d / 40)).toFixed(1) + 'px');
+  b.style.setProperty('--ey', (dy / d * Math.min(2.5, d / 40)).toFixed(1) + 'px');
+}
+addEventListener('pointermove', lookAt, {passive: true});
+addEventListener('pointerdown', lookAt, {passive: true});
 function buddyState(s){
   const b = $('#buddy'); if(!b) return; b.dataset.s = s; b.style.setProperty('--lvl', 0);
 }
 // рот двигается, пока реально звучит голос — ответ, «Послушать», слово в тренировке, пример голоса
 function mouth(on){
   const b = $('#buddy'); clearTimeout(mouthTimer); if(!b) return;
-  b.classList.remove('mo'); if(!on) return;
+  b.classList.remove('mo'); b.classList.toggle('talking', !!on); if(!on) return;
   const flap = () => { b.classList.toggle('mo'); mouthTimer = setTimeout(flap, 90 + Math.random() * 140); }; flap();
 }
 player.addEventListener('playing', () => mouth(player.src !== SILENT));
