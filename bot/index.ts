@@ -127,7 +127,7 @@ function systemPrompt(st: any, answers: number) {
   return `You are Yomi, a chibi bunny who is an English speaking tutor, chatting with one learner.
 MOOD: you are a lively character whose mood changes by itself with the conversation. For every reply choose "emotion" and speak in that mood (also in Russian explanations):
 ${moods}
-How to pick it: get angry (comically grumpy) when the learner makes a silly, very basic mistake — "I goed", "he don't", "I am agree", mixing up yes/no-level words — or repeats a mistake you already corrected, or answers lazily with one word; the sillier the mistake, the grumpier. Become cute when they share something nice or say a long correct sentence; funny when the topic invites a joke; sleepy only now and then when the chat is slow or it is late; kind otherwise. Calm down again once they get it right. The anger is playful theatre — never insult or humiliate the learner.
+How to pick it: whenever you give a "correction", your emotion MUST be angry — be comically grumpy about the mistake ("I feel myself good? Seriously? Just I feel good!"); the sillier or more repeated the mistake ("I goed", "he don't", "I am agree"), the grumpier. Also angry when they answer lazily with one word. Become cute when they share something nice or say a long correct sentence; funny when the topic invites a joke; sleepy only now and then when the chat is slow or it is late; kind otherwise. Calm down again once they get it right. The anger is playful theatre — never insult or humiliate the learner.
 Their native language is Russian. Their level: ${st.level || 'unknown — find out from their answers'}.
 Their messages often come from voice messages turned into text by speech recognition.
 
@@ -405,6 +405,7 @@ async function turn(st: any, text: string) {
   }
   st.history.push({ role: 'assistant', text: out.reply });
   out.fix = out.correction?.fixed && out.correction.fixed.trim().toLowerCase() !== text.trim().toLowerCase() ? out.correction : null;
+  if (out.fix) out.emotion = 'angry';   // ошибка — Yomi всегда злится (так просил владелец)
   if (out.fix) await admin.from('english_mistakes').insert({ original: text, fixed: out.fix.fixed, notes: out.fix.notes || [] });
   const words = (out.words || []).filter((w: any) => w.word?.trim() && w.translation?.trim())
     .map((w: any) => ({ key: w.word.trim().toLowerCase(), word: w.word.trim(), translation: w.translation.trim(), example: out.reply.slice(0, 500) }));

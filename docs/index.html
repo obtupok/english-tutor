@@ -89,7 +89,11 @@ nav .badge{position:absolute;top:6px;left:calc(50% + 7px);min-width:18px;padding
 @keyframes dot{0%,60%,100%{opacity:.25}30%{opacity:1}}
 .err{align-self:center;text-align:center;color:var(--accent);font-size:14px;padding:4px 12px}
 
-.dock{padding:10px 20px 14px;display:flex;flex-direction:column;align-items:center;gap:10px;border-top:1px solid var(--line)}
+.dock{padding:2px 20px 12px;display:flex;flex-direction:column;align-items:center;gap:8px;border-top:1px solid var(--line)}
+/* ручка размера кролика: тянуть вверх — больше, вниз — меньше и до «спрятать»; двойное нажатие — спрятать/показать */
+.grip{width:100%;height:18px;display:grid;place-items:center;cursor:ns-resize;touch-action:none;margin-bottom:-4px}
+.grip::before{content:"";width:44px;height:5px;border-radius:3px;background:var(--line-2);transition:background .2s}
+.grip:hover::before,.grip.drag::before{background:var(--muted)}
 .status{font-size:14px;color:var(--muted);min-height:21px;text-align:center}
 .dock-row{display:flex;align-items:center;justify-content:center;gap:32px;width:100%}
 .side{width:48px;height:48px;border-radius:50%;border:1px solid var(--line-2);display:grid;place-items:center;color:var(--ink-2)}
@@ -183,7 +187,7 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
 /* Кролик Yomi: чиби, нарисован чернилами по бумаге.
    data-s — что происходит в разговоре (idle/listen/think/speak), data-p — настроение из ответа модели,
    data-mood — короткая реакция на реплику (happy/oops), классы f-* — случайные «живые» движения, t-* — реакция на нажатие. */
-.buddy{--lvl:0;--ex:0px;--ey:0px;--b-fur:#FBF8F2;--b-ink:#2A241D;--b-belly:#F1E6D6;--b-nose:#E79A97;width:124px;height:122px;margin:-6px auto -8px;cursor:pointer;touch-action:manipulation;-webkit-user-select:none;user-select:none}
+.buddy{--lvl:0;--ex:0px;--ey:0px;--b-fur:#FBF8F2;--b-ink:#2A241D;--b-belly:#F1E6D6;--b-nose:#E79A97;--bsize:124px;width:var(--bsize);height:calc(var(--bsize) * .984);margin:-6px auto -8px;cursor:pointer;touch-action:manipulation;-webkit-user-select:none;user-select:none}
 .buddy svg{width:100%;height:100%;overflow:visible}
 .b-ear,.b-head,.b-look,.b-eyes,.b-foot,.b-body,.b-nose,.b-scarf-tail,.b-vein,.b-heart,.b-zzz text,.b-steam circle,.b-stars path{transform-box:fill-box}
 .b-line{fill:var(--b-fur);stroke:var(--b-ink);stroke-width:3;stroke-linejoin:round;stroke-linecap:round}
@@ -311,7 +315,7 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
 .buddy.t-wiggle .b-ear.r{animation:b-twitch .5s ease-in-out 2}
 .buddy.t-heart .b-heart{opacity:1;animation:b-float 1.2s ease-out}
 .buddy.t-heart .b-happy{opacity:1}.buddy.t-heart .b-eyes{opacity:0}
-.dock:has(.typebox.on) .buddy{width:86px;height:85px}
+.dock:has(.typebox.on) .buddy{width:min(86px, var(--bsize));height:calc(min(86px, var(--bsize)) * .984)}
 @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -324,6 +328,7 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
       <div class="modes" id="modes" role="tablist"></div>
       <div class="scroll" id="chatWrap"><div class="chat" id="chat" aria-live="polite"></div></div>
       <div class="dock">
+        <div class="grip" id="grip" title="Потяни, чтобы изменить размер кролика. Двойное нажатие — спрятать или показать"></div>
         <div class="buddy" id="buddy" data-s="idle" title="Yomi" aria-hidden="true"><svg viewBox="0 0 160 158">
           <g class="b-all">
             <g class="b-ear l"><path class="b-line" d="M57 66 C43 34 44 7 58 5 C72 3 76 32 72 64 Z"/><path class="b-inner" d="M60 58 C52 36 53 15 59 13 C65 12 67 34 66 56 Z"/></g>
@@ -489,6 +494,7 @@ $('#chat').onclick = async e => {
 
 // ответ сервера → лента + звук
 function onReply(out, userText){
+  if(out.fix) out.emotion = 'angry';   // ошибка — Yomi злится
   const bd = $('#buddy'); if(bd) bd.dataset.p = out.emotion || 'kind';   // настроение Yomi меняется само — по ответу модели
   if(userText){ chat.push({role:'user', text:userText, fix: out.fix || null}); }
   chat.push({role:'tutor', text: out.reply, en: out.english, words: out.words || []});
@@ -602,6 +608,28 @@ function setState(s){
 let mouthTimer = 0, moodTimer = 0;
 function react(cls, ms){ const b = $('#buddy'); if(!b) return; b.classList.remove(cls); void b.offsetWidth; b.classList.add(cls); setTimeout(() => b.classList.remove(cls), ms); }
 function hop(){ react('t-hop', 800); }
+// размер кролика: ручка над ним; на невысоких экранах (Mini App на ПК) по умолчанию меньше
+const BUNNY_MAX = 160, bunnyDefault = () => innerHeight < 700 ? 64 : innerHeight < 820 ? 88 : 124;
+let bsize = store.get('yomi_bsize', null) ?? bunnyDefault(), bsizeShown = bsize || bunnyDefault();
+function applyBsize(save){
+  const b = $('#buddy'); if(!b) return;
+  b.hidden = bsize < 40;
+  b.style.setProperty('--bsize', bsize + 'px');
+  if(save) store.set('yomi_bsize', bsize);
+}
+applyBsize();
+{ const g = $('#grip'); let y0 = 0, s0 = 0, moved = false;
+  g.addEventListener('pointerdown', e => { y0 = e.clientY; s0 = bsize < 40 ? 0 : bsize; moved = false; g.setPointerCapture(e.pointerId); g.classList.add('drag'); });
+  g.addEventListener('pointermove', e => { if(!g.classList.contains('drag')) return;
+    const d = y0 - e.clientY; if(Math.abs(d) > 3) moved = true;
+    bsize = Math.round(Math.max(0, Math.min(BUNNY_MAX, s0 + d))); applyBsize(); });
+  let lastTap = 0;
+  const end = () => { if(!g.classList.contains('drag')) return; g.classList.remove('drag');
+    if(moved){ if(bsize < 40) bsize = 0; else bsizeShown = bsize; applyBsize(true); return; }
+    const now = Date.now();   // двойное касание: спрятать или показать
+    if(now - lastTap < 350){ bsize = bsize < 40 ? bsizeShown : 0; applyBsize(true); lastTap = 0; } else lastTap = now; };
+  g.addEventListener('pointerup', end); g.addEventListener('pointercancel', end);
+}
 // нажатие: каждый раз по-разному
 const TAPS = ['t-hop', 't-boing', 't-wiggle', 't-heart'];
 let tapPrev = '';
