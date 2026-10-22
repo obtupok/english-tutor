@@ -451,6 +451,9 @@ async function turn(st: any, text: string) {
     gameEvent(st, 'phrases');
     if (!out.fix && /[a-z]/i.test(text)) gameEvent(st, 'clean');
     if (st.mode === 'scenario') gameEvent(st, 'scene');
+    if (st.mode === 'coach') gameEvent(st, 'coach');
+    if (text.trim().split(/\s+/).length >= 8 && /[a-z]/i.test(text)) gameEvent(st, 'long');
+    if (/\?\s*$/.test(text) || /^(what|why|how|where|when|who|do|does|did|can|could|are|is|would|will)\b/i.test(text.trim())) gameEvent(st, 'question');
   }
   if (out.fix) await admin.from('english_mistakes').insert({ original: text, fixed: out.fix.fixed, notes: out.fix.notes || [] });
   const words = (out.words || []).filter((w: any) => w.word?.trim() && w.translation?.trim())
@@ -551,6 +554,7 @@ async function onMessage(m: any) {
     await tg('sendChatAction', { chat_id: st.chat_id, action: 'typing' });
     const heard = await tgVoiceText(voice.file_id, sttLang(st), lastTutorLine(st));
     if (!heard) return tg('sendMessage', { chat_id: st.chat_id, text: 'Не расслышал 🙈 Попробуй ещё раз.' });
+    gameEvent(st, 'voice');
     return talk(st, heard, m.message_id, heard);
   }
   if (!text) return tg('sendMessage', { chat_id: st.chat_id, text: 'Я понимаю текст и голосовые 🙂' });
@@ -588,14 +592,15 @@ async function handle(upd: any) {
   }
 }
 
-/* ---------- Игра: монетки, задания дня, магазин скинов (данные — в english_tutor.game у владельца) ---------- */
+/* ---------- Игра: монетки, опыт и уровни, задания дня и недели, магазин скинов (данные — в english_tutor.game у владельца) ---------- */
 // цены — только здесь (сайт показывает, сервер решает)
 const SHOP: Record<string, number> = {
   'char:bunny': 0, 'char:cat': 150, 'char:bear': 200, 'char:fox': 250, 'char:panda': 300,
   'color:classic': 0, 'color:choco': 60, 'color:gray': 60, 'color:pink': 80, 'color:mint': 80, 'color:sky': 100, 'color:gold': 250,
   'hat:none': 0, 'hat:bow': 40, 'hat:flower': 50, 'hat:cap': 80, 'hat:headphones': 120, 'hat:wizard': 180, 'hat:crown': 200,
 };
-const QUESTS = [
+type Quest = { id: string; metric: string; goal: number; reward: number; title: string };
+const QUESTS: Quest[] = [
   { id: 'talk10', metric: 'phrases', goal: 10, reward: 15, title: 'Скажи 10 фраз' },
   { id: 'talk25', metric: 'phrases', goal: 25, reward: 35, title: 'Скажи 25 фраз' },
   { id: 'clean3', metric: 'clean', goal: 3, reward: 15, title: '3 фразы без ошибок' },
@@ -603,34 +608,67 @@ const QUESTS = [
   { id: 'review5', metric: 'reviews', goal: 5, reward: 10, title: 'Повтори 5 слов' },
   { id: 'review15', metric: 'reviews', goal: 15, reward: 25, title: 'Повтори 15 слов' },
   { id: 'scene3', metric: 'scene', goal: 3, reward: 15, title: '3 реплики в сценарии' },
+  { id: 'scene6', metric: 'scene', goal: 6, reward: 25, title: '6 реплик в сценарии' },
   { id: 'chat5', metric: 'friend', goal: 5, reward: 10, title: '5 фраз в «Болтовне»' },
+  { id: 'chat10', metric: 'friend', goal: 10, reward: 20, title: '10 фраз в «Болтовне»' },
   { id: 'pet', metric: 'pet', goal: 1, reward: 5, title: 'Погладь Yomi' },
   { id: 'words3', metric: 'newwords', goal: 3, reward: 10, title: 'Узнай 3 новых слова' },
   { id: 'test', metric: 'test', goal: 1, reward: 30, title: 'Пройди тест уровня' },
+  { id: 'long2', metric: 'long', goal: 2, reward: 15, title: '2 длинные фразы (8+ слов)' },
+  { id: 'q3', metric: 'question', goal: 3, reward: 10, title: 'Задай Yomi 3 вопроса' },
+  { id: 'coach3', metric: 'coach', goal: 3, reward: 10, title: '3 фразы в «Как учить»' },
+  { id: 'voice10', metric: 'voice', goal: 10, reward: 15, title: 'Скажи голосом 10 фраз' },
 ];
-// 3 задания на день с разными метриками; выбор зависит только от даты
-function dailyQuests(day: string) {
-  let h = 0; for (const c of day) h = (h * 31 + c.charCodeAt(0)) >>> 0;
-  const pool = [...QUESTS], out: typeof QUESTS = [], used = new Set<string>();
-  while (out.length < 3 && pool.length) {
+const WEEKLY: Quest[] = [
+  { id: 'w_phr150', metric: 'phrases', goal: 150, reward: 100, title: '150 фраз за неделю' },
+  { id: 'w_clean60', metric: 'clean', goal: 60, reward: 80, title: '60 фраз без ошибок' },
+  { id: 'w_rev50', metric: 'reviews', goal: 50, reward: 60, title: 'Повтори 50 слов' },
+  { id: 'w_days5', metric: 'days', goal: 5, reward: 100, title: 'Занимайся 5 дней' },
+  { id: 'w_scene10', metric: 'scene', goal: 10, reward: 60, title: '10 реплик в сценариях' },
+  { id: 'w_long20', metric: 'long', goal: 20, reward: 70, title: '20 длинных фраз' },
+  { id: 'w_voice60', metric: 'voice', goal: 60, reward: 70, title: '60 фраз голосом' },
+];
+const DAY_BONUS = 25;   // сундучок дня: все задания дня выполнены
+// выбор заданий зависит только от даты: n штук с разными метриками
+function pick(pool: Quest[], seed: string, n: number) {
+  let h = 0; for (const c of seed) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  const left = [...pool], out: Quest[] = [], used = new Set<string>();
+  while (out.length < n && left.length) {
     h = (Math.imul(h, 1103515245) + 12345) >>> 0;
-    const q = pool.splice(h % pool.length, 1)[0];
+    const q = left.splice(h % left.length, 1)[0];
     if (!used.has(q.metric)) { used.add(q.metric); out.push(q); }
   }
   return out;
 }
+const dailyQuests = (day: string) => pick(QUESTS, day, 4);
+const weekKey = () => { const d = new Date(); d.setUTCDate(d.getUTCDate() - (d.getUTCDay() + 6) % 7); return d.toISOString().slice(0, 10); };   // понедельник
+const weeklyQuests = (week: string) => pick(WEEKLY, 'w' + week, 3);
+// уровни: до следующего уровня нужно 80 + 20·n опыта
+const levelNeed = (lvl: number) => 80 + 20 * lvl;
+function levelOf(xp: number) { let lvl = 1, rest = xp; while (rest >= levelNeed(lvl)) { rest -= levelNeed(lvl); lvl++; } return { level: lvl, into: rest, need: levelNeed(lvl) }; }
+const levelReward = (lvl: number) => 10 * lvl + (lvl % 5 === 0 ? 50 : 0);   // каждый 5-й уровень — сундук
 function game(st: any) {
   const g = st.game || (st.game = {});
-  g.coins ??= 0; g.owned ??= ['char:bunny', 'color:classic', 'hat:none']; g.equip ??= { char: 'bunny', color: 'classic', hat: 'none' };
-  if (g.day !== today()) { g.day = today(); g.counts = {}; g.claimed = []; }
+  g.coins ??= 0; g.xp ??= 0; g.level ??= 1; g.owned ??= ['char:bunny', 'color:classic', 'hat:none']; g.equip ??= { char: 'bunny', color: 'classic', hat: 'none' };
+  if (g.day !== today()) { g.day = today(); g.counts = {}; g.claimed = []; g.bonus = false; }
+  if (g.week !== weekKey()) { g.week = weekKey(); g.wcounts = {}; g.wclaimed = []; }
   return g;
 }
-// событие: фраза, фраза без ошибок, повтор слова и т. д.; за некоторые сразу монетка
+function addXp(g: any, n: number) {
+  g.xp += n;
+  const now = levelOf(g.xp).level;
+  while (g.level < now) { g.level++; g.coins += levelReward(g.level); }
+}
+// событие: фраза, фраза без ошибок, повтор слова и т. д.; за многие сразу монетка и опыт
 const COIN_FOR: Record<string, number> = { phrases: 1, clean: 1, reviews: 1 };
+const XP_FOR: Record<string, number> = { phrases: 10, clean: 5, reviews: 3, pet: 2, scene: 3, long: 5, question: 2, voice: 2, newwords: 2, test: 30 };
 function gameEvent(st: any, metric: string, n = 1) {
   const g = game(st);
+  if (g.activeDay !== today()) { g.activeDay = today(); g.wcounts.days = (g.wcounts.days || 0) + 1; }
   g.counts[metric] = (g.counts[metric] || 0) + n;
+  g.wcounts[metric] = (g.wcounts[metric] || 0) + n;
   g.coins += (COIN_FOR[metric] || 0) * n;
+  addXp(g, (XP_FOR[metric] || 0) * n);
 }
 // подарок за вход раз в день: 5 монеток + 2 за каждый день серии (до 7 дней)
 function loginGift(st: any) {
@@ -640,14 +678,32 @@ function loginGift(st: any) {
   g.loginStreak = g.lastLogin === yesterday ? (g.loginStreak || 0) + 1 : 1;
   g.lastLogin = today();
   const gift = 5 + 2 * Math.min(7, g.loginStreak);
-  g.coins += gift;
+  g.coins += gift; addXp(g, 5);
   return gift;
 }
-function gameView(st: any) {
+function claimQuest(st: any, id: string) {
   const g = game(st);
+  if (id === 'bonus') {
+    const all = dailyQuests(g.day).every((q) => g.claimed.includes(q.id));
+    if (!all || g.bonus) return 0;
+    g.bonus = true; g.coins += DAY_BONUS; addXp(g, 20); return DAY_BONUS;
+  }
+  const d = dailyQuests(g.day).find((q) => q.id === id), w = weeklyQuests(g.week).find((q) => q.id === id);
+  const q = d || w, counts = d ? g.counts : g.wcounts, claimed = d ? g.claimed : g.wclaimed;
+  if (!q || claimed.includes(q.id) || (counts[q.metric] || 0) < q.goal) return 0;
+  claimed.push(q.id); g.coins += q.reward; addXp(g, d ? 20 : 60);
+  return q.reward;
+}
+function gameView(st: any) {
+  const g = game(st), lv = levelOf(g.xp);
+  const view = (list: Quest[], counts: any, claimed: string[]) => list.map((q) => ({ ...q, progress: Math.min(q.goal, counts[q.metric] || 0), claimed: claimed.includes(q.id) }));
+  const daily = view(dailyQuests(g.day), g.counts, g.claimed);
+  const weekEnds = Math.ceil((Date.parse(g.week) + 7 * 864e5 - Date.now()) / 864e5);
   return {
     coins: g.coins, owned: g.owned, equip: g.equip, loginStreak: g.loginStreak || 0, prices: SHOP,
-    quests: dailyQuests(g.day).map((q) => ({ ...q, progress: Math.min(q.goal, g.counts[q.metric] || 0), claimed: g.claimed.includes(q.id) })),
+    xp: g.xp, level: lv.level, levelXp: lv.into, levelNeed: lv.need, nextReward: levelReward(lv.level + 1),
+    quests: daily, weekly: view(weeklyQuests(g.week), g.wcounts, g.wclaimed), weekEnds,
+    bonus: { reward: DAY_BONUS, ready: daily.every((q) => q.claimed) && !g.bonus, claimed: !!g.bonus },
   };
 }
 
@@ -695,6 +751,7 @@ async function web(req: Request) {
         if (!text) return json({ error: 'not_heard' });
       }
       if (!text) return json({ error: 'empty' }, 400);
+      if (heard) gameEvent(owner, 'voice');
       const out = await turn(st, text);
       if (out && friend) { bumpStats(owner); gameEvent(owner, 'phrases'); gameEvent(owner, 'friend'); await save(owner); }   // фразы из «Болтовни» тоже идут в прогресс и монетки
       return out ? json({ heard, level: owner.level, plan: owner.plan, stats: owner.stats, out: await reply(out, voice, owner.speaker), game: gameView(owner) }) : json({ error: 'failed', heard }, 502);
@@ -730,10 +787,10 @@ async function web(req: Request) {
     case 'game': return json({ game: gameView(owner) });
     case 'pet': { gameEvent(owner, 'pet'); await save(owner); return json({ game: gameView(owner) }); }
     case 'claim': {
-      const g = game(owner), q = dailyQuests(g.day).find((x) => x.id === b.quest);
-      if (!q || g.claimed.includes(q.id) || (g.counts[q.metric] || 0) < q.goal) return json({ error: 'not_ready', game: gameView(owner) });
-      g.claimed.push(q.id); g.coins += q.reward; await save(owner);
-      return json({ ok: true, reward: q.reward, game: gameView(owner) });
+      const reward = claimQuest(owner, String(b.quest || ''));
+      if (!reward) return json({ error: 'not_ready', game: gameView(owner) });
+      await save(owner);
+      return json({ ok: true, reward, game: gameView(owner) });
     }
     case 'buy': {
       const g = game(owner), id = String(b.item || ''), price = SHOP[id];

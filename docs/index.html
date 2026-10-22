@@ -47,10 +47,11 @@ main{flex:1;min-height:0;position:relative}
 .view.on{display:flex}
 .scroll{flex:1;overflow-y:auto;padding:4px 20px 20px}
 
-nav{display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--line);padding-bottom:var(--safe-b);background:var(--paper)}
+nav{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);padding-bottom:var(--safe-b);background:var(--paper)}
 nav button{display:flex;flex-direction:column;align-items:center;gap:3px;min-height:56px;padding:8px 0;font-size:12px;color:var(--muted);position:relative}
 nav button svg{width:22px;height:22px}
 nav button.on{color:var(--ink)}
+nav button:focus,nav button:focus-visible{outline:none}
 nav button.on::before{content:"";position:absolute;top:0;left:30%;right:30%;height:2px;background:var(--ink)}
 nav .badge{position:absolute;top:6px;left:calc(50% + 7px);min-width:18px;padding:0 5px;border-radius:9px;background:var(--accent);color:var(--accent-ink);font-size:11px;font-weight:600;line-height:18px}
 
@@ -156,6 +157,39 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
 .coins{display:inline-flex;align-items:center;gap:4px;padding:2px 10px;border:1px solid var(--line-2);border-radius:99px;background:var(--sheet);color:var(--ink);font-size:14px;font-weight:600}
 .badge.dot{min-width:10px;height:10px;padding:0;top:7px}
 .ysub{margin:0 0 16px}
+.lvlcard{display:flex;align-items:center;gap:14px;padding:16px;border-radius:16px;background:var(--ink);color:var(--paper);margin-bottom:6px}
+.lvl-badge{flex:none;width:66px;height:66px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 35%,transparent)}
+.lvl-badge small{font-size:10px;letter-spacing:.1em;text-transform:uppercase;opacity:.85}.lvl-badge b{font-family:var(--serif);font-size:28px;line-height:1}
+.lvl-info{flex:1;min-width:0}.lvl-info small{display:block;margin-top:6px;opacity:.8;font-size:13px}
+.xpbar{height:10px;border-radius:99px;background:color-mix(in srgb,var(--paper) 22%,transparent);overflow:hidden}.xpbar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--amber),var(--accent))}
+.path{position:relative;margin:4px 0 6px}
+.path-line{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.path-line polyline{fill:none;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.pl-done{stroke:var(--accent)}.pl-todo{stroke:var(--line-2);stroke-dasharray:2 12}
+.pnode{position:absolute;width:52px;height:52px;margin:-26px 0 0 -26px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:17px;border:3px solid var(--line-2);background:var(--sheet);color:var(--muted)}
+.pnode.past{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.pnode.now{background:var(--paper);border-color:var(--accent);color:var(--ink);box-shadow:0 0 0 6px color-mix(in srgb,var(--accent) 25%,transparent)}
+.pnode.chest:not(.past){font-size:24px;border-color:var(--amber);background:var(--amber-bg)}
+.pbunny{position:absolute;width:66px;margin-left:-33px;transition:left .6s ease,top .6s ease;pointer-events:none;z-index:2}
+.pbunny .buddy.mini{--bsize:66px}
+.pbunny.jump{animation:p-jump .6s ease}
+@keyframes p-jump{30%{transform:translateY(-28px)}60%{transform:translateY(-6px)}}
+.qlist{display:flex;flex-direction:column;gap:8px}
+.qcard{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--sheet)}
+.qcard.ready{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),0 6px 18px color-mix(in srgb,var(--accent) 18%,transparent)}
+.qcard.done{opacity:.55}
+.q-ico{flex:none;width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:22px;background:var(--paper);border:1px solid var(--line)}
+.q-main{flex:1;min-width:0}.q-main b{display:block;font-weight:600;font-size:15px}.q-main small{color:var(--muted);font-size:12px}
+.q-main .q-bar{margin:6px 0 3px}
+.q-side{flex:none}.q-rew{font-size:13px;color:var(--muted);font-weight:600}.q-done{display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:var(--green-bg);color:var(--green);font-weight:700}
+.chestcard .q-ico{background:var(--amber-bg);border-color:var(--amber)}
+.lvlup{position:relative;text-align:center;padding:8px 0 4px;overflow:hidden}
+.lvlup h2{font-size:38px;margin:4px 0}
+.lvlup .actions{justify-content:center}
+.lvlup-b{display:inline-block;animation:p-jump .8s ease infinite}
+.lvlup-b .buddy.mini{--bsize:110px}
+.confetti i{position:absolute;top:-10px;left:calc(var(--i) * 7%);width:8px;height:12px;border-radius:2px;background:hsl(calc(var(--i) * 47),80%,60%);animation:conf 1.8s ease-in calc(var(--i) * .07s) infinite}
+@keyframes conf{to{transform:translateY(320px) rotate(540deg);opacity:0}}
 .sub-h{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:18px 0 8px;font-weight:600}
 .quests{display:flex;flex-direction:column;gap:10px}
 .quest{padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--sheet);display:flex;flex-direction:column;gap:8px}
@@ -448,17 +482,15 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
         <form class="typebox" id="typebox"><input id="typeIn" placeholder="Type in English…" autocomplete="off" aria-label="Сообщение"><button aria-label="Отправить"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></form>
       </div>
     </section>
-    <section class="view" id="v-words"><div class="scroll" id="wordsBox"></div></section>
-    <section class="view" id="v-mist"><div class="scroll" id="mistBox"></div></section>
-    <section class="view" id="v-prog"><div class="scroll" id="progBox"></div></section>
+    <section class="view" id="v-words"><div class="scroll"><div class="chats ysub" id="wseg" role="tablist"><button data-w="words" class="on" role="tab">Слова</button><button data-w="mist" role="tab">Ошибки</button></div><div id="wordsBox"></div><div id="mistBox" hidden></div></div></section>
+    <section class="view" id="v-path"><div class="scroll"><div id="pathBox"></div><div id="progBox"></div></div></section>
     <section class="view" id="v-yomi"><div class="scroll" id="yomiBox"></div></section>
   </main>
   <nav id="nav">
     <button data-v="talk" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Говорить</button>
+    <button data-v="path"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h6.5a3.5 3.5 0 0 0 0-7h-5a3.5 3.5 0 0 1 0-7H16"/></svg>Путь<span class="badge dot" id="pathDot" hidden></span></button>
     <button data-v="words"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/></svg>Слова<span class="badge" id="dueBadge" hidden></span></button>
-    <button data-v="mist"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>Ошибки</button>
-    <button data-v="prog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg>Прогресс</button>
-    <button data-v="yomi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 9.5C7 6 7.2 2.5 8.6 2.4S10.8 5.8 10.6 9M15.5 9.5C17 6 16.8 2.5 15.4 2.4S13.2 5.8 13.4 9"/><ellipse cx="12" cy="15" rx="7.5" ry="6.5"/><path d="M9.6 14.6h.01M14.4 14.6h.01M11 17.2q1 .8 2 0"/></svg>Yomi<span class="badge dot" id="yomiDot" hidden></span></button>
+    <button data-v="yomi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 9.5C7 6 7.2 2.5 8.6 2.4S10.8 5.8 10.6 9M15.5 9.5C17 6 16.8 2.5 15.4 2.4S13.2 5.8 13.4 9"/><ellipse cx="12" cy="15" rx="7.5" ry="6.5"/><path d="M9.6 14.6h.01M14.4 14.6h.01M11 17.2q1 .8 2 0"/></svg>Yomi</button>
   </nav>
 </div>
 <div class="buddy" id="buddy" data-s="idle" data-p="kind" title="Yomi — погладь меня" aria-hidden="true"><svg viewBox="-14 -8 188 172">
@@ -1069,7 +1101,7 @@ function showProgress(){
   const last = [...Array(14)].map((_, i) => { const d = new Date(); d.setUTCDate(d.getUTCDate() - 13 + i); const k = d.toISOString().slice(0, 10); return [k, days[k] || 0]; });
   const max = Math.max(5, ...last.map(x => x[1]));
   const p = S.plan, st = streak();
-  $('#progBox').innerHTML = `<h2>Прогресс</h2><p class="lead">${st ? `Занимаешься ${st} ${plural(st, 'день', 'дня', 'дней')} подряд.` : 'Скажи сегодня хотя бы пару фраз — начнётся серия.'}</p>
+  $('#progBox').innerHTML = `<h3 class="sub-h">Статистика</h3><p class="lead">${st ? `Занимаешься ${st} ${plural(st, 'день', 'дня', 'дней')} подряд.` : 'Скажи сегодня хотя бы пару фраз — начнётся серия.'}</p>
     <div class="figures"><div><b>${S.level || '—'}</b><span>уровень</span></div><div><b>${days[today] || 0}</b><span>фраз сегодня</span></div><div><b>${total}</b><span>фраз всего</span></div></div>
     <div class="figures"><div><b>${st}</b><span>дней подряд</span></div><div><b>${S.words}</b><span>слов</span></div><div><b>${S.due}</b><span>к повтору</span></div></div>
     <p class="chart-h">Фразы за две недели</p>
@@ -1094,19 +1126,21 @@ const SKINS = {
   hat: [['none', 'Без шапки'], ['bow', 'Бантик'], ['flower', 'Цветочек'], ['cap', 'Кепка'], ['headphones', 'Наушники'], ['wizard', 'Шляпа волшебника'], ['crown', 'Корона']],
 };
 const SLOT_NAMES = {char: 'Персонажи', color: 'Окрас', hat: 'Шапки'};
-let G = null, ySub = 'quests';
-const questReady = g => (g?.quests || []).some(q => !q.claimed && q.progress >= q.goal);
+let G = null, ySub = 'shop';
+const questReady = g => [...(g?.quests || []), ...(g?.weekly || [])].some(q => !q.claimed && q.progress >= q.goal) || !!g?.bonus?.ready;
 function applyGame(g){
   if(!g) return;
   const before = G; G = g;
   $('#coins').hidden = false; $('#coins b').textContent = g.coins;
   const b = $('#buddy'); if(b){ b.dataset.char = g.equip.char; b.dataset.color = g.equip.color; b.dataset.hat = g.equip.hat; }
-  $('#yomiDot').hidden = !questReady(g);
+  $('#pathDot').hidden = !questReady(g);
   if(!before) return;
   const gained = g.coins - before.coins;
   if(gained > 0) coinFx(gained);
-  const doneNow = g.quests.filter(q => q.progress >= q.goal && !q.claimed && !(before.quests.find(x => x.id === q.id)?.progress >= q.goal));
-  if(doneNow.length) notify(`Задание выполнено: ${doneNow[0].title}! Забери награду во вкладке Yomi`);
+  const prevQ = [...(before.quests || []), ...(before.weekly || [])];
+  const doneNow = [...g.quests, ...(g.weekly || [])].filter(q => q.progress >= q.goal && !q.claimed && !(prevQ.find(x => x.id === q.id)?.progress >= q.goal));
+  if(doneNow.length) notify(`Задание выполнено: ${doneNow[0].title}! Забери награду в «Пути»`);
+  if(before.level && g.level > before.level) setTimeout(() => celebrate(g.level, g.coins - before.coins), 700);
 }
 // «+N 🪙» взлетает над кроликом (или над счётчиком, если кролик спрятан)
 function coinFx(n){
@@ -1120,21 +1154,11 @@ function notify(text){
   const t = $('#toastx'); t.textContent = text; t.classList.add('on');
   clearTimeout(notify.t); notify.t = setTimeout(() => t.classList.remove('on'), 3200);
 }
-$('#coins').onclick = () => { ySub = 'quests'; tab('yomi'); };
+$('#coins').onclick = () => tab('path');
 function miniBunny(char, color, hat){
   const svg = $('#buddy svg').cloneNode(true);
   const d = document.createElement('div'); d.className = 'buddy mini'; Object.assign(d.dataset, {char, color, hat, p: 'kind', s: 'idle'});
   d.append(svg); return d.outerHTML;
-}
-function questsHtml(){
-  const g = G; if(!g) return '<div class="empty">Загружаю…</div>';
-  return `<div class="cta"><div><b>${g.coins} 🪙</b><small>монетки · серия входов ${g.loginStreak} ${plural(g.loginStreak, 'день', 'дня', 'дней')}</small></div><button class="btn line sm" data-ysub="shop">В магазин</button></div>
-    <p class="lead">Монетка за каждую фразу, ещё одна — если без ошибок, и за каждое повторённое слово. Заходи каждый день — подарок за вход растёт.</p>
-    <h3 class="sub-h">Задания на сегодня</h3>
-    <div class="quests">${g.quests.map(q => `<div class="quest${q.claimed ? ' done' : ''}"><div class="q-t"><b>${esc(q.title)}</b><span>${q.progress} / ${q.goal}</span></div>
-      <div class="q-bar"><i style="width:${Math.round(q.progress / q.goal * 100)}%"></i></div>
-      ${q.claimed ? '<small class="q-ok">Получено ✓</small>' : q.progress >= q.goal ? `<button class="btn sm" data-claim="${q.id}">Забрать +${q.reward} 🪙</button>` : `<small>Награда: ${q.reward} 🪙</small>`}</div>`).join('')}</div>
-    <p class="lead" style="margin-top:14px">Новые задания — завтра.</p>`;
 }
 function shopHtml(){
   const g = G; if(!g) return '<div class="empty">Загружаю…</div>';
@@ -1160,10 +1184,10 @@ async function gameClick(e){
 }
 function showYomi(){
   const box = $('#yomiBox');
-  box.innerHTML = `<h2>Yomi</h2><div class="chats ysub" role="tablist">${[['quests', 'Задания'], ['shop', 'Магазин'], ['settings', 'Настройки']].map(([k, n]) => `<button role="tab" data-ysub="${k}" class="${ySub === k ? 'on' : ''}">${n}${k === 'quests' && questReady(G) ? ' •' : ''}</button>`).join('')}</div><div id="ySubBox"></div>`;
+  box.innerHTML = `<h2>Yomi</h2><div class="chats ysub" role="tablist">${[['shop', 'Магазин'], ['settings', 'Настройки']].map(([k, n]) => `<button role="tab" data-ysub="${k}" class="${ySub === k ? 'on' : ''}">${n}</button>`).join('')}</div><div id="ySubBox"></div>`;
   const sb = $('#ySubBox');
   if(ySub === 'settings') return showYomiSettings(sb);
-  sb.innerHTML = ySub === 'shop' ? shopHtml() : questsHtml();
+  sb.innerHTML = shopHtml();
   if(!G) api('game').then(j => { if(j.game){ applyGame(j.game); showYomi(); } });
 }
 /* ---------- вкладка «Yomi»: кролик на экране, эмоции, звуки, голос ---------- */
@@ -1194,14 +1218,81 @@ $('#yomiBox').onclick = async e => {
   if(vs && vs.dataset.vs !== S.speaker){ const j = await api('speaker', {speaker: vs.dataset.vs}); if(j.ok){ S.speaker = j.speaker; showYomi(); } }
 };
 
+let wSub = 'words';
+function showWordsTab(){
+  document.querySelectorAll('#wseg [data-w]').forEach(b => b.classList.toggle('on', b.dataset.w === wSub));
+  $('#wordsBox').hidden = wSub !== 'words'; $('#mistBox').hidden = wSub !== 'mist';
+  if(wSub === 'words') showWords(); else showMistakes();
+}
+$('#wseg').onclick = e => { const b = e.target.closest('[data-w]'); if(b){ wSub = b.dataset.w; showWordsTab(); } };
+/* ---------- «Путь»: уровни-тропинка, задания дня и недели, сундучок дня ---------- */
+const QICON = {phrases: '💬', clean: '✨', reviews: '🔁', scene: '🎭', friend: '☕', pet: '🐾', newwords: '📝', test: '🎯', long: '📏', question: '❓', coach: '🧭', voice: '🎙️', days: '📅'};
+const PATH_X = [0, 26, 40, 26, 0, -26, -40, -26];   // извилистая тропинка: сдвиг кружков от центра, %
+function questCard(q){
+  const ready = !q.claimed && q.progress >= q.goal;
+  return `<div class="qcard${q.claimed ? ' done' : ready ? ' ready' : ''}"><div class="q-ico" aria-hidden="true">${QICON[q.metric] || '⭐'}</div>
+    <div class="q-main"><b>${esc(q.title)}</b><div class="q-bar"><i style="width:${Math.round(q.progress / q.goal * 100)}%"></i></div><small>${q.progress} / ${q.goal}</small></div>
+    <div class="q-side">${q.claimed ? '<span class="q-done" aria-label="Получено">✓</span>' : ready ? `<button class="btn sm" data-claim="${q.id}">+${q.reward} 🪙</button>` : `<span class="q-rew">${q.reward} 🪙</span>`}</div></div>`;
+}
+function showPath(){
+  const g = G, box = $('#pathBox');
+  if(!g){ box.innerHTML = '<div class="empty">Загружаю…</div>'; api('game').then(j => { if(j.game){ applyGame(j.game); showPath(); } }); return; }
+  const start = Math.max(1, g.level - 2), levels = [...Array(12)].map((_, i) => start + i), ROW = 84;
+  const pos = l => ({x: 50 + PATH_X[(l - 1) % PATH_X.length], y: (l - start) * ROW + 42});
+  const pts = levels.map(l => { const p = pos(l); return `${p.x},${p.y}`; });
+  const done = g.quests.filter(q => q.claimed).length;
+  box.innerHTML = `<div class="lvlcard"><div class="lvl-badge"><small>уровень</small><b>${g.level}</b></div>
+      <div class="lvl-info"><div class="xpbar"><i style="width:${Math.round(g.levelXp / g.levelNeed * 100)}%"></i></div><small>${g.levelXp} / ${g.levelNeed} XP · за следующий уровень +${g.nextReward} 🪙</small></div></div>
+    <div class="path" id="pathMap" style="height:${levels.length * ROW}px">
+      <svg class="path-line" viewBox="0 0 100 ${levels.length * ROW}" preserveAspectRatio="none" aria-hidden="true">
+        <polyline points="${pts.slice(0, g.level - start + 1).join(' ')}" class="pl-done"/><polyline points="${pts.slice(g.level - start).join(' ')}" class="pl-todo"/></svg>
+      ${levels.map(l => { const p = pos(l), chest = l % 5 === 0, cls = l < g.level ? 'past' : l === g.level ? 'now' : 'next';
+        return `<div class="pnode ${cls}${chest ? ' chest' : ''}" style="left:${p.x}%;top:${p.y}px" title="Уровень ${l}">${chest && l > g.level ? '🎁' : l < g.level ? '✓' : l}</div>`; }).join('')}
+      <div class="pbunny" id="pbunny">${miniBunny(g.equip.char, g.equip.color, g.equip.hat)}</div>
+    </div>
+    <h3 class="sub-h">Задания дня</h3>
+    <div class="qlist">${g.quests.map(questCard).join('')}
+      <div class="qcard chestcard${g.bonus.claimed ? ' done' : g.bonus.ready ? ' ready' : ''}"><div class="q-ico" aria-hidden="true">🎁</div>
+        <div class="q-main"><b>Сундучок дня</b><div class="q-bar"><i style="width:${Math.round(done / g.quests.length * 100)}%"></i></div><small>Выполни все задания дня: ${done} / ${g.quests.length}</small></div>
+        <div class="q-side">${g.bonus.claimed ? '<span class="q-done">✓</span>' : g.bonus.ready ? `<button class="btn sm" data-claim="bonus">+${g.bonus.reward} 🪙</button>` : `<span class="q-rew">${g.bonus.reward} 🪙</span>`}</div></div></div>
+    <h3 class="sub-h">Задания недели · ещё ${g.weekEnds} ${plural(g.weekEnds, 'день', 'дня', 'дней')}</h3>
+    <div class="qlist">${g.weekly.map(questCard).join('')}</div>`;
+  // кролик стоит на своём уровне; если уровень вырос с прошлого раза — прыгает по кружкам до нового
+  const pb = $('#pbunny'), seen = Math.max(start, Math.min(g.level, store.get('yomi_seenlvl', g.level)));
+  const put = l => { const p = pos(l); pb.style.left = p.x + '%'; pb.style.top = (p.y - 34) + 'px'; };
+  put(seen);
+  if(seen < g.level){
+    let l = seen;
+    const step = () => { l++; pb.classList.remove('jump'); void pb.offsetWidth; pb.classList.add('jump'); put(l); sfx('hop');
+      if(l < g.level) setTimeout(step, 650); else setTimeout(() => { sfx('happy'); store.set('yomi_seenlvl', g.level); }, 650); };
+    setTimeout(step, 500);
+  } else store.set('yomi_seenlvl', g.level);
+  setTimeout(() => pb.scrollIntoView({block: 'center', behavior: 'smooth'}), 50);
+}
+$('#pathBox').onclick = async e => {
+  const claim = e.target.closest('[data-claim]'); if(!claim) return;
+  unlock(); claim.disabled = true;
+  const j = await api('claim', {quest: claim.dataset.claim});
+  if(j.game) applyGame(j.game);
+  if(j.ok){ react('t-heart', 1300); notify(`+${j.reward} 🪙 — молодец!`); }
+  showPath();
+};
+// праздник нового уровня: карточка с прыгающим кроликом и наградой
+function celebrate(level, reward){
+  sfx('happy'); hop();
+  sheet(`<div class="lvlup"><div class="confetti" aria-hidden="true">${[...Array(14)].map((_, i) => `<i style="--i:${i}"></i>`).join('')}</div>
+    <div class="lvlup-b">${miniBunny(G.equip.char, G.equip.color, G.equip.hat)}</div>
+    <h2>Уровень ${level}!</h2><p class="lead">${level % 5 === 0 ? 'Сундук уровня открыт: ' : 'Награда: '}+${reward} 🪙. Кролик уже прыгнул на новый кружок в «Пути».</p>
+    <div class="actions"><button class="btn" data-lvlok>Ура!</button><button class="btn line" data-lvlpath>Посмотреть путь</button></div></div>`);
+  $('#sheetIn').onclick = e => { if(e.target.closest('[data-lvlok]')) closeSheet(); if(e.target.closest('[data-lvlpath]')){ closeSheet(); tab('path'); } };
+}
 /* ---------- вкладки и запуск ---------- */
 function tab(v){
   document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
   document.querySelectorAll('.view').forEach(s => s.classList.toggle('on', s.id === 'v-' + v));
   if(v !== 'talk' && inCall) endCall();
-  if(v === 'words') showWords();
-  if(v === 'mist') showMistakes();
-  if(v === 'prog') showProgress();
+  if(v === 'words') showWordsTab();
+  if(v === 'path'){ showPath(); showProgress(); }
   if(v === 'yomi') showYomi();
 }
 // переключение «Учёба» ↔ «Болтовня»: у каждого чата своя лента и своя история на сервере
