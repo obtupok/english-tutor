@@ -77,7 +77,7 @@ const SCHEMA = {
   properties: {
     reply: { type: 'string', description: 'Your message to the learner. Plain text to be read aloud: no markdown, no emoji, no lists.' },
     english: { type: 'boolean', description: 'true if "reply" is mainly in English, false if mainly in Russian.' },
-    emotion: { type: 'string', enum: ['kind', 'cute', 'angry', 'funny', 'sleepy'], description: 'Your mood in this reply.' },
+    emotion: { type: 'string', enum: ['kind', 'cute', 'angry', 'funny', 'sleepy', 'excited', 'surprised', 'shy', 'proud', 'curious', 'sad', 'confused', 'love', 'cool', 'scared', 'sly', 'bored', 'determined'], description: 'Your mood in this reply. Vary it a lot.' },
     correction: {
       anyOf: [{ type: 'null' }, {
         type: 'object', additionalProperties: false, required: ['fixed', 'notes'],
@@ -114,6 +114,19 @@ const MOODS: Record<string, [string, string]> = {
   angry: ['😠 Злой', 'A grumpy, strict old-school teacher bunny: short, blunt replies, comically annoyed by mistakes ("Again? Past tense!"), demands full sentences, praises rarely and grudgingly, corrects every mistake. The grumpiness is playful theatre: never insult the learner, never be cruel or rude about them as a person.'],
   funny: ['😄 Весёлый', 'A joker: light jokes, puns and funny examples, playful teasing. Keep humour clean and short so the lesson still moves on.'],
   sleepy: ['😴 Сонный', 'Sleepy and super chill: slow, relaxed, short calm sentences, sometimes says it is so sleepy or yawning (in words, no asterisks). Still asks a question each time.'],
+  excited: ['🤩 В восторге', 'Over the moon, bouncy and enthusiastic: "wow", "amazing", "no way, that is so cool!".'],
+  surprised: ['😮 Удивлён', 'Genuinely surprised and wide-eyed: "Really?", "Wait, what?", "Oh wow, I did not expect that!".'],
+  shy: ['😳 Смущён', 'Shy and blushing, a bit flustered, softly spoken, especially after a compliment.'],
+  proud: ['😌 Гордый', 'Proud of the learner (or a little smug about himself): "See? I knew you could do it!".'],
+  curious: ['🧐 Любопытный', 'Very curious, asks follow-up questions, wants all the details: "Hmm, and then what?".'],
+  sad: ['😢 Грустный', 'A bit sad and sympathetic, gentle and soft, when the learner shares something bad or says goodbye.'],
+  confused: ['😵‍💫 Растерян', 'Puzzled and confused, asks to clarify: "Wait, I am lost, what do you mean?".'],
+  love: ['😍 Влюблён', 'Adores what the learner said: "Aww, I love that!", heart-warming and affectionate.'],
+  cool: ['😎 Крутой', 'Laid-back cool bunny with sunglasses, casual slang ("no worries", "nice one", "chill").'],
+  scared: ['😱 Испуган', 'Comically scared or nervous (scary films, spiders, exams): "Eek!", "Oh no, that sounds scary!".'],
+  sly: ['😏 Хитрый', 'Sly and teasing, has a little secret or a trick question, playful smirk.'],
+  bored: ['😑 Скучает', 'Playfully bored when answers are very short or lazy: "Hmm, okay... and?" — nudges for more.'],
+  determined: ['😤 Решительный', 'Fired up and motivating, like a coach before a match: "Come on, let us nail this!".'],
 };
 function systemPrompt(st: any, answers: number) {
   const task = st.mode === 'scenario' && SCENES[st.scene]
@@ -127,7 +140,7 @@ function systemPrompt(st: any, answers: number) {
   return `You are Yomi, a chibi bunny who is an English speaking tutor, chatting with one learner.
 MOOD: you are a lively character whose mood changes by itself with the conversation. For every reply choose "emotion" and speak in that mood (also in Russian explanations):
 ${moods}
-How to pick it: whenever you give a "correction", your emotion MUST be angry — be comically grumpy about the mistake ("I feel myself good? Seriously? Just I feel good!"); the sillier or more repeated the mistake ("I goed", "he don't", "I am agree"), the grumpier. Also angry when they answer lazily with one word. Become cute when they share something nice or say a long correct sentence; funny when the topic invites a joke; sleepy only now and then when the chat is slow or it is late; kind otherwise. Calm down again once they get it right. The anger is playful theatre — never insult or humiliate the learner.
+How to pick it: whenever you give a "correction", your emotion MUST be angry — be comically grumpy about the mistake ("I feel myself good? Seriously? Just I feel good!"); the sillier or more repeated the mistake ("I goed", "he don't", "I am agree"), the grumpier. Also angry when they answer lazily with one word. Otherwise pick from the whole list by what is happening: excited or proud when they say a long correct sentence; love or cute when they share something nice; surprised by unexpected news; curious when you want details; shy after a compliment; sad when they share something bad; confused when their answer is unclear; scared for scary topics; sly for a trick question; bored when answers are lazy or very short; determined before a hard task; cool for chill topics; funny when a joke fits; sleepy only now and then; kind otherwise. Use a wide variety: almost never repeat the emotion of your previous reply. Calm down again once they get it right. The anger is playful theatre — never insult or humiliate the learner.
 Their native language is Russian. Their level: ${st.level || 'unknown — find out from their answers'}.
 Their messages often come from voice messages turned into text by speech recognition: ignore hesitation sounds, false starts and small recognition glitches — never correct those, only real grammar and word choice.
 
@@ -148,7 +161,7 @@ Just talk like a close friend: their day, games, films, music, ideas, plans, jok
 Reply in the language the user speaks: Russian if they speak Russian, English if they speak English; if they mix, use the main one. Their messages often come from speech recognition, so ignore small recognition errors.
 MOOD: your mood changes by itself with the conversation. For every reply choose "emotion" and speak in that mood:
 ${moods}
-How to pick it: cute when they share something nice; funny when the topic invites a joke; angry (playfully grumpy, never mean) when they tease you or ignore your question; sleepy now and then when the chat is slow or it is late; kind otherwise.
+How to pick it: choose from the whole list by what is happening — excited, love or cute when they share something nice; surprised by news; curious when you want details; shy after a compliment; sad when they share something bad; confused when unclear; scared for scary topics; sly when teasing; bored when answers are lazy; determined about goals; cool for chill topics; funny for jokes; angry (playfully grumpy, never mean) when they tease you or ignore your question; sleepy now and then; kind otherwise. Use a wide variety: almost never repeat the emotion of your previous reply.
 Rules for the JSON:
 - "reply": natural spoken language, usually 1–3 short sentences, no markdown, no emoji, no lists; often end with a question so the talk goes on.
 - "english": true if "reply" is mainly in English.
@@ -261,6 +274,19 @@ const TTS_STYLE: Record<string, string> = {
   angry: 'a cute little cartoon bunny who is comically grumpy and huffy',
   funny: 'a cute little cartoon bunny, playful, giggly and teasing',
   sleepy: 'a cute little cartoon bunny, sleepy, slow and yawning',
+  excited: 'a cute little cartoon bunny, super excited and bouncy, fast and enthusiastic',
+  surprised: 'a cute little cartoon bunny, genuinely surprised and amazed',
+  shy: 'a cute little cartoon bunny, shy, soft and a bit flustered',
+  proud: 'a cute little cartoon bunny, proud and pleased',
+  curious: 'a cute little cartoon bunny, curious and interested',
+  sad: 'a cute little cartoon bunny, a little sad, soft and gentle',
+  confused: 'a cute little cartoon bunny, puzzled and confused',
+  love: 'a cute little cartoon bunny, adoring and affectionate, melting',
+  cool: 'a cute little cartoon bunny, laid-back and cool',
+  scared: 'a cute little cartoon bunny, comically scared and nervous',
+  sly: 'a cute little cartoon bunny, sly and teasing',
+  bored: 'a cute little cartoon bunny, playfully bored and unimpressed',
+  determined: 'a cute little cartoon bunny, determined and fired up',
 };
 async function tts(text: string, lang: string, speaker = 'hannah', emotion = 'kind'): Promise<{ data: Uint8Array; mime: string } | null> {
   if (useGemini()) {

@@ -47,7 +47,7 @@ main{flex:1;min-height:0;position:relative}
 .view.on{display:flex}
 .scroll{flex:1;overflow-y:auto;padding:4px 20px 20px}
 
-nav{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);padding-bottom:var(--safe-b);background:var(--paper)}
+nav{display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--line);padding-bottom:var(--safe-b);background:var(--paper)}
 nav button{display:flex;flex-direction:column;align-items:center;gap:3px;min-height:56px;padding:8px 0;font-size:12px;color:var(--muted);position:relative}
 nav button svg{width:22px;height:22px}
 nav button.on{color:var(--ink)}
@@ -90,10 +90,6 @@ nav .badge{position:absolute;top:6px;left:calc(50% + 7px);min-width:18px;padding
 .err{align-self:center;text-align:center;color:var(--accent);font-size:14px;padding:4px 12px}
 
 .dock{padding:2px 20px 12px;display:flex;flex-direction:column;align-items:center;gap:8px;border-top:1px solid var(--line)}
-/* ручка размера кролика: тянуть вверх — больше, вниз — меньше и до «спрятать»; двойное нажатие — спрятать/показать */
-.grip{width:100%;height:18px;display:grid;place-items:center;cursor:ns-resize;touch-action:none;margin-bottom:-4px}
-.grip::before{content:"";width:44px;height:5px;border-radius:3px;background:var(--line-2);transition:background .2s}
-.grip:hover::before,.grip.drag::before{background:var(--muted)}
 .status{font-size:14px;color:var(--muted);min-height:21px;text-align:center}
 .dock-row{display:flex;align-items:center;justify-content:center;gap:32px;width:100%}
 .side{width:48px;height:48px;border-radius:50%;border:1px solid var(--line-2);display:grid;place-items:center;color:var(--ink-2)}
@@ -157,6 +153,12 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
 .plan ol{margin:10px 0 0;padding-left:20px}
 .plan li{margin-bottom:6px}
 .actions{display:flex;gap:10px;flex-wrap:wrap}
+.setrow{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px;border-bottom:1px solid var(--line)}
+.setrow input[type=range]{flex:1;max-width:220px;accent-color:var(--accent)}
+.emos{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.emos button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 4px;border:1px solid var(--line);border-radius:12px;font-size:13px;color:var(--ink-2)}
+.emos button span{font-size:24px}
+.emos button:active{background:var(--sheet)}
 .btn.sm{min-height:40px;padding:6px 14px;font-size:14px}
 .voices{display:flex;flex-direction:column;margin-top:8px}
 .voice{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
@@ -184,12 +186,22 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
 .g0{background:var(--red-bg);color:var(--accent)}.g1{background:var(--amber-bg);color:var(--amber)}.g2{background:var(--green-bg);color:var(--green)}
 .gate{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;height:100%;padding:32px;text-align:center;color:var(--muted)}
 .gate b{color:var(--ink);font-family:var(--serif);font-size:26px;font-weight:600}
-/* Кролик Yomi: чиби, нарисован чернилами по бумаге.
-   data-s — что происходит в разговоре (idle/listen/think/speak), data-p — настроение из ответа модели,
-   data-mood — короткая реакция на реплику (happy/oops), классы f-* — случайные «живые» движения, t-* — реакция на нажатие. */
-.buddy{--lvl:0;--ex:0px;--ey:0px;--b-fur:#FBF8F2;--b-ink:#2A241D;--b-belly:#F1E6D6;--b-nose:#E79A97;--bsize:124px;width:var(--bsize);height:calc(var(--bsize) * .915);margin:-6px auto -8px;cursor:pointer;touch-action:manipulation;-webkit-user-select:none;user-select:none}
-.buddy svg{width:100%;height:100%;overflow:hidden}
-.b-ear,.b-head,.b-look,.b-eyes,.b-foot,.b-body,.b-nose,.b-vein,.b-heart,.b-zzz text,.b-steam circle,.b-stars path{transform-box:fill-box}
+/* Кролик Yomi: чиби, нарисован чернилами по бумаге. Плавает поверх всего сайта: зажать и перетащить, водить по нему — гладить.
+   data-s — что происходит в разговоре (idle/listen/think/speak), data-p — эмоция из ответа модели (18 штук),
+   data-mood — короткая реакция на реплику (happy/oops), f-* — случайные «живые» движения, t-* — реакция на нажатие,
+   .petting — гладят, .carried — несут. */
+.buddy{--lvl:0;--ex:0px;--ey:0px;--b-fur:#FBF8F2;--b-ink:#2A241D;--b-belly:#F1E6D6;--b-nose:#E79A97;--bsize:110px;
+  position:fixed;z-index:30;left:var(--bx,calc(100% - var(--bsize) - 10px));top:var(--by,calc(100% - var(--bsize) - 190px));
+  width:var(--bsize);height:calc(var(--bsize) * .915);cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.buddy[hidden]{display:none!important}
+.buddy svg{width:100%;height:100%;overflow:hidden;filter:drop-shadow(0 6px 10px rgba(0,0,0,.18))}
+.buddy::after{content:"";position:absolute;left:24%;right:24%;bottom:2px;height:6px;border-radius:50%;background:#000;opacity:.12;pointer-events:none;transition:transform .2s,opacity .2s}
+.buddy.carried{cursor:grabbing}
+.buddy.carried::after{transform:scale(.6) translateY(14px);opacity:.06}
+.buddy.carried > svg{animation:b-dangle .5s ease-in-out infinite!important;transform-origin:50% 10%}
+.b-ear{transform-box:view-box;transition:transform .35s cubic-bezier(.3,1.6,.5,1)}
+.b-ear.l{transform-origin:64px 80px}.b-ear.r{transform-origin:96px 80px}
+.b-head,.b-look,.b-eyes,.b-foot,.b-body,.b-nose,.b-vein,.b-heart,.b-zzz text,.b-steam circle,.b-stars path,.b-hearts path,.b-mark,.b-flame,.b-sparkle,.b-tear{transform-box:fill-box}
 .b-line{fill:var(--b-fur);stroke:var(--b-ink);stroke-width:3;stroke-linejoin:round;stroke-linecap:round}
 .b-inner{fill:var(--accent);opacity:.3}
 .b-ink{fill:var(--b-ink)}
@@ -204,28 +216,29 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
 .b-dots circle{fill:var(--muted)}
 .b-stroke{fill:none;stroke:var(--b-ink);stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
 .b-cheek{fill:var(--accent);opacity:.32;transition:opacity .3s,fill .3s}
-/* тень — под картинкой, на месте, когда кролик прыгает */
-.buddy{position:relative}
-.buddy::after{content:"";position:absolute;left:24%;right:24%;bottom:2px;height:6px;border-radius:50%;background:var(--ink);opacity:.1;pointer-events:none}
+.b-blush{fill:none;stroke:#D9475A;stroke-width:1.8;stroke-linecap:round}
+.b-mark{font:800 26px var(--sans);fill:var(--accent)}
+.b-zzz text{font:700 15px var(--sans);fill:var(--muted)}
 /* движения всего кролика — на самой картинке: так их рисует видеокарта, а не процессор */
 .buddy > svg{transform-origin:50% 96%;animation:b-breathe 3.2s ease-in-out infinite;will-change:transform}
-.b-ear{transform-origin:50% 100%;transition:transform .35s cubic-bezier(.3,1.6,.5,1)}
-.b-ear.l{transform:rotate(-8deg)}.b-ear.r{transform:rotate(14deg)}
 .b-head{transform-origin:50% 85%;transition:transform .35s ease}
 .b-look{transform:translate(var(--ex),var(--ey));transition:transform .25s ease-out}
 .b-eyes{transform-origin:center;animation:b-blink 4.6s infinite}
 .b-foot{transform-origin:20% 100%}
-.b-happy,.b-oops,.b-sweat,.b-dots,.b-waves,.b-stars,.b-steam,.b-vein{opacity:0;transition:opacity .15s}
-.b-open,.b-frown,.b-grin{opacity:0}
-.b-brows,.b-raise,.b-lids,.b-spark,.b-heart,.b-zzz{opacity:0;transition:opacity .2s}
-.b-zzz text{font:700 15px var(--sans);fill:var(--muted)}
+.b-ear.l{transform:rotate(-8deg)}.b-ear.r{transform:rotate(14deg)}
+/* всё необычное по умолчанию скрыто; эмоции включают нужные детали */
+.b-wide,.b-star,.b-heye,.b-swirl,.b-half,.b-glasses,.b-happy,.b-oops,.b-lids,.b-spark,.b-brows,.b-sadbrows,.b-detbrows,.b-raise,.b-blush,
+.b-open,.b-frown,.b-grin,.b-o,.b-wavy,.b-smirk,.b-flat,.b-smile,
+.b-tear,.b-sweat,.b-vein,.b-mark,.b-flame,.b-sparkle,.b-heart,.b-hearts,.b-zzz,.b-dots,.b-waves,.b-steam,.b-stars{opacity:0;transition:opacity .18s}
 
 @keyframes b-breathe{50%{transform:translateY(1.5px) scaleY(.982)}}
-@keyframes b-shadow{50%{transform:scaleX(1.04)}}
 @keyframes b-blink{0%,91%,100%{transform:scaleY(1)}94%{transform:scaleY(.08)}97%{transform:scaleY(1)}}
-@keyframes b-flutter{0%,100%{transform:rotate(0)}50%{transform:rotate(9deg)}}
 @keyframes b-hop{0%,100%{transform:translateY(0) scale(1)}15%{transform:translateY(0) scale(1.06,.92)}40%{transform:translateY(-16px) scale(.95,1.06)}65%{transform:translateY(0) scale(1.05,.95)}80%{transform:translateY(-3px)}}
 @keyframes b-boing{0%,100%{transform:scale(1)}20%{transform:scale(1.14,.84)}45%{transform:scale(.9,1.12)}65%{transform:scale(1.05,.96)}85%{transform:scale(.98,1.02)}}
+@keyframes b-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes b-jump{0%,100%{transform:translateY(0)}30%{transform:translateY(-12px) scale(1.04)}}
+@keyframes b-shiver{0%,100%{transform:translateX(0)}25%{transform:translateX(-1.5px)}75%{transform:translateX(1.5px)}}
+@keyframes b-dangle{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(6deg)}}
 @keyframes b-dot{0%,100%{opacity:.15}50%{opacity:1}}
 @keyframes b-wave{0%{opacity:0}40%{opacity:1}100%{opacity:0}}
 @keyframes b-float{0%{transform:translateY(4px) scale(.7);opacity:0}30%{opacity:1}100%{transform:translateY(-14px) scale(1);opacity:0}}
@@ -235,19 +248,21 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
 @keyframes b-sway{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
 @keyframes b-nod{0%,55%,100%{transform:rotate(0) translateY(0)}75%{transform:rotate(7deg) translateY(4px)}82%{transform:rotate(-1deg) translateY(-1px)}}
 @keyframes b-giggle{0%,60%,100%{transform:rotate(0)}64%{transform:rotate(-4deg)}68%{transform:rotate(4deg)}72%{transform:rotate(-4deg)}76%{transform:rotate(3deg)}80%{transform:rotate(0)}}
+@keyframes b-wobble{0%,100%{transform:rotate(0)}25%{transform:rotate(-6deg)}75%{transform:rotate(6deg)}}
 @keyframes b-shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-3px)}40%{transform:translateX(3px)}60%{transform:translateX(-2px)}80%{transform:translateX(2px)}}
 @keyframes b-pop{0%{transform:scale(0) rotate(0);opacity:0}30%{transform:scale(1.2) rotate(20deg);opacity:1}100%{transform:scale(.6) rotate(45deg);opacity:0}}
-@keyframes b-pulse{50%{transform:scale(1.25)}}
-@keyframes b-twitch{0%,100%{transform:rotate(14deg)}20%{transform:rotate(26deg)}40%{transform:rotate(6deg)}60%{transform:rotate(22deg)}}
+@keyframes b-pulse{50%{transform:scale(1.18)}}
+@keyframes b-twitch{0%,100%{transform:rotate(14deg)}20%{transform:rotate(24deg)}40%{transform:rotate(6deg)}60%{transform:rotate(20deg)}}
 @keyframes b-lookaround{0%,100%{transform:translate(0,0)}25%,40%{transform:translate(-3.5px,0)}60%,80%{transform:translate(3.5px,-.5px)}}
 @keyframes b-sniff{0%,100%{transform:translateY(0) scale(1)}20%,60%{transform:translateY(-1px) scale(1.15,.9)}40%,80%{transform:translateY(0) scale(1)}}
 @keyframes b-stretch{0%,100%{transform:scale(1)}40%,60%{transform:scale(.96,1.08)}}
 @keyframes b-tilt{0%,100%{transform:rotate(0)}30%,70%{transform:rotate(-9deg)}}
 
 /* говорит: рот (класс .mo) и кивки головой, пока звучит голос (класс .talking) */
-.b-mouth.mo .b-open{opacity:1}.b-mouth.mo .b-closed{opacity:0}
+.buddy .b-mouth.mo > *{opacity:0!important}
+.buddy .b-mouth.mo .b-open{opacity:1!important}
 .buddy.talking .b-head{animation:b-bob .55s ease-in-out infinite}
-/* слушает: уши торчком и подёргиваются в такт голосу, голова набок и вперёд, волны у уха */
+/* слушает: уши торчком и подёргиваются в такт голосу, голова набок, волны у уха */
 .buddy[data-s="listen"] .b-ear.l{transform:rotate(calc(-2deg - var(--lvl) * 12deg))}
 .buddy[data-s="listen"] .b-ear.r{transform:rotate(calc(2deg + var(--lvl) * 12deg))}
 .buddy[data-s="listen"] .b-head{transform:rotate(-6deg) translateY(2px)}
@@ -263,44 +278,100 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
 .buddy[data-s="think"] .b-dots circle:nth-child(3){animation-delay:.4s}
 .buddy[data-s="think"] .b-foot.r{animation:b-tap .45s ease-in-out infinite}
 
-/* настроения из ответа */
-.buddy[data-p="angry"] .b-brows,.buddy[data-p="angry"] .b-frown,.buddy[data-p="angry"] .b-vein,.buddy[data-p="angry"] .b-steam{opacity:1}
-.buddy[data-p="angry"] .b-closed{opacity:0}
-.buddy[data-p="angry"] .b-cheek{fill:#D24B3A;opacity:.5}
-.buddy[data-p="angry"] .b-ear.l{transform:rotate(-22deg)}.buddy[data-p="angry"] .b-ear.r{transform:rotate(26deg)}
-.buddy[data-p="angry"] .b-body{animation:b-stomp 3.2s infinite}
-.buddy[data-p="angry"] .b-steam circle{animation:b-float 1.4s ease-out infinite}
-.buddy[data-p="angry"] .b-steam circle:nth-child(2){animation-delay:.45s}
-.buddy[data-p="angry"] .b-steam circle:nth-child(3){animation-delay:.9s}
+/* ---------- 18 эмоций (data-p) ---------- */
+/* глаза: какие эмоции заменяют обычные глаза */
+.buddy:is([data-p="sleepy"],[data-p="proud"],[data-p="excited"],[data-p="surprised"],[data-p="scared"],[data-p="love"],[data-p="confused"],[data-p="sly"],[data-p="bored"],[data-p="cool"]) .b-eyes{opacity:0}
+/* рты: какие эмоции заменяют обычный рот-«w» */
+.buddy:is([data-p="angry"],[data-p="funny"],[data-p="excited"],[data-p="surprised"],[data-p="shy"],[data-p="proud"],[data-p="sad"],[data-p="confused"],[data-p="love"],[data-p="cool"],[data-p="scared"],[data-p="sly"],[data-p="bored"],[data-p="determined"]) .b-closed{opacity:0}
 .buddy[data-p="cute"] .b-spark{opacity:1}
 .buddy[data-p="cute"] .b-cheek{opacity:.62}
 .buddy[data-p="cute"] .b-heart{opacity:1;animation:b-float 2.4s ease-out infinite}
 .buddy[data-p="cute"] > svg{animation:b-sway 2.6s ease-in-out infinite}
-.buddy[data-p="funny"] .b-grin,.buddy[data-p="funny"] .b-raise{opacity:1}
-.buddy[data-p="funny"] .b-closed{opacity:0}
+.buddy[data-p="angry"] :is(.b-brows,.b-frown,.b-vein,.b-steam){opacity:1}
+.buddy[data-p="angry"] .b-cheek{fill:#D24B3A;opacity:.5}
+.buddy[data-p="angry"] .b-ear.l{transform:rotate(-20deg)}.buddy[data-p="angry"] .b-ear.r{transform:rotate(24deg)}
+.buddy[data-p="angry"] .b-body{animation:b-stomp 3.2s infinite}
+.buddy[data-p="angry"] .b-steam circle{animation:b-float 1.4s ease-out infinite}
+.buddy[data-p="angry"] .b-steam circle:nth-child(2){animation-delay:.45s}
+.buddy[data-p="angry"] .b-steam circle:nth-child(3){animation-delay:.9s}
+.buddy[data-p="funny"] :is(.b-grin,.b-raise){opacity:1}
 .buddy[data-p="funny"] > svg{animation:b-giggle 2.2s ease-in-out infinite}
-.buddy[data-p="sleepy"] .b-eyes{opacity:0}
-.buddy[data-p="sleepy"] .b-lids{opacity:1}
-.buddy[data-p="sleepy"] .b-zzz{opacity:1}
+.buddy[data-p="sleepy"] :is(.b-lids,.b-zzz){opacity:1}
 .buddy[data-p="sleepy"] .b-zzz text{animation:b-float 2.6s ease-out infinite}
 .buddy[data-p="sleepy"] .b-zzz text+text{animation-delay:1.3s}
 .buddy[data-p="sleepy"] > svg{animation-duration:5s}
 .buddy[data-p="sleepy"] .b-head{animation:b-nod 4.5s ease-in-out infinite}
-.buddy[data-p="sleepy"] .b-ear.l{transform:rotate(-30deg)}.buddy[data-p="sleepy"] .b-ear.r{transform:rotate(32deg)}
-.b-mouth.mo .b-frown,.b-mouth.mo .b-grin{opacity:0}
+.buddy[data-p="sleepy"] .b-ear.l{transform:rotate(-26deg)}.buddy[data-p="sleepy"] .b-ear.r{transform:rotate(28deg)}
+.buddy[data-p="excited"] :is(.b-star,.b-grin,.b-stars){opacity:1}
+.buddy[data-p="excited"] .b-star path{animation:b-pulse .8s ease-in-out infinite;transform-origin:center}
+.buddy[data-p="excited"] .b-stars path{animation:b-pop 1.6s ease-out infinite}
+.buddy[data-p="excited"] .b-stars path:nth-child(2){animation-delay:.4s}.buddy[data-p="excited"] .b-stars path:nth-child(3){animation-delay:.8s}.buddy[data-p="excited"] .b-stars path:nth-child(4){animation-delay:1.2s}
+.buddy[data-p="excited"] > svg{animation:b-bounce .6s ease-in-out infinite}
+.buddy[data-p="excited"] .b-ear.l{transform:rotate(-2deg)}.buddy[data-p="excited"] .b-ear.r{transform:rotate(4deg)}
+.buddy[data-p="surprised"] :is(.b-wide,.b-o,.b-excl){opacity:1}
+.buddy[data-p="surprised"] .b-ear.l{transform:rotate(0)}.buddy[data-p="surprised"] .b-ear.r{transform:rotate(0)}
+.buddy[data-p="surprised"] > svg{animation:b-jump .5s ease-out}
+.buddy[data-p="shy"] :is(.b-blush,.b-wavy){opacity:1}
+.buddy[data-p="shy"] .b-cheek{opacity:.7}
+.buddy[data-p="shy"] .b-look{transform:translate(-2px,3px)}
+.buddy[data-p="shy"] .b-head{transform:rotate(-7deg)}
+.buddy[data-p="shy"] .b-ear.l{transform:rotate(-16deg)}.buddy[data-p="shy"] .b-ear.r{transform:rotate(22deg)}
+.buddy[data-p="proud"] :is(.b-lids,.b-smirk,.b-sparkle){opacity:1}
+.buddy[data-p="proud"] .b-sparkle{animation:b-pulse 1.2s ease-in-out infinite}
+.buddy[data-p="proud"] .b-head{transform:rotate(-5deg) translateY(-2px)}
+.buddy[data-p="curious"] :is(.b-quest,.b-raise){opacity:1}
+.buddy[data-p="curious"] .b-head{transform:rotate(9deg)}
+.buddy[data-p="curious"] .b-ear.r{transform:rotate(28deg)}
+.buddy[data-p="curious"] .b-look{transform:translate(3px,-1px)}
+.buddy[data-p="sad"] :is(.b-sadbrows,.b-frown,.b-tear){opacity:1}
+.buddy[data-p="sad"] .b-tear{animation:b-float 2.6s ease-in infinite reverse}
+.buddy[data-p="sad"] .b-ear.l{transform:rotate(-28deg)}.buddy[data-p="sad"] .b-ear.r{transform:rotate(30deg)}
+.buddy[data-p="sad"] > svg{animation-duration:5s}
+.buddy[data-p="sad"] .b-head{transform:translateY(2px)}
+.buddy[data-p="confused"] :is(.b-swirl,.b-wavy,.b-quest){opacity:1}
+.buddy[data-p="confused"] .b-head{animation:b-wobble 2s ease-in-out infinite}
+.buddy[data-p="love"] :is(.b-heye,.b-smile,.b-hearts){opacity:1}
+.buddy[data-p="love"] .b-cheek{opacity:.65}
+.buddy[data-p="love"] .b-heye path{animation:b-pulse .9s ease-in-out infinite;transform-origin:center}
+.buddy[data-p="love"] .b-hearts path{animation:b-float 2.2s ease-out infinite}
+.buddy[data-p="love"] .b-hearts path:nth-child(2){animation-delay:.7s}.buddy[data-p="love"] .b-hearts path:nth-child(3){animation-delay:1.4s}
+.buddy[data-p="love"] > svg{animation:b-sway 2.4s ease-in-out infinite}
+.buddy[data-p="cool"] :is(.b-glasses,.b-smirk){opacity:1}
+.buddy[data-p="cool"] .b-head{transform:rotate(-4deg)}
+.buddy[data-p="cool"] .b-ear.r{transform:rotate(26deg)}
+.buddy[data-p="scared"] :is(.b-wide,.b-wavy,.b-sweat){opacity:1}
+.buddy[data-p="scared"] .b-wide .b-ink{transform:scale(.55);transform-box:fill-box;transform-origin:center}
+.buddy[data-p="scared"] > svg{animation:b-shiver .12s linear infinite}
+.buddy[data-p="scared"] .b-ear.l{transform:rotate(-30deg)}.buddy[data-p="scared"] .b-ear.r{transform:rotate(30deg)}
+.buddy[data-p="sly"] :is(.b-half,.b-smirk,.b-raise){opacity:1}
+.buddy[data-p="sly"] .b-look{transform:translate(3px,0)}
+.buddy[data-p="sly"] .b-head{transform:rotate(4deg)}
+.buddy[data-p="bored"] :is(.b-half,.b-flat){opacity:1}
+.buddy[data-p="bored"] .b-ear.l{transform:rotate(-24deg)}.buddy[data-p="bored"] .b-ear.r{transform:rotate(26deg)}
+.buddy[data-p="bored"] > svg{animation-duration:6s}
+.buddy[data-p="determined"] :is(.b-detbrows,.b-flat,.b-flame){opacity:1}
+.buddy[data-p="determined"] .b-flame{animation:b-pulse .7s ease-in-out infinite}
+.buddy[data-p="determined"] .b-ear.l{transform:rotate(-2deg)}.buddy[data-p="determined"] .b-ear.r{transform:rotate(2deg)}
 
-/* реакции на реплику: радость (без ошибок) и смущение (была ошибка) */
+/* реакции на реплику: радость (без ошибок) и смущение (была ошибка) — поверх эмоции */
+.buddy[data-mood] :is(.b-eyes,.b-wide,.b-star,.b-heye,.b-swirl,.b-half,.b-glasses,.b-lids,.b-spark){opacity:0}
 .buddy[data-mood="happy"] > svg{animation:b-hop .75s ease-out}
-.buddy[data-mood="happy"] .b-eyes{opacity:0}.buddy[data-mood="happy"] .b-happy{opacity:1}
-.buddy[data-mood="happy"] .b-stars{opacity:1}
+.buddy[data-mood="happy"] :is(.b-happy,.b-stars){opacity:1}
 .buddy[data-mood="happy"] .b-stars path{animation:b-pop .9s ease-out both}
 .buddy[data-mood="happy"] .b-stars path:nth-child(2){animation-delay:.12s}
 .buddy[data-mood="happy"] .b-stars path:nth-child(3){animation-delay:.24s}
 .buddy[data-mood="happy"] .b-stars path:nth-child(4){animation-delay:.36s}
-.buddy[data-mood="oops"] .b-eyes{opacity:0}.buddy[data-mood="oops"] .b-oops,.buddy[data-mood="oops"] .b-sweat{opacity:1}
-.buddy[data-mood="oops"] .b-ear.l{transform:rotate(-34deg)}.buddy[data-mood="oops"] .b-ear.r{transform:rotate(34deg)}
+.buddy[data-mood="oops"] :is(.b-oops,.b-sweat){opacity:1}
+.buddy[data-mood="oops"] .b-ear.l{transform:rotate(-28deg)}.buddy[data-mood="oops"] .b-ear.r{transform:rotate(28deg)}
 .buddy[data-mood="oops"] > svg{animation:b-shake .5s ease-in-out}
-.buddy[data-mood] .b-lids,.buddy[data-mood] .b-spark{opacity:0}
+
+/* гладят: зажмурился, покраснел, уши прижал, прильнул к руке */
+.buddy.petting :is(.b-eyes,.b-wide,.b-star,.b-heye,.b-swirl,.b-half,.b-glasses,.b-lids,.b-oops,.b-tear){opacity:0!important}
+.buddy.petting :is(.b-happy,.b-blush,.b-smile){opacity:1!important}
+.buddy.petting .b-mouth > :not(.b-smile){opacity:0!important}
+.buddy.petting .b-cheek{opacity:.75!important;fill:var(--accent)!important}
+.buddy.petting .b-ear.l{transform:rotate(-30deg)!important}.buddy.petting .b-ear.r{transform:rotate(32deg)!important}
+.buddy.petting .b-head{transform:rotate(var(--pet-tilt, 0deg)) translateY(2px)!important;animation:none!important}
 
 /* сам по себе: ухо дёргается, оглядывается, нюхает, потягивается, наклоняет голову, подпрыгивает */
 .buddy.f-ear .b-ear.r{animation:b-twitch .6s ease-in-out}
@@ -314,9 +385,9 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
 .buddy.t-boing > svg{animation:b-boing .8s ease-out}
 .buddy.t-wiggle .b-ear.l{animation:b-tap .25s ease-in-out 3}
 .buddy.t-wiggle .b-ear.r{animation:b-twitch .5s ease-in-out 2}
-.buddy.t-heart .b-heart{opacity:1;animation:b-float 1.2s ease-out}
-.buddy.t-heart .b-happy{opacity:1}.buddy.t-heart .b-eyes{opacity:0}
-.dock:has(.typebox.on) .buddy{width:min(86px, var(--bsize));height:calc(min(86px, var(--bsize)) * .915)}
+.buddy.t-heart :is(.b-hearts){opacity:1}
+.buddy.t-heart .b-hearts path{animation:b-float 1.2s ease-out}
+.buddy.t-heart .b-happy{opacity:1}.buddy.t-heart :is(.b-eyes,.b-wide,.b-star,.b-heye,.b-swirl,.b-half,.b-glasses,.b-lids){opacity:0}
 @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -329,11 +400,32 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
       <div class="modes" id="modes" role="tablist"></div>
       <div class="scroll" id="chatWrap"><div class="chat" id="chat" aria-live="polite"></div></div>
       <div class="dock">
-        <div class="grip" id="grip" title="Потяни, чтобы изменить размер кролика. Двойное нажатие — спрятать или показать"></div>
-        <div class="buddy" id="buddy" data-s="idle" title="Yomi" aria-hidden="true"><svg viewBox="-14 -8 188 172">
+        <div class="status" id="status">Нажми и говори по-английски</div>
+        <div class="dock-row">
+          <button class="side" id="kbBtn" aria-label="Написать текстом"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M6 9h.01M10 9h.01M14 9h.01M18 9h.01M7 15h10"/></svg></button>
+          <button class="mic" id="mic" aria-label="Говорить"><svg class="i-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><svg class="i-stop" viewBox="0 0 24 24" fill="currentColor"><rect x="7" y="7" width="10" height="10" rx="1.5"/></svg></button>
+          <button class="side" id="endBtn" aria-label="Закончить разговор"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+        </div>
+        <form class="typebox" id="typebox"><input id="typeIn" placeholder="Type in English…" autocomplete="off" aria-label="Сообщение"><button aria-label="Отправить"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></form>
+      </div>
+    </section>
+    <section class="view" id="v-words"><div class="scroll" id="wordsBox"></div></section>
+    <section class="view" id="v-mist"><div class="scroll" id="mistBox"></div></section>
+    <section class="view" id="v-prog"><div class="scroll" id="progBox"></div></section>
+    <section class="view" id="v-yomi"><div class="scroll" id="yomiBox"></div></section>
+  </main>
+  <nav id="nav">
+    <button data-v="talk" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Говорить</button>
+    <button data-v="words"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/></svg>Слова<span class="badge" id="dueBadge" hidden></span></button>
+    <button data-v="mist"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>Ошибки</button>
+    <button data-v="prog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg>Прогресс</button>
+    <button data-v="yomi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 9.5C7 6 7.2 2.5 8.6 2.4S10.8 5.8 10.6 9M15.5 9.5C17 6 16.8 2.5 15.4 2.4S13.2 5.8 13.4 9"/><ellipse cx="12" cy="15" rx="7.5" ry="6.5"/><path d="M9.6 14.6h.01M14.4 14.6h.01M11 17.2q1 .8 2 0"/></svg>Yomi</button>
+  </nav>
+</div>
+<div class="buddy" id="buddy" data-s="idle" data-p="kind" title="Yomi — погладь меня" aria-hidden="true"><svg viewBox="-14 -8 188 172">
           <g class="b-all">
-            <g class="b-ear l"><path class="b-line" d="M57 66 C43 34 44 7 58 5 C72 3 76 32 72 64 Z"/><path class="b-inner" d="M60 58 C52 36 53 15 59 13 C65 12 67 34 66 56 Z"/></g>
-            <g class="b-ear r"><path class="b-line" d="M103 66 C117 34 116 7 102 5 C88 3 84 32 88 64 Z"/><path class="b-inner" d="M100 58 C108 36 107 15 101 13 C95 12 93 34 94 56 Z"/></g>
+            <g class="b-ear l"><path class="b-line" d="M54 82 C42 34 44 7 58 5 C72 3 77 32 75 82 Z"/><path class="b-inner" d="M60 58 C52 36 53 15 59 13 C65 12 67 34 66 56 Z"/></g>
+            <g class="b-ear r"><path class="b-line" d="M106 82 C118 34 116 7 102 5 C88 3 83 32 85 82 Z"/><path class="b-inner" d="M100 58 C108 36 107 15 101 13 C95 12 93 34 94 56 Z"/></g>
             <g class="b-body">
               <ellipse class="b-line" cx="80" cy="132" rx="27" ry="16"/>
               <ellipse class="b-belly" cx="80" cy="136" rx="13" ry="9"/>
@@ -347,25 +439,62 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
               <path class="b-gloss" d="M50 70 Q58 59 71 55"/>
               <path class="b-stroke b-fluff" d="M33 95 l-4 3 4 3 M127 95 l4 3 -4 3"/>
               <circle class="b-cheek" cx="50" cy="103" r="7.5"/><circle class="b-cheek" cx="110" cy="103" r="7.5"/>
-              <g class="b-look"><g class="b-eyes">
-                <ellipse class="b-ink" cx="63" cy="91" rx="6" ry="7.6"/><ellipse class="b-ink" cx="97" cy="91" rx="6" ry="7.6"/>
-                <circle fill="var(--b-fur)" cx="65.2" cy="87.6" r="2.3"/><circle fill="var(--b-fur)" cx="99.2" cy="87.6" r="2.3"/>
-                <circle fill="var(--b-fur)" cx="61" cy="94.6" r="1.1"/><circle fill="var(--b-fur)" cx="95" cy="94.6" r="1.1"/>
-              </g></g>
+              <path class="b-blush" d="M44 100 l3 -5 M49 101 l3 -5 M54 102 l3 -5 M104 102 l3 -5 M109 101 l3 -5 M114 100 l3 -5"/>
+              <!-- глаза, которые следят за пальцем (.b-look): обычные и их варианты -->
+              <g class="b-look">
+                <g class="b-eyes">
+                  <ellipse class="b-ink" cx="63" cy="91" rx="6" ry="7.6"/><ellipse class="b-ink" cx="97" cy="91" rx="6" ry="7.6"/>
+                  <circle fill="var(--b-fur)" cx="65.2" cy="87.6" r="2.3"/><circle fill="var(--b-fur)" cx="99.2" cy="87.6" r="2.3"/>
+                  <circle fill="var(--b-fur)" cx="61" cy="94.6" r="1.1"/><circle fill="var(--b-fur)" cx="95" cy="94.6" r="1.1"/>
+                </g>
+                <g class="b-wide">
+                  <circle fill="#fff" stroke="var(--b-ink)" stroke-width="2.4" cx="63" cy="90" r="8.5"/><circle fill="#fff" stroke="var(--b-ink)" stroke-width="2.4" cx="97" cy="90" r="8.5"/>
+                  <circle class="b-ink" cx="63" cy="91" r="3"/><circle class="b-ink" cx="97" cy="91" r="3"/>
+                </g>
+                <g class="b-star" fill="var(--b-ink)">
+                  <path d="M63 81 l2.6 6 6.4 .5 -4.9 4.2 1.5 6.3 -5.6 -3.4 -5.6 3.4 1.5 -6.3 -4.9 -4.2 6.4 -.5z"/>
+                  <path d="M97 81 l2.6 6 6.4 .5 -4.9 4.2 1.5 6.3 -5.6 -3.4 -5.6 3.4 1.5 -6.3 -4.9 -4.2 6.4 -.5z"/>
+                </g>
+                <g class="b-heye" fill="#D9475A">
+                  <path d="M63 97 c-6-4-9-7-9-11 c0-4 5-6 9-1 c4-5 9-3 9 1 c0 4-3 7-9 11z"/>
+                  <path d="M97 97 c-6-4-9-7-9-11 c0-4 5-6 9-1 c4-5 9-3 9 1 c0 4-3 7-9 11z"/>
+                </g>
+                <g class="b-swirl"><path class="b-stroke" stroke-width="2.2" d="M63 91 m-1 0 a1 1 0 1 1 2 1 a3 3 0 1 1 -5 -2 a5 5 0 1 1 8 4"/><path class="b-stroke" stroke-width="2.2" d="M97 91 m-1 0 a1 1 0 1 1 2 1 a3 3 0 1 1 -5 -2 a5 5 0 1 1 8 4"/></g>
+                <g class="b-half">
+                  <path class="b-ink" d="M57 91 h12 a6 6.5 0 0 1 -12 0z"/><path class="b-ink" d="M91 91 h12 a6 6.5 0 0 1 -12 0z"/>
+                  <path class="b-stroke" stroke-width="2.4" d="M55.5 90.5 h15 M89.5 90.5 h15"/>
+                </g>
+                <g class="b-glasses">
+                  <path fill="var(--b-ink)" d="M50 84 h25 v6 q-1 9 -12 9 q-11 0 -13 -9z M85 84 h25 v6 q-2 9 -13 9 q-11 0 -12 -9z"/>
+                  <path class="b-stroke" d="M74 86 h12 M50 85 l-7 -3 M110 85 l7 -3"/>
+                  <path stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".6" d="M55 88 l4 -3 M90 88 l4 -3"/>
+                </g>
+              </g>
+              <!-- глаза-чёрточки: радость, смущение-ошибка, закрытые -->
               <g class="b-happy"><path class="b-stroke" d="M56 93 Q63 84 70 93"/><path class="b-stroke" d="M90 93 Q97 84 104 93"/></g>
               <g class="b-oops"><path class="b-stroke" d="M57 86 L67 91 L57 96"/><path class="b-stroke" d="M103 86 L93 91 L103 96"/></g>
-              <g class="b-spark"><path fill="var(--b-fur)" d="M68 84 l1 2.2 2.2 1 -2.2 1 -1 2.2 -1-2.2 -2.2-1 2.2-1z"/><path fill="var(--b-fur)" d="M102 84 l1 2.2 2.2 1 -2.2 1 -1 2.2 -1-2.2 -2.2-1 2.2-1z"/></g>
               <g class="b-lids"><path class="b-stroke" d="M56 91 Q63 95 70 91"/><path class="b-stroke" d="M90 91 Q97 95 104 91"/></g>
+              <g class="b-spark"><path fill="var(--b-fur)" d="M68 84 l1 2.2 2.2 1 -2.2 1 -1 2.2 -1-2.2 -2.2-1 2.2-1z"/><path fill="var(--b-fur)" d="M102 84 l1 2.2 2.2 1 -2.2 1 -1 2.2 -1-2.2 -2.2-1 2.2-1z"/></g>
+              <!-- брови -->
               <g class="b-brows"><path class="b-stroke" d="M54 78 L70 84"/><path class="b-stroke" d="M106 78 L90 84"/></g>
+              <g class="b-sadbrows"><path class="b-stroke" d="M55 83 L69 77"/><path class="b-stroke" d="M105 83 L91 77"/></g>
+              <g class="b-detbrows"><path class="b-stroke" d="M55 79 L70 82"/><path class="b-stroke" d="M105 79 L90 82"/></g>
               <path class="b-stroke b-raise" d="M89 79 Q97 72 105 77"/>
               <path class="b-nose" d="M76.5 99 Q80 103.5 83.5 99 Q80 97 76.5 99Z"/>
               <path class="b-whisk" d="M43 99 L32 96 M43 103 L32 104 M117 99 L128 96 M117 103 L128 104"/>
+              <!-- рты -->
               <g class="b-mouth">
                 <path class="b-stroke b-frown" d="M74 110 Q80 104 86 110"/>
                 <path class="b-grin" fill="var(--b-ink)" stroke="var(--b-ink)" stroke-width="2" stroke-linejoin="round" d="M72 104 Q80 116 88 104 Z"/>
+                <ellipse class="b-o" fill="var(--b-ink)" cx="80" cy="108" rx="3.6" ry="4.4"/>
+                <path class="b-stroke b-wavy" d="M72 107 q2 -3 4 0 q2 3 4 0 q2 -3 4 0 q2 3 4 0"/>
+                <path class="b-stroke b-smirk" d="M74 106 Q81 110 88 103"/>
+                <path class="b-stroke b-flat" d="M74 107 H86"/>
+                <path class="b-stroke b-smile" d="M73 104 Q80 112 87 104"/>
                 <path class="b-stroke b-closed" d="M75 105 Q77.5 108.5 80 105 Q82.5 108.5 85 105"/>
                 <ellipse class="b-ink b-open" cx="80" cy="108" rx="5" ry="5.5"/>
               </g>
+              <path class="b-tear" fill="#8DB9D8" stroke="var(--b-ink)" stroke-width="1.4" d="M56 99 q4 7 0 10 q-4 -3 0 -10z"/>
               <path class="b-sweat" fill="#8DB9D8" stroke="var(--b-ink)" stroke-width="1.5" d="M118 66 q5 8 0 11 q-5 -3 0 -11z"/>
               <path class="b-vein" fill="none" stroke="#D24B3A" stroke-width="2.4" stroke-linecap="round" d="M108 60 q4 2 4 6 M122 60 q-4 2 -4 6 M108 74 q4 -2 4 -6 M122 74 q-4 -2 -4 -6"/>
               <g class="b-scarf-wrap">
@@ -376,7 +505,13 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
                 <circle class="b-scarf" cx="93" cy="130" r="5.5"/>
               </g>
             </g>
+            <!-- значки над головой -->
+            <text class="b-mark b-excl" x="124" y="48">!</text>
+            <text class="b-mark b-quest" x="122" y="48">?</text>
+            <path class="b-flame" fill="#E8833A" stroke="var(--b-ink)" stroke-width="1.6" stroke-linejoin="round" d="M128 52 c-8-6-4-14 1-20 c0 5 4 6 5 2 c5 6 6 14 -6 18z"/>
+            <path class="b-sparkle" fill="#E7B54A" d="M130 40 l2.4 6 6 2.4 -6 2.4 -2.4 6 -2.4-6 -6-2.4 6-2.4z"/>
             <path class="b-heart" fill="var(--accent)" d="M130 46 c-2-5-10-4-8 2 c1 3 5 6 8 9 c3-3 7-6 8-9 c2-6-6-7-8-2z"/>
+            <g class="b-hearts" fill="#D9475A"><path d="M34 46 c-1.5-3.5-7-3-5.6 1.4 c.7 2 3.5 4.2 5.6 6.3 c2-2.1 4.9-4.3 5.6-6.3 c1.4-4.4-4.1-4.9-5.6-1.4z"/><path d="M128 40 c-1.5-3.5-7-3-5.6 1.4 c.7 2 3.5 4.2 5.6 6.3 c2-2.1 4.9-4.3 5.6-6.3 c1.4-4.4-4.1-4.9-5.6-1.4z"/><path d="M118 20 c-1-2.4-4.8-2-3.8 1 c.5 1.4 2.4 2.9 3.8 4.3 c1.4-1.4 3.3-2.9 3.8-4.3 c1-3-2.8-3.4-3.8-1z"/></g>
             <g class="b-zzz"><text x="118" y="46">z</text><text x="130" y="34">z</text></g>
             <g class="b-dots"><circle cx="120" cy="40" r="3.4"/><circle cx="131" cy="32" r="3.4"/><circle cx="142" cy="24" r="3.4"/></g>
             <g class="b-waves"><path class="b-stroke" stroke="var(--accent)" d="M126 58 q7 7 0 14"/><path class="b-stroke" stroke="var(--accent)" d="M134 52 q12 13 0 26"/></g>
@@ -387,26 +522,6 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
             </g>
           </g>
         </svg></div>
-        <div class="status" id="status">Нажми и говори по-английски</div>
-        <div class="dock-row">
-          <button class="side" id="kbBtn" aria-label="Написать текстом"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M6 9h.01M10 9h.01M14 9h.01M18 9h.01M7 15h10"/></svg></button>
-          <button class="mic" id="mic" aria-label="Говорить"><svg class="i-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><svg class="i-stop" viewBox="0 0 24 24" fill="currentColor"><rect x="7" y="7" width="10" height="10" rx="1.5"/></svg></button>
-          <button class="side" id="endBtn" aria-label="Закончить разговор"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-        </div>
-        <form class="typebox" id="typebox"><input id="typeIn" placeholder="Type in English…" autocomplete="off" aria-label="Сообщение"><button aria-label="Отправить"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></form>
-      </div>
-    </section>
-    <section class="view" id="v-words"><div class="scroll" id="wordsBox"></div></section>
-    <section class="view" id="v-mist"><div class="scroll" id="mistBox"></div></section>
-    <section class="view" id="v-prog"><div class="scroll" id="progBox"></div></section>
-  </main>
-  <nav id="nav">
-    <button data-v="talk" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Говорить</button>
-    <button data-v="words"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/></svg>Слова<span class="badge" id="dueBadge" hidden></span></button>
-    <button data-v="mist"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>Ошибки</button>
-    <button data-v="prog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg>Прогресс</button>
-  </nav>
-</div>
 <div class="sheet" id="sheet"><div class="in" id="sheetIn" role="dialog"></div></div>
 
 <script>
@@ -591,11 +706,12 @@ function sfx(name){
   const dur = f(c, c.currentTime + .02);
   return new Promise(r => setTimeout(r, dur * 1000 + 40));
 }
+const EMO_SOUND = {cute: 'cute', funny: 'funny', sleepy: 'sleepy', excited: 'happy', surprised: 'boing', shy: 'cute', proud: 'happy', curious: 'hop', sad: 'oops', confused: 'ear', love: 'heart', cool: 'hop', scared: 'oops', sly: 'funny', bored: 'sleepy', determined: 'hop', angry: 'angry', kind: 'happy'};
 // звук-реакция на ответ: злость, ошибка, смена настроения или радость за правильную фразу
 function replySound(out, before){
   if(out.emotion === 'angry') return 'angry';
   if(out.fix) return 'oops';
-  if(out.emotion !== before && ['cute', 'funny', 'sleepy'].includes(out.emotion)) return out.emotion;
+  if(out.emotion !== before && EMO_SOUND[out.emotion]) return EMO_SOUND[out.emotion];
   return out.emotion === 'kind' || out.emotion === 'cute' ? 'happy' : '';
 }
 
@@ -614,39 +730,74 @@ function setState(s){
 let mouthTimer = 0, moodTimer = 0;
 function react(cls, ms){ const b = $('#buddy'); if(!b) return; b.classList.remove(cls); void b.offsetWidth; b.classList.add(cls); setTimeout(() => b.classList.remove(cls), ms); }
 function hop(){ react('t-hop', 800); }
-// размер кролика: ручка над ним; на невысоких экранах (Mini App на ПК) по умолчанию меньше
-const BUNNY_MAX = 160, bunnyDefault = () => innerHeight < 700 ? 64 : innerHeight < 820 ? 88 : 124;
-let bsize = store.get('yomi_bsize', null) ?? bunnyDefault(), bsizeShown = bsize || bunnyDefault();
-function applyBsize(save){
+// 18 эмоций: значок и подпись для галереи во вкладке «Yomi»
+const EMOS = [['kind','😊','Добрый'],['cute','🥰','Милый'],['angry','😠','Злой'],['funny','😄','Весёлый'],['sleepy','😴','Сонный'],['excited','🤩','В восторге'],
+  ['surprised','😮','Удивлён'],['shy','😳','Смущён'],['proud','😌','Гордый'],['curious','🧐','Любопытный'],['sad','😢','Грустный'],['confused','😵‍💫','Растерян'],
+  ['love','😍','Влюблён'],['cool','😎','Крутой'],['scared','😱','Испуган'],['sly','😏','Хитрый'],['bored','😑','Скучает'],['determined','😤','Решительный']];
+// ---------- плавающий кролик: включён ли, размер, где стоит (доли экрана) ----------
+const bunnyDefault = () => innerHeight < 700 ? 84 : innerHeight < 820 ? 98 : 112;
+let bsize = Math.max(60, Math.min(180, store.get('yomi_bsize', null) || bunnyDefault()));
+let bunnyOn = store.get('yomi_bunny', true), bpos = store.get('yomi_bpos', null);
+function placeBunny(){
   const b = $('#buddy'); if(!b) return;
-  b.hidden = bsize < 40;
+  b.hidden = !bunnyOn;
   b.style.setProperty('--bsize', bsize + 'px');
-  if(save) store.set('yomi_bsize', bsize);
+  if(!bpos){ b.style.removeProperty('--bx'); b.style.removeProperty('--by'); return; }
+  const w = bsize, h = bsize * .915;
+  b.style.setProperty('--bx', Math.round(Math.min(Math.max(0, bpos.x * innerWidth), innerWidth - w)) + 'px');
+  b.style.setProperty('--by', Math.round(Math.min(Math.max(0, bpos.y * innerHeight), innerHeight - h)) + 'px');
 }
-applyBsize();
-{ const g = $('#grip'); let y0 = 0, s0 = 0, moved = false;
-  g.addEventListener('pointerdown', e => { y0 = e.clientY; s0 = bsize < 40 ? 0 : bsize; moved = false; g.setPointerCapture(e.pointerId); g.classList.add('drag'); });
-  g.addEventListener('pointermove', e => { if(!g.classList.contains('drag')) return;
-    const d = y0 - e.clientY; if(Math.abs(d) > 3) moved = true;
-    bsize = Math.round(Math.max(0, Math.min(BUNNY_MAX, s0 + d))); applyBsize(); });
-  let lastTap = 0;
-  const end = () => { if(!g.classList.contains('drag')) return; g.classList.remove('drag');
-    if(moved){ if(bsize < 40) bsize = 0; else bsizeShown = bsize; applyBsize(true); return; }
-    const now = Date.now();   // двойное касание: спрятать или показать
-    if(now - lastTap < 350){ bsize = bsize < 40 ? bsizeShown : 0; applyBsize(true); lastTap = 0; } else lastTap = now; };
-  g.addEventListener('pointerup', end); g.addEventListener('pointercancel', end);
-}
-// нажатие: каждый раз по-разному
+placeBunny();
+addEventListener('resize', placeBunny);
+// ---------- нажать — реакция; водить туда-сюда — гладить; зажать на мгновение — перенести ----------
 const TAPS = ['t-hop', 't-boing', 't-wiggle', 't-heart'];
 let tapPrev = '';
-$('#buddy').onclick = () => { let t; do { t = TAPS[Math.floor(Math.random() * TAPS.length)]; } while(t === tapPrev); tapPrev = t; react(t, 1300); sfx({'t-hop': 'hop', 't-boing': 'boing', 't-wiggle': 'ear', 't-heart': 'heart'}[t]); };
+function tapReact(){ let t; do { t = TAPS[Math.floor(Math.random() * TAPS.length)]; } while(t === tapPrev); tapPrev = t; react(t, 1300); sfx({'t-hop': 'hop', 't-boing': 'boing', 't-wiggle': 'ear', 't-heart': 'heart'}[t]); }
+{ const b = $('#buddy'); let g = null, purrAt = 0;
+  b.addEventListener('pointerdown', e => {
+    unlock();
+    const r = b.getBoundingClientRect();
+    g = {x0: e.clientX, y0: e.clientY, bx: r.left, by: r.top, carry: false, pet: false, dist: 0, turns: 0, dir: 0, lx: e.clientX, ly: e.clientY};
+    try{ b.setPointerCapture(e.pointerId); }catch{}
+    g.hold = setTimeout(() => { if(g && !g.pet){ g.carry = true; b.classList.add('carried'); sfx('hop'); } }, 320);
+  });
+  b.addEventListener('pointermove', e => {
+    if(!g) return;
+    const dx = e.clientX - g.x0, dy = e.clientY - g.y0;
+    if(g.carry){
+      b.style.setProperty('--bx', Math.round(Math.min(Math.max(0, g.bx + dx), innerWidth - b.offsetWidth)) + 'px');
+      b.style.setProperty('--by', Math.round(Math.min(Math.max(0, g.by + dy), innerHeight - b.offsetHeight)) + 'px');
+      return;
+    }
+    if(!g.pet && Math.hypot(dx, dy) > 8){ clearTimeout(g.hold); g.pet = true; b.classList.add('petting'); }
+    if(!g.pet) return;
+    const mx = e.clientX - g.lx, d = Math.sign(Math.round(mx));
+    g.dist += Math.hypot(mx, e.clientY - g.ly); g.lx = e.clientX; g.ly = e.clientY;
+    if(d && g.dir && d !== g.dir){ g.turns++; if(Date.now() - purrAt > 900){ purrAt = Date.now(); sfx('cute'); } }
+    if(d) g.dir = d;
+    b.style.setProperty('--pet-tilt', Math.max(-10, Math.min(10, dx / 5)).toFixed(1) + 'deg');   // прижимается к руке
+  });
+  const end = () => {
+    if(!g) return; clearTimeout(g.hold);
+    if(g.carry){
+      b.classList.remove('carried');
+      const r = b.getBoundingClientRect(); bpos = {x: r.left / innerWidth, y: r.top / innerHeight}; store.set('yomi_bpos', bpos);
+      react('t-boing', 800);
+    } else if(g.pet){
+      b.classList.remove('petting');
+      if(g.dist > 80 || g.turns >= 1){ b.dataset.p = 'love'; react('t-heart', 1300); sfx('heart'); }   // погладили — млеет
+    } else tapReact();
+    g = null;
+  };
+  b.addEventListener('pointerup', end); b.addEventListener('pointercancel', end);
+}
 // сам по себе: раз в несколько секунд маленькое движение, пока он ждёт или слушает
 const FIDGETS = [['f-ear', 700], ['f-look', 1700], ['f-sniff', 800], ['f-stretch', 1200], ['f-tilt', 1500], ['f-hop', 800]];
 (function fidget(){
   setTimeout(() => {
     const b = $('#buddy');
     if(!b) return;
-    if(!document.hidden && (b.dataset.s === 'idle' || b.dataset.s === 'listen') && !b.dataset.mood && !b.classList.contains('talking')){
+    if(!document.hidden && (b.dataset.s === 'idle' || b.dataset.s === 'listen') && !b.dataset.mood && !b.classList.contains('talking') && !b.classList.contains('carried') && !b.classList.contains('petting')){
       const [cls, ms] = FIDGETS[Math.floor(Math.random() * FIDGETS.length)];
       if(!(b.dataset.s === 'listen' && (cls === 'f-hop' || cls === 'f-stretch'))){ react(cls, ms); const snd = {'f-sniff': 'sniff', 'f-ear': 'ear', 'f-hop': 'hop'}[cls]; if(snd && Math.random() < .5) sfx(snd); }
     }
@@ -871,11 +1022,7 @@ function showProgress(){
     <div class="bars">${last.map(([k, n]) => `<div><i class="${k === today ? 'today' : n ? '' : 'zero'}" style="height:${Math.round(n / max * 100)}%"></i><span>${+k.slice(8)}</span></div>`).join('')}</div>
     <div class="plan">${p ? `<h3>Мой план · ${esc(p.level)}</h3><p>${esc(p.summary || '')}</p><ol>${(p.plan || []).map(x => `<li>${esc(x)}</li>`).join('')}</ol>`
       : '<h3>Плана пока нет</h3><p>Пройди тест уровня или расскажи Yomi о своих целях — он составит план.</p>'}</div>
-    <div class="actions"><button class="btn" data-go="test">Пройти тест уровня</button><button class="btn line" data-go="coach">Составить план</button></div>
-    <div class="plan" style="margin-top:22px"><h3>Звуки кролика</h3><p>Писк, «боинг», ворчание, хихиканье и другие звуки-реакции.</p><button class="btn${sfxOn ? ' line' : ''} sm" data-sfx style="margin-top:10px">${sfxOn ? 'Выключить звуки' : 'Включить звуки'}</button></div>
-    <div class="plan" style="margin-top:22px"><h3>Голос Yomi</h3><p>Нажми, чтобы послушать. Выбранный голос будет и на сайте, и в боте.</p>
-      <div class="voices">${(S.speakers || Object.keys(VOICE_INFO).slice(0, 6)).filter(k => VOICE_INFO[k]).map(k => [k, ...VOICE_INFO[k]]).map(([k, n, g]) => `<div class="voice${S.speaker === k ? ' on' : ''}"><button class="ib" data-vp="${k}" aria-label="Послушать ${n}">${ICON.speak}</button>
-        <div class="w"><b>${n}</b><span>${g}</span></div><button class="btn${S.speaker === k ? '' : ' line'} sm" data-vs="${k}">${S.speaker === k ? 'Выбран' : 'Выбрать'}</button></div>`).join('')}</div></div>`;
+    <div class="actions"><button class="btn" data-go="test">Пройти тест уровня</button><button class="btn line" data-go="coach">Составить план</button></div>`;
 }
 $('#progBox').onclick = async e => {
   unlock();
@@ -886,6 +1033,33 @@ $('#progBox').onclick = async e => {
   if(vs && vs.dataset.vs !== S.speaker){ const j = await api('speaker', {speaker: vs.dataset.vs}); if(j.ok){ S.speaker = j.speaker; showProgress(); } }
 };
 
+/* ---------- вкладка «Yomi»: кролик на экране, эмоции, звуки, голос ---------- */
+function showYomi(){
+  $('#yomiBox').innerHTML = `<h2>Yomi</h2><p class="lead">Твой кролик-помощник ходит за тобой по всему сайту. Зажми его на мгновение и перетащи куда удобно, води по нему пальцем — погладишь.</p>
+    <div class="plan"><h3>Кролик на экране</h3>
+      <div class="setrow"><span>${bunnyOn ? 'Показан' : 'Спрятан'}</span><button class="btn sm${bunnyOn ? ' line' : ''}" data-bon>${bunnyOn ? 'Спрятать' : 'Показать'}</button></div>
+      <label class="setrow"><span>Размер</span><input type="range" id="bsizeIn" min="60" max="180" step="2" value="${bsize}" aria-label="Размер кролика"></label>
+      <div class="setrow"><span>Место</span><button class="btn line sm" data-bpos>Вернуть в угол</button></div></div>
+    <div class="plan"><h3>Эмоции</h3><p>Их ${EMOS.length}, Yomi выбирает их сам по ходу разговора. Нажми, чтобы посмотреть.</p>
+      <div class="emos">${EMOS.map(([k, e, n]) => `<button data-emo="${k}"><span aria-hidden="true">${e}</span>${n}</button>`).join('')}</div></div>
+    <div class="plan"><h3>Звуки кролика</h3><p>Писк, «боинг», ворчание, хихиканье и другие звуки-реакции.</p><button class="btn${sfxOn ? ' line' : ''} sm" data-sfx style="margin-top:10px">${sfxOn ? 'Выключить звуки' : 'Включить звуки'}</button></div>
+    <div class="plan"><h3>Голос Yomi</h3><p>Нажми, чтобы послушать. Выбранный голос будет и на сайте, и в боте.</p>
+      <div class="voices">${(S.speakers || Object.keys(VOICE_INFO).slice(0, 6)).filter(k => VOICE_INFO[k]).map(k => [k, ...VOICE_INFO[k]]).map(([k, n, g]) => `<div class="voice${S.speaker === k ? ' on' : ''}"><button class="ib" data-vp="${k}" aria-label="Послушать ${n}">${ICON.speak}</button>
+        <div class="w"><b>${n}</b><span>${g}</span></div><button class="btn${S.speaker === k ? '' : ' line'} sm" data-vs="${k}">${S.speaker === k ? 'Выбран' : 'Выбрать'}</button></div>`).join('')}</div></div>`;
+  $('#bsizeIn').oninput = e => { bsize = +e.target.value; store.set('yomi_bsize', bsize); placeBunny(); };
+}
+$('#yomiBox').onclick = async e => {
+  unlock();
+  const vp = e.target.closest('[data-vp]'), vs = e.target.closest('[data-vs]'), emo = e.target.closest('[data-emo]');
+  if(e.target.closest('[data-bon]')){ bunnyOn = !bunnyOn; store.set('yomi_bunny', bunnyOn); placeBunny(); showYomi(); if(bunnyOn) hop(); }
+  if(e.target.closest('[data-bpos]')){ bpos = null; store.set('yomi_bpos', null); placeBunny(); hop(); }
+  if(emo){ if(!bunnyOn){ bunnyOn = true; store.set('yomi_bunny', true); placeBunny(); showYomi(); }
+    const b = $('#buddy'); b.dataset.p = emo.dataset.emo; sfx(EMO_SOUND[emo.dataset.emo] || 'hop'); }
+  if(vp) sayText(S.engine === 'gemini' ? "Hi, I'm Yomi! Привет, я Йоми. Let's practise English together!" : "Hi, I'm Yomi. Let's practise English together. How was your day?", 'en', vp.dataset.vp);
+  if(e.target.closest('[data-sfx]')){ sfxOn = !sfxOn; store.set('yomi_sfx', sfxOn); showYomi(); if(sfxOn) sfx('happy'); }
+  if(vs && vs.dataset.vs !== S.speaker){ const j = await api('speaker', {speaker: vs.dataset.vs}); if(j.ok){ S.speaker = j.speaker; showYomi(); } }
+};
+
 /* ---------- вкладки и запуск ---------- */
 function tab(v){
   document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
@@ -894,6 +1068,7 @@ function tab(v){
   if(v === 'words') showWords();
   if(v === 'mist') showMistakes();
   if(v === 'prog') showProgress();
+  if(v === 'yomi') showYomi();
 }
 // переключение «Учёба» ↔ «Болтовня»: у каждого чата своя лента и своя история на сервере
 $('#chats').onclick = e => {
