@@ -714,8 +714,9 @@ function listen(){
     if(now - t0 < 400) floor = Math.max(floor, rms * 0.9);           // первые 0.4 с — уровень шума
     const loud = rms > Math.max(0.02, floor * 2.5);
     const lvl = Math.min(1, rms * 8).toFixed(2); $('#mic').style.setProperty('--lvl', lvl); document.querySelectorAll('.b-ear').forEach(e => e.style.setProperty('--lvl', lvl));
-    if(loud){ spoke = spoke || (speechMs += 50) > 250; lastLoud = now; }
-    if((spoke && now - lastLoud > 1200) || now - t0 > 45000) finishUtterance();
+    if(loud){ speechMs += 50; spoke = spoke || speechMs > 250; lastLoud = now; }
+    // пауза «эээ…» посреди фразы не обрывает её: короткую фразу ждём дольше (2.2 c), длинную — 1.7 c
+    if((spoke && now - lastLoud > (speechMs < 1500 ? 2200 : 1700)) || now - t0 > 60000) finishUtterance();
   }, 50);
 }
 function finishUtterance(){ clearInterval(vadTimer); if(rec?.state === 'recording') rec.stop(); }

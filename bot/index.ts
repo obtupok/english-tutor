@@ -129,7 +129,7 @@ MOOD: you are a lively character whose mood changes by itself with the conversat
 ${moods}
 How to pick it: whenever you give a "correction", your emotion MUST be angry — be comically grumpy about the mistake ("I feel myself good? Seriously? Just I feel good!"); the sillier or more repeated the mistake ("I goed", "he don't", "I am agree"), the grumpier. Also angry when they answer lazily with one word. Become cute when they share something nice or say a long correct sentence; funny when the topic invites a joke; sleepy only now and then when the chat is slow or it is late; kind otherwise. Calm down again once they get it right. The anger is playful theatre — never insult or humiliate the learner.
 Their native language is Russian. Their level: ${st.level || 'unknown — find out from their answers'}.
-Their messages often come from voice messages turned into text by speech recognition.
+Their messages often come from voice messages turned into text by speech recognition: ignore hesitation sounds, false starts and small recognition glitches — never correct those, only real grammar and word choice.
 
 ${task}
 
@@ -205,21 +205,36 @@ async function askGroq(system: string, msgs: { role: string; content: string }[]
 }
 
 /* ---------- Голос: распознавание (Groq Whisper) и озвучка (Google) ---------- */
-async function transcribe(audio: Blob, name: string, lang: string) {
-  const fd = new FormData();
-  fd.append('file', audio, name);
-  fd.append('model', 'whisper-large-v3-turbo');
-  if (lang) fd.append('language', lang);
-  const r = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', { method: 'POST', headers: { Authorization: 'Bearer ' + env('GROQ_API_KEY') }, body: fd });
-  const j = await r.json().catch(() => ({}));
-  if (!r.ok) console.error('stt', r.status, JSON.stringify(j).slice(0, 300));
-  return String(j.text || '').trim().slice(0, 1500);
+// Распознавание: полная модель Whisper (точнее на невнятной речи), с подсказкой — о чём спрашивал Yomi;
+// если она не ответит — быстрая turbo. Звуки-паузы «эээ», «ммм», «um», «uh» вырезаем.
+async function transcribe(audio: Blob, name: string, lang: string, context = '') {
+  for (const model of ['whisper-large-v3', 'whisper-large-v3-turbo']) {
+    const fd = new FormData();
+    fd.append('file', audio, name);
+    fd.append('model', model);
+    fd.append('temperature', '0');
+    if (lang) fd.append('language', lang);
+    fd.append('prompt', ('A language learner answers the tutor, sometimes hesitating. ' + context).slice(0, 600));
+    const r = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', { method: 'POST', headers: { Authorization: 'Bearer ' + env('GROQ_API_KEY') }, body: fd });
+    const j = await r.json().catch(() => ({}));
+    if (r.ok) return stripFillers(String(j.text || '')).slice(0, 1500);
+    console.error('stt', model, r.status, JSON.stringify(j).slice(0, 300));
+  }
+  return '';
 }
-async function tgVoiceText(fileId: string, lang: string) {
+function stripFillers(t: string) {
+  return t
+    .replace(/(^|[\s,.!?…])(u+m+|u+h+|e+r+m*|a+h+|h+m+|m{2,})(?=[\s,.!?…]|$)[,.…]*/giu, '$1')
+    .replace(/(^|[\s,.!?…])(э+м*|а{2,}|м{2,}|ы{2,}|эм+)(?=[\s,.!?…]|$)[,.…]*/giu, '$1')
+    .replace(/\s+([,.!?])/g, '$1').replace(/^[\s,.…]+/, '').replace(/\s{2,}/g, ' ').trim();
+}
+// последняя реплика Yomi — подсказка для распознавания (слова из вопроса узнаются увереннее)
+const lastTutorLine = (st: any) => String([...(st.history || [])].reverse().find((m: any) => m.role === 'assistant')?.text || '').slice(0, 400);
+async function tgVoiceText(fileId: string, lang: string, context = '') {
   const f = await tg('getFile', { file_id: fileId });
   if (!f.ok) return '';
   const audio = await fetch(`https://api.telegram.org/file/bot${TOKEN}/${f.result.file_path}`).then((r) => r.blob());
-  return transcribe(new Blob([audio], { type: 'audio/ogg' }), 'voice.ogg', lang);
+  return transcribe(new Blob([audio], { type: 'audio/ogg' }), 'voice.ogg', lang, context);
 }
 const sttLang = (st: any) => (st.mode === 'coach' || st.mode === 'friend' ? '' : 'en');   // в «Как учить» и «Болтовне» говорят и по-русски — язык определит сам Whisper
 
@@ -501,7 +516,7 @@ async function onMessage(m: any) {
     if (!env('GROQ_API_KEY')) return tg('sendMessage', { chat_id: st.chat_id, text: 'Голосовые пока не подключены (нужен секрет GROQ_API_KEY). Напиши текстом 🙂' });
     if ((voice.duration || 0) > 180) return tg('sendMessage', { chat_id: st.chat_id, text: 'Слишком длинное голосовое — давай до 3 минут.' });
     await tg('sendChatAction', { chat_id: st.chat_id, action: 'typing' });
-    const heard = await tgVoiceText(voice.file_id, sttLang(st));
+    const heard = await tgVoiceText(voice.file_id, sttLang(st), lastTutorLine(st));
     if (!heard) return tg('sendMessage', { chat_id: st.chat_id, text: 'Не расслышал 🙈 Попробуй ещё раз.' });
     return talk(st, heard, m.message_id, heard);
   }
@@ -579,7 +594,7 @@ async function web(req: Request) {
       if (!text && b.audio) {
         if (!env('GROQ_API_KEY')) return json({ error: 'no_stt' });
         const mime = String(b.mime || 'audio/webm'), ext = /mp4|m4a|aac/.test(mime) ? 'm4a' : /ogg/.test(mime) ? 'ogg' : /wav/.test(mime) ? 'wav' : 'webm';
-        heard = text = await transcribe(new Blob([Uint8Array.from(atob(String(b.audio)), (c) => c.charCodeAt(0))], { type: mime }), 'speech.' + ext, sttLang(st));
+        heard = text = await transcribe(new Blob([Uint8Array.from(atob(String(b.audio)), (c) => c.charCodeAt(0))], { type: mime }), 'speech.' + ext, sttLang(st), lastTutorLine(st));
         if (!text) return json({ error: 'not_heard' });
       }
       if (!text) return json({ error: 'empty' }, 400);
