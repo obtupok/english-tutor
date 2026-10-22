@@ -415,8 +415,10 @@ function speakLocal(text, lang){
   return new Promise(res => {
     if(!('speechSynthesis' in window)) return res();
     const u = new SpeechSynthesisUtterance(text); u.lang = lang === 'ru' ? 'ru-RU' : 'en-US'; u.rate = .95;
-    const t = setTimeout(res, 2000 + text.length * 90);   // некоторые браузеры молча не говорят и не присылают onend
-    u.onend = u.onerror = () => { clearTimeout(t); res(); };
+    const done = () => { clearTimeout(t); mouth(false); res(); };
+    const t = setTimeout(done, 2000 + text.length * 90);   // некоторые браузеры молча не говорят и не присылают onend
+    u.onstart = () => mouth(true);
+    u.onend = u.onerror = done;
     speechSynthesis.cancel(); speechSynthesis.speak(u);
   });
 }
@@ -428,7 +430,7 @@ async function sayText(text, lang = 'en', speaker = S.speaker){
   if(!a){ const j = await api('tts', {text, lang, speaker}); if(j.audio){ a = {b: j.audio, mime: j.mime}; ttsCache.set(key, a); } }
   return a ? playB64(a.b, a.mime) : speakLocal(text, lang);
 }
-function stopAudio(){ try{ player.pause(); }catch{} try{ speechSynthesis.cancel(); }catch{} }
+function stopAudio(){ try{ player.pause(); }catch{} try{ speechSynthesis.cancel(); }catch{} mouth(false); }
 
 /* ---------- разговор «как звонок»: слушаем, ловим паузу, отправляем, слушаем ответ, снова слушаем ---------- */
 let state = 'idle', inCall = false, stream = null, actx = null, analyser = null, rec = null, chunks = [], vadTimer = 0;
@@ -447,9 +449,15 @@ function hop(){ const b = $('#buddy'); b.classList.remove('hop'); void b.offsetW
 $('#buddy').onclick = hop;
 function buddyState(s){
   const b = $('#buddy'); if(!b) return; b.dataset.s = s; b.style.setProperty('--lvl', 0);
-  clearTimeout(mouthTimer); b.classList.remove('mo');
-  if(s === 'speak'){ const flap = () => { b.classList.toggle('mo'); mouthTimer = setTimeout(flap, 90 + Math.random() * 140); }; flap(); }
 }
+// рот двигается, пока реально звучит голос — ответ, «Послушать», слово в тренировке, пример голоса
+function mouth(on){
+  const b = $('#buddy'); clearTimeout(mouthTimer); if(!b) return;
+  b.classList.remove('mo'); if(!on) return;
+  const flap = () => { b.classList.toggle('mo'); mouthTimer = setTimeout(flap, 90 + Math.random() * 140); }; flap();
+}
+player.addEventListener('playing', () => mouth(player.src !== SILENT));
+['pause', 'ended', 'error', 'emptied', 'waiting'].forEach(ev => player.addEventListener(ev, () => mouth(false)));
 function buddyMood(m){ const b = $('#buddy'); if(!b) return; clearTimeout(moodTimer); b.dataset.mood = m; moodTimer = setTimeout(() => { delete b.dataset.mood; }, 2200); }
 const canRecord = () => !!(navigator.mediaDevices?.getUserMedia && window.MediaRecorder && S.stt);
 
