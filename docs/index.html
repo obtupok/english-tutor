@@ -243,12 +243,6 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
 .buddy.mo .b-frown,.buddy.mo .b-grin{opacity:0}
 .buddy[data-mood] .b-lids,.buddy[data-mood] .b-spark{opacity:0}
 .b-zzz text{font:700 15px var(--sans);fill:var(--muted)}
-.personas{display:flex;flex-direction:column}
-.personas button{display:flex;gap:12px;align-items:center;text-align:left;min-height:60px;padding:12px 0;border-bottom:1px solid var(--line)}
-.personas b{display:block;font-family:var(--serif);font-size:19px;font-weight:500}
-.personas span{display:block;color:var(--muted);font-size:14px}
-.personas .em{font-size:26px;width:36px;text-align:center}
-.personas button.on b::after{content:" · выбран";font-family:var(--sans);font-size:13px;color:var(--accent);font-weight:500}
 @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -349,7 +343,7 @@ function gate(){
 }
 
 /* ---------- состояние ---------- */
-let S = {mode:'free', scene:'smalltalk', history:[], stats:{}, plan:null, level:null, scenes:{}, due:0, words:0, stt:false, speaker:'hannah', persona:'kind'};
+let S = {mode:'free', scene:'smalltalk', history:[], stats:{}, plan:null, level:null, scenes:{}, due:0, words:0, stt:false, speaker:'hannah'};
 const VOICES = [['hannah','Hannah','женский'],['diana','Diana','женский'],['autumn','Autumn','женский'],['troy','Troy','мужской'],['austin','Austin','мужской'],['daniel','Daniel','мужской']];
 let chat = store.get('yomi_chat', []);       // что видно в ленте (с исправлениями и словами)
 let busy = false, errText = '';
@@ -396,6 +390,7 @@ $('#chat').onclick = async e => {
 
 // ответ сервера → лента + звук
 function onReply(out, userText){
+  const bd = $('#buddy'); if(bd) bd.dataset.p = out.emotion || 'kind';   // настроение Yomi меняется само — по ответу модели
   if(userText){ chat.push({role:'user', text:userText, fix: out.fix || null}); }
   chat.push({role:'tutor', text: out.reply, en: out.english, words: out.words || []});
   if(out.assessment){ chat.push({role:'result', a: out.assessment}); }
@@ -448,26 +443,14 @@ function setState(s){
 }
 /* ---------- кролик ---------- */
 let mouthTimer = 0, moodTimer = 0;
+function hop(){ const b = $('#buddy'); b.classList.remove('hop'); void b.offsetWidth; b.classList.add('hop'); setTimeout(() => b.classList.remove('hop'), 700); }
+$('#buddy').onclick = hop;
 function buddyState(s){
   const b = $('#buddy'); if(!b) return; b.dataset.s = s; b.style.setProperty('--lvl', 0);
   clearTimeout(mouthTimer); b.classList.remove('mo');
   if(s === 'speak'){ const flap = () => { b.classList.toggle('mo'); mouthTimer = setTimeout(flap, 90 + Math.random() * 140); }; flap(); }
 }
 function buddyMood(m){ const b = $('#buddy'); if(!b) return; clearTimeout(moodTimer); b.dataset.mood = m; moodTimer = setTimeout(() => { delete b.dataset.mood; }, 2200); }
-const PERSONA_INFO = {kind:['😊','Добрый','Мягко поправляет и хвалит'], cute:['🌸','Милый','Восторженный и ласковый, «yay!»'], angry:['😠','Злой','Ворчливый строгий учитель, придирается к каждой ошибке'], funny:['😄','Весёлый','Шутит и подкалывает'], sleepy:['😴','Сонный','Медленный и спокойный, всё время зевает']};
-function hop(){ const b = $('#buddy'); b.classList.remove('hop'); void b.offsetWidth; b.classList.add('hop'); setTimeout(() => b.classList.remove('hop'), 700); }
-$('#buddy').onclick = () => {
-  hop();
-  sheet(`<h2>Характер Yomi</h2><p class="lead">Меняется, как он говорит и как выглядит. Учит одинаково хорошо.</p><div class="personas">${Object.entries(PERSONA_INFO).map(([k, [e, n, d]]) =>
-    `<button data-pe="${k}" class="${S.persona === k ? 'on' : ''}"><span class="em" aria-hidden="true">${e}</span><div><b>${n}</b><span>${d}</span></div></button>`).join('')}</div>`);
-  $('#sheetIn').onclick = async e => {
-    const b = e.target.closest('[data-pe]'); if(!b) return;
-    closeSheet();
-    if(b.dataset.pe === S.persona) return;
-    const j = await api('persona', {persona: b.dataset.pe});
-    if(j.ok){ S.persona = j.persona; $('#buddy').dataset.p = j.persona; hop(); $('#status').textContent = `Теперь Yomi — ${PERSONA_INFO[j.persona][1].toLowerCase()}`; }
-  };
-};
 const canRecord = () => !!(navigator.mediaDevices?.getUserMedia && window.MediaRecorder && S.stt);
 
 async function startCall(){
@@ -547,7 +530,7 @@ async function handleTalk(j, typed){
   if(j.stats) S.stats = j.stats;
   drawHead();
   onReply(j.out, j.heard || typed);
-  buddyMood(j.out.fix ? 'oops' : 'happy');
+  if(j.out.emotion !== 'angry') buddyMood(j.out.fix ? 'oops' : 'happy');   // злость — сама по себе реакция на ошибку
   setState('speak');
   await (j.out.audio ? playB64(j.out.audio, j.out.mime) : speakLocal(j.out.reply, j.out.english ? 'en' : 'ru'));
   if(state !== 'speak') return;           // перебили
@@ -690,7 +673,6 @@ $('#nav').onclick = e => { const b = e.target.closest('[data-v]'); if(b) tab(b.d
   // лента из браузера устарела (разговор шёл в боте) — показываем историю с сервера
   const last = chat.filter(m => m.role === 'tutor').pop()?.text, srv = S.history.filter(m => m.role === 'assistant').pop()?.text;
   if(last !== srv) chat = S.history.map(m => m.role === 'user' ? {role:'user', text:m.text} : {role:'tutor', text:m.text, en:true});
-  $('#buddy').dataset.p = S.persona || 'kind';
   saveChat(); drawModes(); drawHead(); drawChat(); setState('idle');
 })();
 </script>
