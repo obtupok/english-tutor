@@ -464,6 +464,9 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
 .buddy[data-color="sky"]{--b-fur:#CFE2F5;--b-belly:#E8F1FB}
 .buddy[data-color="gold"]{--b-fur:#F2D07A;--b-belly:#F9E7B5}
 .buddy[data-hat="bow"] .h-bow,.buddy[data-hat="flower"] .h-flower,.buddy[data-hat="cap"] .h-cap,.buddy[data-hat="headphones"] .h-headphones,.buddy[data-hat="wizard"] .h-wizard,.buddy[data-hat="crown"] .h-crown{display:inline}
+.w-bowtie,.w-bell,.w-tie,.w-medal,.w-sweater,.w-overalls,.w-cape,.g-round,.g-sun,.g-heart,.g-star,.g-monocle,.h-beanie,.h-party,.h-beret,.h-santa,.h-chef,.h-halo{display:none}
+.buddy[data-wear="bowtie"] .w-bowtie,.buddy[data-wear="bell"] .w-bell,.buddy[data-wear="tie"] .w-tie,.buddy[data-wear="medal"] .w-medal,.buddy[data-wear="sweater"] .w-sweater,.buddy[data-wear="overalls"] .w-overalls,.buddy[data-wear="cape"] .w-cape,.buddy[data-glasses="round"] .g-round,.buddy[data-glasses="sun"] .g-sun,.buddy[data-glasses="heart"] .g-heart,.buddy[data-glasses="star"] .g-star,.buddy[data-glasses="monocle"] .g-monocle,.buddy[data-hat="beanie"] .h-beanie,.buddy[data-hat="party"] .h-party,.buddy[data-hat="beret"] .h-beret,.buddy[data-hat="santa"] .h-santa,.buddy[data-hat="chef"] .h-chef,.buddy[data-hat="halo"] .h-halo{display:inline}
+.buddy[data-wear]:not([data-wear="scarf"]) .b-scarf-wrap{display:none}
 /* превью в магазине: неподвижные маленькие копии */
 .buddy.mini{position:relative;left:auto;top:auto;--bsize:66px;cursor:default;pointer-events:none;margin:0 auto}
 .buddy.mini::after{display:none}
@@ -502,9 +505,12 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
 </div>
 <div class="buddy" id="buddy" data-s="idle" data-p="kind" title="Yomi — погладь меня" aria-hidden="true"><svg viewBox="-14 -8 188 172">
           <g class="b-all">
+            <path class="w-cape" fill="#C2413A" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" d="M54 120 Q40 140 34 156 Q80 166 126 156 Q120 140 106 120Z"/>
             <g class="b-body">
               <ellipse class="b-line" cx="80" cy="132" rx="27" ry="16"/>
               <ellipse class="b-belly" cx="80" cy="136" rx="13" ry="9"/>
+              <g class="w-sweater"><ellipse fill="#6FA8DC" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" cx="80" cy="133" rx="27" ry="15.5"/><path fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" opacity=".8" d="M57 139 Q80 149 103 139"/></g>
+              <g class="w-overalls"><path fill="#5B7DB1" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" d="M55 135 Q80 127 105 135 Q106 148 80 148.5 Q54 148 55 135Z"/><rect fill="#7E9CCB" stroke="var(--b-ink)" stroke-width="1.6" x="73" y="135" width="14" height="9" rx="2"/></g>
               <g class="b-foot l"><ellipse class="b-line" cx="66" cy="145" rx="9" ry="5.5"/><path class="b-whisk" d="M63 147.5v-3M67 148v-3"/></g>
               <g class="b-foot r"><ellipse class="b-line" cx="94" cy="145" rx="9" ry="5.5"/><path class="b-whisk" d="M93 148v-3M97 147.5v-3"/></g>
             </g>
@@ -587,7 +593,27 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
                 <path class="b-scarf-stripe" d="M52 121.5 Q80 135 108 121.5"/>
                 <circle class="b-scarf" cx="93" cy="130" r="5.5"/>
               </g>
+              <!-- одежда у шеи -->
+              <g class="w-bowtie"><path fill="#D9475A" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" d="M80 128 L66 120 L66 136 Z M80 128 L94 120 L94 136 Z"/><rect fill="#D9475A" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" x="75.5" y="123.5" width="9" height="9" rx="3"/></g>
+              <g class="w-bell"><path fill="none" stroke="#D9475A" stroke-width="6" stroke-linecap="round" d="M50 120 Q80 136 110 120"/><circle fill="#F2C94C" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" cx="80" cy="135" r="6.5"/><path fill="none" stroke="var(--b-ink)" stroke-width="1.8" stroke-linecap="round" d="M75.5 136.5h9"/><circle fill="var(--b-ink)" cx="80" cy="139" r="1.2"/></g>
+              <g class="w-tie"><path fill="#3E6FB0" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" d="M75.5 124 h9 l-1.8 6.5 h-5.4z"/><path fill="#3E6FB0" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" d="M77.3 130.5 h5.4 l3.3 14 -6 5.5 -6-5.5z"/><path fill="none" stroke="#F2C94C" stroke-width="1.8" d="M77.5 136 l5 3 M76.5 141.5 l6.5 3.5"/></g>
+              <g class="w-medal"><path fill="#3E6FB0" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" d="M68 122 L80 140 L92 122 L86 121 L80 131 L74 121Z"/><circle fill="#F2C94C" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" cx="80" cy="142" r="7.5"/><path fill="#fff4d6" d="M80 137.5l1.4 2.9 3.2.4-2.3 2.2.6 3.1-2.9-1.6-2.9 1.6.6-3.1-2.3-2.2 3.2-.4z"/></g>
+              <g class="w-sweater"><path fill="#6FA8DC" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" d="M51 120 Q80 136 109 120 L107 129 Q80 143 53 129 Z"/><path fill="none" stroke="#fff" stroke-width="2" opacity=".7" d="M56 125.5 Q80 138 104 125.5"/></g>
+              <g class="w-overalls"><path fill="none" stroke="#5B7DB1" stroke-width="5" stroke-linecap="round" d="M64 124 L66 136 M96 124 L94 136"/><circle fill="#F2C94C" stroke="var(--b-ink)" stroke-width="1.5" cx="66" cy="134" r="2.4"/><circle fill="#F2C94C" stroke="var(--b-ink)" stroke-width="1.5" cx="94" cy="134" r="2.4"/></g>
+              <g class="w-cape"><path fill="none" stroke="#C2413A" stroke-width="6" stroke-linecap="round" d="M50 120 Q80 135 110 120"/><circle fill="#F2C94C" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" cx="80" cy="129" r="5"/></g>
+              <!-- очки -->
+              <g class="g-round" fill="rgba(255,255,255,.18)" stroke="var(--b-ink)" stroke-width="2.4"><circle cx="63" cy="91" r="11"/><circle cx="97" cy="91" r="11"/><path fill="none" d="M74 90 Q80 86 86 90 M52 89 L42 85 M108 89 L118 85"/></g>
+              <g class="g-sun" stroke="var(--b-ink)" stroke-width="2.4" stroke-linejoin="round"><path fill="#2A241D" d="M50 83 H76 V90 A13 11 0 0 1 50 90Z M84 83 H110 V90 A13 11 0 0 1 84 90Z"/><path fill="none" d="M76 86 H84 M50 85 L41 82 M110 85 L119 82"/><path fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".7" d="M55 88 l4 -3 M89 88 l4 -3"/></g>
+              <g class="g-heart" fill="#F06A8A" fill-opacity=".8" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round"><path d="M63 102 C48 93 50 79 63 85 C76 79 78 93 63 102Z"/><path d="M97 102 C82 93 84 79 97 85 C110 79 112 93 97 102Z"/><path fill="none" d="M74 88 Q80 85 86 88"/></g>
+              <g class="g-star" fill="#F2C94C" fill-opacity=".85" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round"><path d="M63 77 l4.1 8.4 9.2 1.3 -6.7 6.5 1.6 9.2 -8.2 -4.4 -8.2 4.4 1.6 -9.2 -6.7 -6.5 9.2 -1.3z"/><path d="M97 77 l4.1 8.4 9.2 1.3 -6.7 6.5 1.6 9.2 -8.2 -4.4 -8.2 4.4 1.6 -9.2 -6.7 -6.5 9.2 -1.3z"/><path fill="none" d="M75 89 H85"/></g>
+              <g class="g-monocle"><circle fill="rgba(255,255,255,.2)" stroke="#C99A2E" stroke-width="3" cx="97" cy="91" r="11.5"/><path fill="none" stroke="#C99A2E" stroke-width="1.6" stroke-dasharray="2 2" d="M106 98 Q114 110 110 124"/></g>
               <!-- шапки -->
+              <g class="h-beanie"><path fill="#E07A5F" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" d="M48 64 Q48 30 80 30 Q112 30 112 64Z"/><path fill="none" stroke="#fff" stroke-width="2" opacity=".55" d="M62 34 Q60 48 62 60 M80 31 V60 M98 34 Q100 48 98 60"/><rect fill="#F4E3D0" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" x="45" y="58" width="70" height="10" rx="5"/><circle fill="#F4E3D0" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" cx="80" cy="27" r="6.5"/></g>
+              <g class="h-party"><path fill="#7AC7A3" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" d="M65 60 L80 16 L95 60Z"/><circle fill="#F2C94C" cx="76" cy="48" r="2.5"/><circle fill="#E86A8A" cx="85" cy="38" r="2.5"/><circle fill="#fff" cx="79" cy="29" r="2"/><circle fill="#F2C94C" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" cx="80" cy="15" r="5"/></g>
+              <g class="h-beret"><ellipse fill="#C2413A" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" cx="76" cy="54" rx="31" ry="10" transform="rotate(-10 76 54)"/><path fill="#C2413A" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" d="M77 44 q1 -6 5 -7"/></g>
+              <g class="h-santa"><path fill="#D9475A" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" d="M50 62 Q54 30 82 28 Q110 28 124 50 L110 60Z"/><rect fill="#fff" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" x="46" y="56" width="68" height="11" rx="5.5"/><circle fill="#fff" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" cx="125" cy="52" r="7"/></g>
+              <g class="h-chef"><path fill="#fff" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" d="M58 62 V48 Q46 44 51 33 Q56 23 68 28 Q72 17 82 19 Q93 17 96 28 Q109 25 109 38 Q110 46 102 48 V62Z"/><path fill="none" stroke="var(--b-ink)" stroke-width="1.8" d="M58 55 H102 M70 50 V60 M90 50 V60"/></g>
+              <g class="h-halo"><ellipse fill="none" stroke="#F2C94C" stroke-width="5" cx="80" cy="24" rx="24" ry="6.5"/><ellipse fill="none" stroke="#fff3c4" stroke-width="1.6" cx="80" cy="23" rx="24" ry="6.5"/></g>
               <g class="h-bow"><path fill="#E86A8A" stroke="var(--b-ink)" stroke-width="2" stroke-linejoin="round" d="M60 57 l-13 -8 v16z M60 57 l13 -8 v16z"/><circle fill="#E86A8A" stroke="var(--b-ink)" stroke-width="2" cx="60" cy="57" r="4"/></g>
               <g class="h-flower"><g fill="#F7B6C8" stroke="var(--b-ink)" stroke-width="1.6"><circle cx="104" cy="52" r="5"/><circle cx="112" cy="57" r="5"/><circle cx="110" cy="66" r="5"/><circle cx="100" cy="66" r="5"/><circle cx="97" cy="57" r="5"/></g><circle fill="#F2C94C" stroke="var(--b-ink)" stroke-width="1.6" cx="104.5" cy="60" r="3.6"/></g>
               <g class="h-cap"><path fill="#3E6FB0" stroke="var(--b-ink)" stroke-width="2.4" stroke-linejoin="round" d="M46 66 Q50 34 80 34 Q110 34 114 66 Q80 56 46 66Z"/><path fill="#3E6FB0" stroke="var(--b-ink)" stroke-width="2.4" stroke-linejoin="round" d="M104 62 Q126 58 134 66 Q120 72 106 68Z"/><circle fill="#fff" stroke="var(--b-ink)" stroke-width="1.6" cx="80" cy="35" r="3"/></g>
@@ -1130,16 +1156,18 @@ $('#progBox').onclick = async e => {
 const SKINS = {
   char: [['bunny', 'Кролик'], ['cat', 'Котик'], ['bear', 'Медвежонок'], ['fox', 'Лисёнок'], ['panda', 'Панда']],
   color: [['classic', 'Родной'], ['choco', 'Шоколадный'], ['gray', 'Серый'], ['pink', 'Розовый'], ['mint', 'Мятный'], ['sky', 'Голубой'], ['gold', 'Золотой']],
-  hat: [['none', 'Без шапки'], ['bow', 'Бантик'], ['flower', 'Цветочек'], ['cap', 'Кепка'], ['headphones', 'Наушники'], ['wizard', 'Шляпа волшебника'], ['crown', 'Корона']],
+  wear: [['scarf', 'Шарфик'], ['none', 'Без одежды'], ['bowtie', 'Бабочка'], ['bell', 'Колокольчик'], ['tie', 'Галстук'], ['sweater', 'Свитер'], ['overalls', 'Комбинезон'], ['medal', 'Медаль'], ['cape', 'Плащ героя']],
+  hat: [['none', 'Без шапки'], ['bow', 'Бантик'], ['flower', 'Цветочек'], ['party', 'Колпак'], ['beanie', 'Шапка с помпоном'], ['cap', 'Кепка'], ['beret', 'Берет'], ['chef', 'Колпак повара'], ['santa', 'Новогодняя'], ['headphones', 'Наушники'], ['wizard', 'Шляпа волшебника'], ['crown', 'Корона'], ['halo', 'Нимб']],
+  glasses: [['none', 'Без очков'], ['round', 'Круглые'], ['heart', 'Сердечки'], ['star', 'Звёздочки'], ['sun', 'Тёмные'], ['monocle', 'Монокль']],
 };
-const SLOT_NAMES = {char: 'Персонажи', color: 'Окрас', hat: 'Шапки'};
+const SLOT_NAMES = {char: 'Персонажи', color: 'Окрас', wear: 'Одежда', hat: 'Шапки', glasses: 'Очки'};
 let G = null, ySub = 'shop';
 const questReady = g => [...(g?.quests || []), ...(g?.weekly || [])].some(q => !q.claimed && q.progress >= q.goal) || !!g?.bonus?.ready;
 function applyGame(g){
   if(!g) return;
   const before = G; G = g;
   $('#coins').hidden = false; $('#coins b').textContent = g.coins;
-  const b = $('#buddy'); if(b){ b.dataset.char = g.equip.char; b.dataset.color = g.equip.color; b.dataset.hat = g.equip.hat; }
+  const b = $('#buddy'); if(b){ b.dataset.char = g.equip.char; b.dataset.color = g.equip.color; b.dataset.hat = g.equip.hat; b.dataset.wear = g.equip.wear || 'scarf'; b.dataset.glasses = g.equip.glasses || 'none'; }
   $('#pathDot').hidden = !questReady(g);
   if(!before) return;
   const gained = g.coins - before.coins;
@@ -1162,9 +1190,9 @@ function notify(text){
   clearTimeout(notify.t); notify.t = setTimeout(() => t.classList.remove('on'), 3200);
 }
 $('#coins').onclick = () => tab('path');
-function miniBunny(char, color, hat){
+function miniBunny(char, color, hat, wear = G?.equip?.wear || 'scarf', glasses = G?.equip?.glasses || 'none'){
   const svg = $('#buddy svg').cloneNode(true);
-  const d = document.createElement('div'); d.className = 'buddy mini'; Object.assign(d.dataset, {char, color, hat, p: 'kind', s: 'idle'});
+  const d = document.createElement('div'); d.className = 'buddy mini'; Object.assign(d.dataset, {char, color, hat, wear, glasses, p: 'kind', s: 'idle'});
   d.append(svg); return d.outerHTML;
 }
 function shopHtml(){
@@ -1172,8 +1200,8 @@ function shopHtml(){
   const e = g.equip;
   return `<div class="cta"><div><b>${g.coins} 🪙</b><small>трать на скины для Yomi</small></div></div>` + Object.entries(SKINS).map(([slot, list]) => `<h3 class="sub-h">${SLOT_NAMES[slot]}</h3><div class="shop">${list.map(([id, name]) => {
     const key = slot + ':' + id, price = g.prices[key] ?? 0, owned = g.owned.includes(key), on = e[slot] === id;
-    const look = {char: e.char, color: e.color, hat: e.hat, [slot]: id};
-    return `<button class="item${on ? ' on' : ''}" data-item="${key}" ${!owned && price > g.coins ? 'data-poor="1"' : ''}>${miniBunny(look.char, look.color, look.hat)}<b>${name}</b><span>${on ? 'Надето' : owned ? 'Надеть' : price + ' 🪙'}</span></button>`;
+    const look = {char: e.char, color: e.color, hat: e.hat, wear: e.wear || 'scarf', glasses: e.glasses || 'none', [slot]: id};
+    return `<button class="item${on ? ' on' : ''}" data-item="${key}" ${!owned && price > g.coins ? 'data-poor="1"' : ''}>${miniBunny(look.char, look.color, look.hat, look.wear, look.glasses)}<b>${name}</b><span>${on ? 'Надето' : owned ? 'Надеть' : price + ' 🪙'}</span></button>`;
   }).join('')}</div>`).join('');
 }
 async function gameClick(e){

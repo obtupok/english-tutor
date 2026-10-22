@@ -598,6 +598,9 @@ const SHOP: Record<string, number> = {
   'char:bunny': 0, 'char:cat': 150, 'char:bear': 200, 'char:fox': 250, 'char:panda': 300,
   'color:classic': 0, 'color:choco': 60, 'color:gray': 60, 'color:pink': 80, 'color:mint': 80, 'color:sky': 100, 'color:gold': 250,
   'hat:none': 0, 'hat:bow': 40, 'hat:flower': 50, 'hat:cap': 80, 'hat:headphones': 120, 'hat:wizard': 180, 'hat:crown': 200,
+  'hat:party': 60, 'hat:beanie': 70, 'hat:beret': 90, 'hat:chef': 110, 'hat:santa': 120, 'hat:halo': 250,
+  'wear:scarf': 0, 'wear:none': 0, 'wear:bowtie': 60, 'wear:bell': 80, 'wear:tie': 90, 'wear:sweater': 120, 'wear:overalls': 140, 'wear:medal': 150, 'wear:cape': 220,
+  'glasses:none': 0, 'glasses:round': 70, 'glasses:heart': 90, 'glasses:star': 110, 'glasses:sun': 130, 'glasses:monocle': 160,
 };
 type Quest = { id: string; metric: string; goal: number; reward: number; title: string };
 const QUESTS: Quest[] = [
@@ -650,6 +653,8 @@ const levelReward = (lvl: number) => 10 * lvl + (lvl % 5 === 0 ? 50 : 0);   // Ð
 function game(st: any) {
   const g = st.game || (st.game = {});
   g.coins ??= 0; g.xp ??= 0; g.level ??= 1; g.owned ??= ['char:bunny', 'color:classic', 'hat:none']; g.equip ??= { char: 'bunny', color: 'classic', hat: 'none' };
+  g.equip.wear ??= 'scarf'; g.equip.glasses ??= 'none';
+  for (const free of ['wear:scarf', 'wear:none', 'glasses:none']) if (!g.owned.includes(free)) g.owned.push(free);
   if (g.day !== today()) { g.day = today(); g.counts = {}; g.claimed = []; g.bonus = false; }
   if (g.week !== weekKey()) { g.week = weekKey(); g.wcounts = {}; g.wclaimed = []; }
   return g;
