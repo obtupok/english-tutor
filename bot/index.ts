@@ -275,6 +275,8 @@ const CHARS: Record<string, { noun: string; voice: string; orpheus: string; trai
   bear: { noun: 'bear cub', voice: 'charon', orpheus: 'troy', trait: 'calm, warm and patient like a big hug, loves honey, forests and cosy evenings' },
   fox: { noun: 'fox cub', voice: 'despina', orpheus: 'autumn', trait: 'clever and sly, loves riddles, little tricks and smart word games' },
   panda: { noun: 'panda', voice: 'achernar', orpheus: 'daniel', trait: 'super chill and a bit sleepy, loves bamboo, snacks and doing things slowly but surely' },
+  hamster: { noun: 'hamster', voice: 'laomedeia', orpheus: 'autumn', trait: 'tiny, fast and fussy, stuffs snacks into its cheeks, gets excited about small things' },
+  dog: { noun: 'puppy', voice: 'puck', orpheus: 'austin', trait: 'loyal, super friendly and energetic, loves walks, balls and praising the learner like a best friend' },
 };
 const CHAR_OF = new WeakMap<object, string>();   // кто сейчас разговаривает (персонаж владельца) — для копии чата «Болтовни»
 const charOf = (st: any) => { const c = CHAR_OF.get(st) || st.game?.equip?.char; return CHARS[c] ? c : 'bunny'; };
@@ -614,7 +616,8 @@ async function handle(upd: any) {
 /* ---------- Игра: монетки, опыт и уровни, задания дня и недели, магазин скинов (данные — в english_tutor.game у владельца) ---------- */
 // цены — только здесь (сайт показывает, сервер решает)
 const SHOP: Record<string, number> = {
-  'char:bunny': 0, 'char:cat': 150, 'char:bear': 200, 'char:fox': 250, 'char:panda': 300,
+  'char:bunny': 0, 'char:cat': 150, 'char:bear': 200, 'char:fox': 250, 'char:panda': 300, 'char:hamster': 220, 'char:dog': 280,
+  'color:cream': 70, 'color:peach': 90, 'color:lavender': 120, 'color:graphite': 150,
   'color:classic': 0, 'color:choco': 60, 'color:gray': 60, 'color:pink': 80, 'color:mint': 80, 'color:sky': 100, 'color:gold': 250,
   'hat:none': 0, 'hat:bow': 40, 'hat:flower': 50, 'hat:cap': 80, 'hat:headphones': 120, 'hat:wizard': 180, 'hat:crown': 200,
   'hat:party': 60, 'hat:beanie': 70, 'hat:beret': 90, 'hat:chef': 110, 'hat:santa': 120, 'hat:halo': 250,
@@ -676,8 +679,41 @@ const WEEKLY: Quest[] = [
   { id: 'w_games20', metric: 'games', goal: 20, reward: 80, title: '20 мини-игр за неделю' },
 ];
 const DAY_BONUS = 25;   // сундучок дня: все задания дня выполнены
+// достижения: копятся за всё время (g.totals), награда — один раз
+const ACH: Quest[] = [
+  { id: 'a_phr10', metric: 'phrases', goal: 10, reward: 20, title: 'Первые 10 фраз' },
+  { id: 'a_phr100', metric: 'phrases', goal: 100, reward: 60, title: '100 фраз' },
+  { id: 'a_phr500', metric: 'phrases', goal: 500, reward: 200, title: '500 фраз' },
+  { id: 'a_clean50', metric: 'clean', goal: 50, reward: 60, title: '50 фраз без ошибок' },
+  { id: 'a_clean300', metric: 'clean', goal: 300, reward: 200, title: '300 фраз без ошибок' },
+  { id: 'a_voice100', metric: 'voice', goal: 100, reward: 80, title: '100 фраз голосом' },
+  { id: 'a_rev100', metric: 'reviews', goal: 100, reward: 80, title: 'Повтори 100 слов' },
+  { id: 'a_words50', metric: 'newwords', goal: 50, reward: 80, title: '50 новых слов' },
+  { id: 'a_scene30', metric: 'scene', goal: 30, reward: 60, title: '30 реплик в сценариях' },
+  { id: 'a_games10', metric: 'games', goal: 10, reward: 40, title: '10 мини-игр' },
+  { id: 'a_wins50', metric: 'gamewins', goal: 50, reward: 150, title: '50 побед в играх' },
+  { id: 'a_pet30', metric: 'pet', goal: 30, reward: 30, title: 'Погладь Yomi 30 раз' },
+  { id: 'a_streak7', metric: 'streak', goal: 7, reward: 100, title: '7 дней подряд' },
+  { id: 'a_lvl10', metric: 'level', goal: 10, reward: 150, title: 'Дойди до 10 уровня' },
+  { id: 'a_closet', metric: 'owned', goal: 30, reward: 120, title: 'Собери 30 вещей' },
+];
+const achProgress = (g: any, m: string) => m === 'streak' ? g.loginStreak || 0 : m === 'level' ? levelOf(g.xp).level : m === 'owned' ? g.owned.length : g.totals?.[m] || 0;
+// колесо удачи: раз в день; сектора на сайте идут в этом же порядке
+const WHEEL: (number | 'item')[] = [10, 50, 20, 100, 10, 30, 20, 'item'];
+const WHEEL_W = [22, 8, 18, 3, 22, 12, 10, 5];
+function spinWheel(g: any) {
+  let r = Math.random() * WHEEL_W.reduce((a, b) => a + b, 0), i = 0;
+  while (r >= WHEEL_W[i]) { r -= WHEEL_W[i]; i++; }
+  if (WHEEL[i] === 'item') {
+    const pool = Object.entries(SHOP).filter(([id, p]) => p > 0 && p <= 150 && !id.startsWith('char:') && !LOCKED[id] && !g.owned.includes(id));
+    if (pool.length) { const id = pool[Math.floor(Math.random() * pool.length)][0]; g.owned.push(id); return { index: i, item: id, coins: 0 }; }
+    i = 1;   // всё уже есть — 50 монет
+  }
+  g.coins += WHEEL[i] as number;
+  return { index: i, item: null, coins: WHEEL[i] as number };
+}
 // мини-игры со словами: монетки за победу, но не больше 10 оплаченных побед в день
-const GAME_KINDS = ['quiz', 'build', 'blitz'], GAME_PAID_WINS = 10;
+const GAME_KINDS = ['quiz', 'build', 'blitz', 'pairs', 'listen'], GAME_PAID_WINS = 10;
 const gameReward = (kind: string, score: number) => (kind === 'blitz' ? Math.min(25, 5 + Math.floor(score / 2)) : 10);
 // выбор заданий зависит только от даты: n штук с разными метриками
 function pick(pool: Quest[], seed: string, n: number) {
@@ -704,6 +740,9 @@ function game(st: any) {
   for (const free of ['wear:scarf', 'wear:none', 'glasses:none']) if (!g.owned.includes(free)) g.owned.push(free);
   if (g.day !== today()) { g.day = today(); g.counts = {}; g.claimed = []; g.bonus = false; }
   if (g.week !== weekKey()) { g.week = weekKey(); g.wcounts = {}; g.wclaimed = []; }
+  // общие счётчики для достижений; фразы — с учётом прошлых дней из статистики
+  g.totals ??= { phrases: Object.values(st.stats?.days || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0) };
+  g.achClaimed ??= [];
   grantUnlocks(g);
   return g;
 }
@@ -721,6 +760,7 @@ function gameEvent(st: any, metric: string, n = 1) {
   if (g.activeDay !== today()) { g.activeDay = today(); g.wcounts.days = (g.wcounts.days || 0) + 1; }
   g.counts[metric] = (g.counts[metric] || 0) + n;
   g.wcounts[metric] = (g.wcounts[metric] || 0) + n;
+  g.totals[metric] = (g.totals[metric] || 0) + n;
   g.coins += (COIN_FOR[metric] || 0) * n;
   addXp(g, (XP_FOR[metric] || 0) * n);
 }
@@ -737,6 +777,11 @@ function loginGift(st: any) {
 }
 function claimQuest(st: any, id: string) {
   const g = game(st);
+  if (id.startsWith('ach:')) {
+    const a = ACH.find((x) => x.id === id.slice(4));
+    if (!a || g.achClaimed.includes(a.id) || achProgress(g, a.metric) < a.goal) return 0;
+    g.achClaimed.push(a.id); g.coins += a.reward; addXp(g, 30); return a.reward;
+  }
   if (id === 'bonus') {
     const all = dailyQuests(g.day).every((q) => g.claimed.includes(q.id));
     if (!all || g.bonus) return 0;
@@ -756,7 +801,8 @@ function gameView(st: any) {
   return {
     coins: g.coins, owned: g.owned, equip: g.equip, loginStreak: g.loginStreak || 0, prices: SHOP,
     voices: Object.fromEntries(Object.keys(CHARS).map((c) => [c, voiceFor(st, c)])),
-    unlocks: LEVEL_UNLOCKS, petOnly: PET_ONLY,
+    unlocks: LEVEL_UNLOCKS, petOnly: PET_ONLY, spinReady: g.spinDay !== today(),
+    achievements: ACH.map((a) => ({ ...a, progress: Math.min(a.goal, achProgress(g, a.metric)), claimed: g.achClaimed.includes(a.id) })),
     best: g.best || {}, paidWinsLeft: Math.max(0, GAME_PAID_WINS - (g.counts.gamewins || 0)),
     xp: g.xp, level: lv.level, levelXp: lv.into, levelNeed: lv.need, nextReward: levelReward(lv.level + 1),
     quests: daily, weekly: view(weeklyQuests(g.week), g.wcounts, g.wclaimed), weekEnds,
@@ -877,6 +923,14 @@ async function web(req: Request) {
       g.best = { ...(g.best || {}), [kind]: Math.max(g.best?.[kind] || 0, score) };
       await save(owner);
       return json({ ok: true, reward, best: g.best[kind], left: Math.max(0, GAME_PAID_WINS - (g.counts.gamewins || 0)), game: gameView(owner) });
+    }
+    case 'spin': {
+      const g = game(owner);
+      if (g.spinDay === today()) return json({ error: 'spun', game: gameView(owner) });
+      g.spinDay = today();
+      const prize = spinWheel(g);
+      await save(owner);
+      return json({ ok: true, ...prize, game: gameView(owner) });
     }
     case 'mistakes': {
       const { data } = await admin.from('english_mistakes').select('*').order('at', { ascending: false }).limit(200);
