@@ -175,7 +175,18 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
 .ghint{color:var(--muted);font-size:14px}
 .gtokens{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
 .gtok{padding:9px 14px;border:1px solid var(--line-2);border-bottom-width:3px;border-radius:12px;background:var(--sheet);color:var(--ink);font:inherit;font-size:16px;font-weight:600;cursor:pointer}
-.gfix{margin:-6px 0 12px;font-size:14px;color:var(--muted)}.gfix b{color:var(--ink)}
+.pathscroll{overflow-x:auto;overflow-y:hidden;margin:4px -20px 0;padding:0 20px;scrollbar-width:none}.pathscroll::-webkit-scrollbar{display:none}
+.pathscroll .path{height:196px;margin:4px 0}
+.pathscroll .path-line{width:100%;height:100%}
+.pnode.gift:not(.past){border-color:var(--amber)}
+.plabel{position:absolute;transform:translateX(-50%);width:72px;text-align:center;font-size:11px;line-height:1.2;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px}
+.plabel svg{width:16px;height:16px;color:var(--amber)}.plabel.got{color:var(--green)}.plabel.got svg{color:var(--green)}
+.item.locked{opacity:.75}.item.locked .buddy.mini{filter:grayscale(.6)}
+.item .petonly{display:block;font-size:11px;color:var(--accent);margin-top:-2px}
+.lvl-got{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin:6px 0 12px}.lvl-got > div{display:flex;flex-direction:column;align-items:center;padding:8px 10px;border:1px solid var(--amber);border-radius:14px;background:var(--amber-bg)}
+.lvl-got .buddy.mini{--bsize:70px}.lvl-got b{font-size:14px}.lvl-got small{font-size:11px;color:var(--muted)}
+.gnext{display:flex;justify-content:center;margin-top:16px}.gnext .btn{min-width:160px}
+.gfix{margin:-4px 0 14px;font-size:14px;color:var(--muted)}.gfix p{margin:0 0 8px}.gfix b{color:var(--ink)}
 .gend{text-align:center;padding:10px 0}.gend .buddy.mini{--bsize:110px}.gend .actions{justify-content:center}
 #gamesBox .actions{display:flex;gap:10px;align-items:center;margin-top:16px}
 .lvlcard{display:flex;align-items:center;gap:14px;padding:16px;border-radius:16px;background:var(--ink);color:var(--paper);margin-bottom:6px}
@@ -499,6 +510,8 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
 .w-bowtie,.w-bell,.w-tie,.w-medal,.w-sweater,.w-overalls,.w-cape,.g-round,.g-sun,.g-heart,.g-star,.g-monocle,.h-beanie,.h-party,.h-beret,.h-santa,.h-chef,.h-halo{display:none}
 .buddy[data-wear="bowtie"] .w-bowtie,.buddy[data-wear="bell"] .w-bell,.buddy[data-wear="tie"] .w-tie,.buddy[data-wear="medal"] .w-medal,.buddy[data-wear="sweater"] .w-sweater,.buddy[data-wear="overalls"] .w-overalls,.buddy[data-wear="cape"] .w-cape,.buddy[data-glasses="round"] .g-round,.buddy[data-glasses="sun"] .g-sun,.buddy[data-glasses="heart"] .g-heart,.buddy[data-glasses="star"] .g-star,.buddy[data-glasses="monocle"] .g-monocle,.buddy[data-hat="beanie"] .h-beanie,.buddy[data-hat="party"] .h-party,.buddy[data-hat="beret"] .h-beret,.buddy[data-hat="santa"] .h-santa,.buddy[data-hat="chef"] .h-chef,.buddy[data-hat="halo"] .h-halo{display:inline}
 .buddy[data-wear]:not([data-wear="scarf"]) .b-scarf-wrap{display:none}
+.w-dress,.w-tutu,.w-hoodie,.w-jersey,.w-suit,.w-raincoat,.h-twinbows,.h-tiara,.h-gradcap,.h-cowboy,.h-pirate,.h-carrotcap,.h-daisies,.w-fishcharm,.w-pinkbell,.h-rangerhat,.w-apron,.h-detective,.h-leaves,.h-hachimaki,.h-sakura{display:none}
+.buddy[data-wear="dress"] .w-dress,.buddy[data-wear="tutu"] .w-tutu,.buddy[data-wear="hoodie"] .w-hoodie,.buddy[data-wear="jersey"] .w-jersey,.buddy[data-wear="suit"] .w-suit,.buddy[data-wear="raincoat"] .w-raincoat,.buddy[data-hat="twinbows"] .h-twinbows,.buddy[data-hat="tiara"] .h-tiara,.buddy[data-hat="gradcap"] .h-gradcap,.buddy[data-hat="cowboy"] .h-cowboy,.buddy[data-hat="pirate"] .h-pirate,.buddy[data-char="bunny"][data-hat="carrotcap"] .h-carrotcap,.buddy[data-char="bunny"][data-hat="daisies"] .h-daisies,.buddy[data-char="cat"][data-wear="fishcharm"] .w-fishcharm,.buddy[data-char="cat"][data-wear="pinkbell"] .w-pinkbell,.buddy[data-char="bear"][data-hat="rangerhat"] .h-rangerhat,.buddy[data-char="bear"][data-wear="apron"] .w-apron,.buddy[data-char="fox"][data-hat="detective"] .h-detective,.buddy[data-char="fox"][data-hat="leaves"] .h-leaves,.buddy[data-char="panda"][data-hat="hachimaki"] .h-hachimaki,.buddy[data-char="panda"][data-hat="sakura"] .h-sakura{display:inline}
 /* превью в магазине: неподвижные маленькие копии */
 .buddy.mini{position:relative;z-index:auto;left:auto;top:auto;--bsize:66px;cursor:default;pointer-events:none;margin:0 auto}
 .buddy.mini::after{display:none}
@@ -541,6 +554,13 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
             <g class="b-body">
               <ellipse class="b-line" cx="80" cy="132" rx="27" ry="16"/>
               <ellipse class="b-belly" cx="80" cy="136" rx="13" ry="9"/>
+              <g class="w-dress"><path fill="#F49AB5" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" d="M60 128 L50 149 Q80 155 110 149 L100 128Z"/><g fill="#fff" opacity=".85"><circle cx="66" cy="140" r="1.8"/><circle cx="78" cy="146" r="1.8"/><circle cx="92" cy="141" r="1.8"/><circle cx="84" cy="134" r="1.6"/><circle cx="72" cy="133" r="1.6"/></g></g>
+              <g class="w-tutu"><path fill="#F7C6D9" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" d="M48 139 Q52 131 58 136 Q62 129 68 135 Q74 128 80 134 Q86 128 92 135 Q98 129 102 136 Q108 131 112 139 Q80 151 48 139Z"/></g>
+              <g class="w-hoodie"><ellipse fill="#7FA37A" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" cx="80" cy="133" rx="27" ry="15.5"/><path fill="#6B8C66" stroke="var(--b-ink)" stroke-width="1.6" d="M68 138 H92 V146 Q80 149 68 146Z"/></g>
+              <g class="w-jersey"><ellipse fill="#D9475A" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" cx="80" cy="133" rx="27" ry="15.5"/><path fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" d="M75 134 H85 L79 145"/></g>
+              <g class="w-suit"><ellipse fill="#3B4A6B" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" cx="80" cy="133" rx="27" ry="15.5"/><path fill="#fff" d="M71 124 L80 141 L89 124Z"/><circle fill="#F2C94C" cx="80" cy="144" r="1.6"/></g>
+              <g class="w-raincoat"><ellipse fill="#F2C94C" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" cx="80" cy="133" rx="27" ry="15.5"/><g fill="#fff" stroke="var(--b-ink)" stroke-width="1.4"><circle cx="80" cy="136" r="2"/><circle cx="80" cy="143" r="2"/></g></g>
+              <g class="w-apron"><path fill="#FFF6E0" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" d="M64 128 H96 V146 Q80 150 64 146Z"/><path fill="#E8A93A" stroke="var(--b-ink)" stroke-width="1.6" d="M74 135 h12 v3 q0 6 -6 6 q-6 0 -6 -6z"/><path fill="none" stroke="#C47F12" stroke-width="1.6" d="M75 138 h10"/></g>
               <g class="w-sweater"><ellipse fill="#6FA8DC" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" cx="80" cy="133" rx="27" ry="15.5"/><path fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" opacity=".8" d="M57 139 Q80 149 103 139"/></g>
               <g class="w-overalls"><path fill="#5B7DB1" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" d="M55 135 Q80 127 105 135 Q106 148 80 148.5 Q54 148 55 135Z"/><rect fill="#7E9CCB" stroke="var(--b-ink)" stroke-width="1.6" x="73" y="135" width="14" height="9" rx="2"/></g>
               <g class="b-foot l"><ellipse class="b-line" cx="66" cy="145" rx="9" ry="5.5"/><path class="b-whisk" d="M63 147.5v-3M67 148v-3"/></g>
@@ -633,6 +653,15 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
               <g class="w-sweater"><path fill="#6FA8DC" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" d="M51 120 Q80 136 109 120 L107 129 Q80 143 53 129 Z"/><path fill="none" stroke="#fff" stroke-width="2" opacity=".7" d="M56 125.5 Q80 138 104 125.5"/></g>
               <g class="w-overalls"><path fill="none" stroke="#5B7DB1" stroke-width="5" stroke-linecap="round" d="M64 124 L66 136 M96 124 L94 136"/><circle fill="#F2C94C" stroke="var(--b-ink)" stroke-width="1.5" cx="66" cy="134" r="2.4"/><circle fill="#F2C94C" stroke="var(--b-ink)" stroke-width="1.5" cx="94" cy="134" r="2.4"/></g>
               <g class="w-cape"><path fill="none" stroke="#C2413A" stroke-width="6" stroke-linecap="round" d="M50 120 Q80 135 110 120"/><circle fill="#F2C94C" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" cx="80" cy="129" r="5"/></g>
+              <g class="w-dress"><path fill="#F49AB5" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" d="M52 121 Q80 136 108 121 L106 128 Q80 141 54 128Z"/><path fill="#fff" stroke="var(--b-ink)" stroke-width="1.6" d="M70 129 q5 6 10 1 q5 5 10 -1 l-2 -3 q-8 5 -16 0z"/></g>
+              <g class="w-tutu"><path fill="none" stroke="#F49AB5" stroke-width="5" stroke-linecap="round" d="M52 121 Q80 136 108 121"/><path fill="#F49AB5" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" d="M80 129 l-8 -5 v10z M80 129 l8 -5 v10z"/></g>
+              <g class="w-hoodie"><path fill="#7FA37A" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" d="M47 117 Q80 139 113 117 L110 130 Q80 147 50 130Z"/><path fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" d="M74 133 v9 M86 133 v9"/></g>
+              <g class="w-jersey"><path fill="#fff" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" d="M60 124 Q80 134 100 124 L94 130 Q80 138 66 130Z"/></g>
+              <g class="w-suit"><path fill="#3B4A6B" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" d="M50 120 Q60 128 72 130 L80 140 L88 130 Q100 128 110 120 L108 129 Q80 144 52 129Z"/><path fill="#fff" stroke="var(--b-ink)" stroke-width="1.6" d="M70 126 L78 131 L74 135Z M90 126 L82 131 L86 135Z"/><path fill="#D9475A" stroke="var(--b-ink)" stroke-width="1.6" d="M78 130 h4 l1 3 -3 7 -3 -7z"/></g>
+              <g class="w-raincoat"><path fill="#F2C94C" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" d="M48 118 Q80 138 112 118 L109 129 Q80 145 51 129Z"/></g>
+              <g class="w-apron"><path fill="none" stroke="#FFF6E0" stroke-width="3.5" d="M66 122 L68 132 M94 122 L92 132"/></g>
+              <g class="w-fishcharm"><path fill="none" stroke="#3E6FB0" stroke-width="2.6" stroke-linecap="round" d="M52 120 Q80 136 108 120"/><path fill="#7EC4E8" stroke="var(--b-ink)" stroke-width="1.8" stroke-linejoin="round" d="M71 136 q8 -7 16 0 q-8 7 -16 0z M87 136 l6 -5 v10z"/><circle fill="var(--b-ink)" cx="76" cy="135" r="1.2"/></g>
+              <g class="w-pinkbell"><path fill="none" stroke="#F06A8A" stroke-width="6" stroke-linecap="round" d="M50 120 Q80 136 110 120"/><path fill="#F06A8A" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" d="M66 125 l-7 -6 v10z M66 125 l7 -6 v10z"/><circle fill="#F2C94C" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" cx="80" cy="135" r="6.5"/><path fill="none" stroke="var(--b-ink)" stroke-width="1.8" stroke-linecap="round" d="M75.5 136.5h9"/></g>
               <!-- очки -->
               <g class="g-round" fill="rgba(255,255,255,.18)" stroke="var(--b-ink)" stroke-width="2.4"><circle cx="63" cy="91" r="11"/><circle cx="97" cy="91" r="11"/><path fill="none" d="M74 90 Q80 86 86 90 M52 89 L42 85 M108 89 L118 85"/></g>
               <g class="g-sun" stroke="var(--b-ink)" stroke-width="2.4" stroke-linejoin="round"><path fill="#2A241D" d="M50 83 H76 V90 A13 11 0 0 1 50 90Z M84 83 H110 V90 A13 11 0 0 1 84 90Z"/><path fill="none" d="M76 86 H84 M50 85 L41 82 M110 85 L119 82"/><path fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".7" d="M55 88 l4 -3 M89 88 l4 -3"/></g>
@@ -640,6 +669,18 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
               <g class="g-star" fill="#F2C94C" fill-opacity=".85" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round"><path d="M63 77 l4.1 8.4 9.2 1.3 -6.7 6.5 1.6 9.2 -8.2 -4.4 -8.2 4.4 1.6 -9.2 -6.7 -6.5 9.2 -1.3z"/><path d="M97 77 l4.1 8.4 9.2 1.3 -6.7 6.5 1.6 9.2 -8.2 -4.4 -8.2 4.4 1.6 -9.2 -6.7 -6.5 9.2 -1.3z"/><path fill="none" d="M75 89 H85"/></g>
               <g class="g-monocle"><circle fill="rgba(255,255,255,.2)" stroke="#C99A2E" stroke-width="3" cx="97" cy="91" r="11.5"/><path fill="none" stroke="#C99A2E" stroke-width="1.6" stroke-dasharray="2 2" d="M106 98 Q114 110 110 124"/></g>
               <!-- шапки -->
+              <g class="h-twinbows"><g fill="#F06A8A" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round"><path d="M58 60 l-10 -6 v12z M58 60 l10 -6 v12z"/><path d="M102 60 l-10 -6 v12z M102 60 l10 -6 v12z"/></g><circle fill="#F06A8A" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" cx="58" cy="60" r="3"/><circle fill="#F06A8A" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" cx="102" cy="60" r="3"/></g>
+              <g class="h-tiara"><path fill="#ECE6F5" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" d="M60 60 L64 46 L72 54 L80 40 L88 54 L96 46 L100 60 Q80 55 60 60Z"/><circle fill="#7FD3F0" stroke="var(--b-ink)" stroke-width="1.4" cx="80" cy="50" r="3.2"/><circle fill="#F49AB5" cx="66" cy="54" r="1.8"/><circle fill="#F49AB5" cx="94" cy="54" r="1.8"/></g>
+              <g class="h-gradcap"><path fill="#2A241D" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" d="M60 54 Q80 61 100 54 V45 Q80 51 60 45Z"/><path fill="#3A332B" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" d="M80 27 L118 40 L80 52 L42 40Z"/><path fill="none" stroke="#F2C94C" stroke-width="2.2" d="M80 40 L108 46 V60"/><circle fill="#F2C94C" cx="108" cy="61" r="2.8"/></g>
+              <g class="h-cowboy"><path fill="#A0784E" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" d="M60 58 Q57 34 70 32 Q80 38 90 32 Q103 34 100 58Z"/><path fill="none" stroke="#5E3F22" stroke-width="3.5" d="M60 52 Q80 56 100 52"/><path fill="#A0784E" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" d="M36 58 Q44 52 60 56 Q80 60 100 56 Q116 52 124 58 Q118 66 100 63 Q80 66 60 63 Q42 66 36 58Z"/></g>
+              <g class="h-pirate"><path fill="#2A241D" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" d="M48 60 Q52 34 80 32 Q108 34 112 60 Q80 52 48 60Z"/><path fill="#2A241D" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" d="M38 58 Q80 44 122 58 Q120 65 112 63 Q80 55 48 63 Q40 65 38 58Z"/><circle fill="#fff" cx="80" cy="43" r="4.5"/><path fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" d="M73 52 l14 -4 M73 48 l14 4"/></g>
+              <g class="h-carrotcap"><path fill="#F08A3C" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" d="M58 60 Q60 36 80 26 Q100 36 102 60 Q80 53 58 60Z"/><path fill="none" stroke="#C8641E" stroke-width="2" stroke-linecap="round" d="M66 48 h9 M84 42 h9 M73 36 h7 M86 54 h8"/><path fill="#6DBE6A" stroke="var(--b-ink)" stroke-width="2" stroke-linejoin="round" d="M80 27 q-12 -8 -9 -19 q8 6 9 15 q0 -11 9 -17 q3 11 -9 21z"/></g>
+              <g class="h-daisies"><g fill="#fff" stroke="var(--b-ink)" stroke-width="1.5"><circle cx="52" cy="66" r="5.5"/><circle cx="62" cy="58" r="5.5"/><circle cx="74" cy="54" r="5.5"/><circle cx="86" cy="54" r="5.5"/><circle cx="98" cy="58" r="5.5"/><circle cx="108" cy="66" r="5.5"/></g><g fill="#F2C94C"><circle cx="52" cy="66" r="2.3"/><circle cx="62" cy="58" r="2.3"/><circle cx="74" cy="54" r="2.3"/><circle cx="86" cy="54" r="2.3"/><circle cx="98" cy="58" r="2.3"/><circle cx="108" cy="66" r="2.3"/></g><g fill="#6DBE6A"><ellipse cx="57" cy="61" rx="3" ry="1.6"/><ellipse cx="68" cy="55" rx="3" ry="1.6"/><ellipse cx="80" cy="53" rx="3" ry="1.6"/><ellipse cx="92" cy="55" rx="3" ry="1.6"/><ellipse cx="103" cy="61" rx="3" ry="1.6"/></g></g>
+              <g class="h-rangerhat"><path fill="#5E8C4A" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" d="M58 58 Q60 34 80 33 Q100 34 102 58Z"/><path fill="none" stroke="#3E6230" stroke-width="3.5" d="M59 51 Q80 55 101 51"/><ellipse fill="#5E8C4A" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" cx="80" cy="58" rx="38" ry="7"/><path fill="#E07A5F" stroke="var(--b-ink)" stroke-width="1.6" d="M96 50 q10 -14 6 -22 q-8 8 -6 22z"/></g>
+              <g class="h-detective"><path fill="#A0784E" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" d="M54 62 Q54 34 80 32 Q106 34 106 62 Q80 56 54 62Z"/><path fill="none" stroke="#7A5634" stroke-width="1.6" d="M63 39 V58 M72 34 V56 M88 34 V56 M97 39 V58 M56 46 H104"/><path fill="#A0784E" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" d="M54 61 Q42 64 38 57 Q47 52 57 55Z M106 61 Q118 64 122 57 Q113 52 103 55Z"/><circle fill="#7A5634" stroke="var(--b-ink)" stroke-width="1.4" cx="80" cy="32" r="3"/></g>
+              <g class="h-leaves"><g stroke="var(--b-ink)" stroke-width="1.5"><ellipse fill="#E07A5F" cx="52" cy="66" rx="7" ry="3.8" transform="rotate(-60 52 66)"/><ellipse fill="#F2C94C" cx="60" cy="58" rx="7" ry="3.8" transform="rotate(-40 60 58)"/><ellipse fill="#D9475A" cx="70" cy="53" rx="7" ry="3.8" transform="rotate(-20 70 53)"/><ellipse fill="#F08A3C" cx="80" cy="51" rx="7" ry="3.8" transform="rotate(0 80 51)"/><ellipse fill="#F2C94C" cx="90" cy="53" rx="7" ry="3.8" transform="rotate(20 90 53)"/><ellipse fill="#E07A5F" cx="100" cy="58" rx="7" ry="3.8" transform="rotate(40 100 58)"/><ellipse fill="#D9475A" cx="108" cy="66" rx="7" ry="3.8" transform="rotate(60 108 66)"/></g><circle fill="#9B3B2E" cx="80" cy="51" r="2"/></g>
+              <g class="h-hachimaki"><path fill="#fff" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" d="M35 76 Q80 56 125 76 L124 84 Q80 64 36 84Z"/><circle fill="#D9475A" cx="80" cy="70" r="4.5"/><path fill="#fff" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" d="M123 79 l13 -7 -1 11z M123 81 l11 7 -11 2z"/></g>
+              <g class="h-sakura"><g fill="#F7B6C8" stroke="var(--b-ink)" stroke-width="1.5"><ellipse cx="104" cy="52" rx="4.5" ry="3.4" transform="rotate(90 104 52)"/><ellipse cx="109.7" cy="56.14" rx="4.5" ry="3.4" transform="rotate(18 109.7 56.14)"/><ellipse cx="107.54" cy="62.86" rx="4.5" ry="3.4" transform="rotate(-54 107.54 62.86)"/><ellipse cx="100.46" cy="62.86" rx="4.5" ry="3.4" transform="rotate(54 100.46 62.86)"/><ellipse cx="98.3" cy="56.14" rx="4.5" ry="3.4" transform="rotate(-18 98.3 56.14)"/></g><circle fill="#E86A8A" cx="104" cy="58" r="2.4"/><g fill="#F7B6C8" stroke="var(--b-ink)" stroke-width="1.3"><circle cx="116" cy="70" r="3"/><circle cx="121" cy="68" r="3"/><circle cx="119" cy="74" r="3"/></g><circle fill="#E86A8A" cx="119" cy="70.5" r="1.4"/></g>
               <g class="h-beanie"><path fill="#E07A5F" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" d="M48 64 Q48 30 80 30 Q112 30 112 64Z"/><path fill="none" stroke="#fff" stroke-width="2" opacity=".55" d="M62 34 Q60 48 62 60 M80 31 V60 M98 34 Q100 48 98 60"/><rect fill="#F4E3D0" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" x="45" y="58" width="70" height="10" rx="5"/><circle fill="#F4E3D0" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" cx="80" cy="27" r="6.5"/></g>
               <g class="h-party"><path fill="#7AC7A3" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" d="M65 60 L80 16 L95 60Z"/><circle fill="#F2C94C" cx="76" cy="48" r="2.5"/><circle fill="#E86A8A" cx="85" cy="38" r="2.5"/><circle fill="#fff" cx="79" cy="29" r="2"/><circle fill="#F2C94C" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" cx="80" cy="15" r="5"/></g>
               <g class="h-beret"><ellipse fill="#C2413A" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" cx="76" cy="54" rx="31" ry="10" transform="rotate(-10 76 54)"/><path fill="#C2413A" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" d="M77 44 q1 -6 5 -7"/></g>
@@ -679,6 +720,8 @@ const API = 'https://yxoakverustsnnglzdiy.supabase.co/functions/v1/english-tutor
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const store = { get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch{ return d; } }, set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch{} } };
+// твой наряд — сразу при загрузке, не дожидаясь сервера (иначе мелькает обычный кролик)
+{ const eq = store.get('yomi_equip', null), b = document.getElementById('buddy'); if(eq && b) Object.assign(b.dataset, eq); }
 const ICON = {
   speak:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>',
   tr:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h8M8 3v2M5 11c2 0 5-2 6-6M6 7c1 2 3 4 6 4"/><path d="M13 21l4-9 4 9M14.5 18h5"/></svg>',
@@ -1193,10 +1236,15 @@ $('#progBox').onclick = async e => {
 const SKINS = {
   char: [['bunny', 'Кролик'], ['cat', 'Котик'], ['bear', 'Медвежонок'], ['fox', 'Лисёнок'], ['panda', 'Панда']],
   color: [['classic', 'Родной'], ['choco', 'Шоколадный'], ['gray', 'Серый'], ['pink', 'Розовый'], ['mint', 'Мятный'], ['sky', 'Голубой'], ['gold', 'Золотой']],
-  wear: [['scarf', 'Шарфик'], ['none', 'Без одежды'], ['bowtie', 'Бабочка'], ['bell', 'Колокольчик'], ['tie', 'Галстук'], ['sweater', 'Свитер'], ['overalls', 'Комбинезон'], ['medal', 'Медаль'], ['cape', 'Плащ героя']],
-  hat: [['none', 'Без шапки'], ['bow', 'Бантик'], ['flower', 'Цветочек'], ['party', 'Колпак'], ['beanie', 'Шапка с помпоном'], ['cap', 'Кепка'], ['beret', 'Берет'], ['chef', 'Колпак повара'], ['santa', 'Новогодняя'], ['headphones', 'Наушники'], ['wizard', 'Шляпа волшебника'], ['crown', 'Корона'], ['halo', 'Нимб']],
+  wear: [['scarf', 'Шарфик'], ['none', 'Без одежды'], ['bowtie', 'Бабочка'], ['bell', 'Колокольчик'], ['tie', 'Галстук'], ['sweater', 'Свитер'], ['overalls', 'Комбинезон'], ['medal', 'Медаль'], ['cape', 'Плащ героя'], ['dress', 'Платье в горошек'], ['tutu', 'Пачка балерины'], ['hoodie', 'Толстовка'], ['jersey', 'Футболка №7'], ['raincoat', 'Дождевик'], ['suit', 'Костюм'],
+    ['fishcharm', 'Кулон-рыбка'], ['pinkbell', 'Розовый колокольчик'], ['apron', 'Фартук пасечника']],
+  hat: [['none', 'Без шапки'], ['bow', 'Бантик'], ['flower', 'Цветочек'], ['party', 'Колпак'], ['beanie', 'Шапка с помпоном'], ['cap', 'Кепка'], ['beret', 'Берет'], ['chef', 'Колпак повара'], ['santa', 'Новогодняя'], ['headphones', 'Наушники'], ['wizard', 'Шляпа волшебника'], ['crown', 'Корона'], ['halo', 'Нимб'], ['twinbows', 'Два бантика'], ['cowboy', 'Ковбойская'], ['pirate', 'Пиратская'], ['gradcap', 'Шапочка выпускника'], ['tiara', 'Диадема'],
+    ['carrotcap', 'Шапочка-морковка'], ['daisies', 'Венок из ромашек'], ['rangerhat', 'Шляпа лесника'], ['detective', 'Шляпа сыщика'], ['leaves', 'Осенний венок'], ['hachimaki', 'Повязка хатимаки'], ['sakura', 'Цветы сакуры']],
   glasses: [['none', 'Без очков'], ['round', 'Круглые'], ['heart', 'Сердечки'], ['star', 'Звёздочки'], ['sun', 'Тёмные'], ['monocle', 'Монокль']],
 };
+const PET_NAMES = {bunny: 'кролика', cat: 'котика', bear: 'медвежонка', fox: 'лисёнка', panda: 'панды'};
+const lockLevel = (g, key) => (g.unlocks || []).find(([, id]) => id === key)?.[0];
+const itemName = key => { const [slot, id] = key.split(':'); return SKINS[slot]?.find(([x]) => x === id)?.[1] || id; };
 const SLOT_NAMES = {char: 'Персонажи', color: 'Окрас', wear: 'Одежда', hat: 'Шапки', glasses: 'Очки'};
 let G = null, ySub = 'char';
 const questReady = g => [...(g?.quests || []), ...(g?.weekly || [])].some(q => !q.claimed && q.progress >= q.goal) || !!g?.bonus?.ready;
@@ -1205,6 +1253,7 @@ function applyGame(g){
   const before = G; G = g;
   $('#coins').hidden = false; $('#coins b').textContent = g.coins;
   const b = $('#buddy'); if(b){ b.dataset.char = g.equip.char; b.dataset.color = g.equip.color; b.dataset.hat = g.equip.hat; b.dataset.wear = g.equip.wear || 'scarf'; b.dataset.glasses = g.equip.glasses || 'none'; }
+  store.set('yomi_equip', {char: g.equip.char, color: g.equip.color, hat: g.equip.hat, wear: g.equip.wear || 'scarf', glasses: g.equip.glasses || 'none'});
   if(g.voices?.[g.equip.char]) S.speaker = g.voices[g.equip.char];
   $('#pathDot').hidden = !questReady(g);
   if(!before) return;
@@ -1213,7 +1262,8 @@ function applyGame(g){
   const prevQ = [...(before.quests || []), ...(before.weekly || [])];
   const doneNow = [...g.quests, ...(g.weekly || [])].filter(q => q.progress >= q.goal && !q.claimed && !(prevQ.find(x => x.id === q.id)?.progress >= q.goal));
   if(doneNow.length) notify(`Задание выполнено: ${doneNow[0].title}! Забери награду в «Пути»`);
-  if(before.level && g.level > before.level) setTimeout(() => celebrate(g.level, g.coins - before.coins), 700);
+  const gotNew = g.owned.filter(k => !before.owned.includes(k) && lockLevel(g, k));
+  if(before.level && g.level > before.level) setTimeout(() => celebrate(g.level, g.coins - before.coins, gotNew), 700);
 }
 // «+N 🪙» взлетает над кроликом (или над счётчиком, если кролик спрятан)
 function coinFx(n){
@@ -1238,8 +1288,9 @@ function shopHtml(){
   const e = g.equip;
   return `<p class="lead">Наряжай персонажа: вещи примеряются на того, кто сейчас с тобой. На счету <b>${g.coins} 🪙</b>.</p>` + Object.entries(SKINS).filter(([slot]) => slot !== 'char').map(([slot, list]) => `<h3 class="sub-h">${SLOT_NAMES[slot]}</h3><div class="shop">${list.map(([id, name]) => {
     const key = slot + ':' + id, price = g.prices[key] ?? 0, owned = g.owned.includes(key), on = e[slot] === id;
-    const look = {char: e.char, color: e.color, hat: e.hat, wear: e.wear || 'scarf', glasses: e.glasses || 'none', [slot]: id};
-    return `<button class="item${on ? ' on' : ''}" data-item="${key}" ${!owned && price > g.coins ? 'data-poor="1"' : ''}>${miniBunny(look.char, look.color, look.hat, look.wear, look.glasses)}<b>${name}</b><span>${on ? 'Надето' : owned ? 'Надеть' : price + ' 🪙'}</span></button>`;
+    const pet = g.petOnly?.[key], lock = !owned && lockLevel(g, key) && !key.startsWith('char:') ? lockLevel(g, key) : 0;
+    const look = {char: pet || e.char, color: pet && pet !== e.char ? 'classic' : e.color, hat: e.hat, wear: e.wear || 'scarf', glasses: e.glasses || 'none', [slot]: id};
+    return `<button class="item${on ? ' on' : ''}${lock ? ' locked' : ''}" data-item="${key}" ${lock ? `data-lock="${lock}"` : !owned && price > g.coins ? 'data-poor="1"' : ''} ${pet ? `data-pet="${pet}"` : ''}>${miniBunny(look.char, look.color, look.hat, look.wear, look.glasses)}<b>${name}</b>${pet ? `<small class="petonly">только для ${PET_NAMES[pet]}</small>` : ''}<span>${on ? 'Надето' : owned ? 'Надеть' : lock ? `🔒 ${lock} уровень` : price + ' 🪙'}</span></button>`;
   }).join('')}</div>`).join('');
 }
 async function gameClick(e){
@@ -1248,9 +1299,10 @@ async function gameClick(e){
   if(claim){ claim.disabled = true; const j = await api('claim', {quest: claim.dataset.claim}); if(j.game) applyGame(j.game); if(j.ok){ react('t-heart', 1300); notify(`+${j.reward} 🪙 — молодец!`); } showYomi(); return true; }
   if(item){
     if(item.classList.contains('on')) return true;
+    if(item.dataset.lock){ notify(`Откроется на ${item.dataset.lock} уровне — смотри «Путь»`); sfx('oops'); return true; }
     if(item.dataset.poor){ const need = G.prices[item.dataset.item] - G.coins; notify(`Не хватает ${need} 🪙 — поговори с Yomi ещё немного`); sfx('oops'); return true; }
     const j = await api('buy', {item: item.dataset.item});
-    if(j.game){ applyGame(j.game); if(j.ok){ hop(); sfx('happy'); } }
+    if(j.game){ applyGame(j.game); if(j.ok){ hop(); sfx('happy'); if(item.dataset.pet && item.dataset.pet !== G.equip.char) notify(`Надето — видно, когда с тобой ${PET_NAMES[item.dataset.pet].replace(/а$/, '')}`); } }
     showYomi(); return true;
   }
   return false;
@@ -1355,23 +1407,25 @@ function questCard(q){
 function showPath(){
   const g = G, box = $('#pathBox');
   if(!g){ box.innerHTML = '<div class="empty">Загружаю…</div>'; api('game').then(j => { if(j.game){ applyGame(j.game); showPath(); } }); return; }
-  // короткая тропинка в одну строку: прошлый уровень, текущий и 4 следующих
-  const start = Math.max(1, g.level - 1), levels = [...Array(6)].map((_, i) => start + i);
-  const pos = l => ({x: 8 + (l - start) * 16.8, y: (l - start) % 2 ? 112 : 96});
+  // тропинка всех уровней (листается вбок): на кружках — что дают; кролик стоит на своём
+  const last = Math.max(20, g.level + 6), levels = [...Array(last)].map((_, i) => i + 1), STEP = 74, start = 1;
+  const pos = l => ({x: 36 + (l - 1) * STEP, y: l % 2 ? 92 : 108});
   const pts = levels.map(l => { const p = pos(l); return `${p.x},${p.y}`; });
+  const unl = Object.fromEntries((g.unlocks || []).map(([l, id]) => [l, id]));
   const done = g.quests.filter(q => q.claimed).length, left = g.levelNeed - g.levelXp;
   box.innerHTML = `<div class="lvlcard"><div class="lvl-badge"><small>уровень</small><b>${g.level}</b></div>
       <div class="lvl-info"><div class="xpbar"><i style="width:${Math.round(g.levelXp / g.levelNeed * 100)}%"></i></div><small>Ещё ${left} XP до уровня ${g.level + 1} · награда +${g.nextReward} 🪙</small></div></div>
-    <div class="path" id="pathMap">
-      <svg class="path-line" viewBox="0 0 100 140" preserveAspectRatio="none" aria-hidden="true">
-        <polyline points="${pts.slice(0, g.level - start + 1).join(' ')}" class="pl-done"/><polyline points="${pts.slice(g.level - start).join(' ')}" class="pl-todo"/></svg>
-      ${levels.map(l => { const p = pos(l), chest = l % 5 === 0, cls = l < g.level ? 'past' : l === g.level ? 'now' : 'next';
-        return `<div class="pnode ${cls}${chest ? ' chest' : ''}" style="left:${p.x}%;top:${p.y}px" title="Уровень ${l}">${chest && l > g.level ? ico('gift') : l < g.level ? '✓' : l}</div>`; }).join('')}
+    <div class="pathscroll" id="pathScroll"><div class="path" id="pathMap" style="width:${pos(last).x + 40}px">
+      <svg class="path-line" viewBox="0 0 ${pos(last).x + 40} 196" aria-hidden="true">
+        <polyline points="${pts.slice(0, g.level).join(' ')}" class="pl-done"/><polyline points="${pts.slice(g.level - 1).join(' ')}" class="pl-todo"/></svg>
+      ${levels.map(l => { const p = pos(l), chest = l % 5 === 0, cls = l < g.level ? 'past' : l === g.level ? 'now' : 'next', u = unl[l];
+        const label = u ? itemName(u) : chest ? 'сундук' : '';
+        return `<div class="pnode ${cls}${chest ? ' chest' : ''}${u ? ' gift' : ''}" style="left:${p.x}px;top:${p.y}px" title="Уровень ${l}${label ? ': ' + label : ''}">${l < g.level ? '✓' : l}</div>${label ? `<div class="plabel${l <= g.level ? ' got' : ''}" style="left:${p.x}px;top:${p.y + 30}px">${u ? ico(u.startsWith('char:') ? 'star' : 'gift') : ''}${esc(label)}</div>` : ''}`; }).join('')}
       <div class="pbunny" id="pbunny">${miniBunny(g.equip.char, g.equip.color, g.equip.hat)}</div>
-    </div>
+    </div></div>
     <div class="howto"><b>Как прокачать уровень</b>
       <ul><li>${tile('phrases', 'h-ico')}Фраза на английском <em>+10 XP</em></li><li>${tile('clean', 'h-ico')}Без ошибок <em>+5 XP</em></li><li>${tile('reviews', 'h-ico')}Повтор слова <em>+3 XP</em></li><li>${tile('test', 'h-ico')}Задание ниже <em>+20 XP и монеты</em></li></ul>
-      <p>Новый уровень — монеты, каждый 5-й — сундук. Кролик прыгает на следующий кружок.</p>
+      <p>Каждый уровень — монеты, а на многих — новый персонаж или вещь, которую не купить в магазине (подписаны под кружками). Каждый 5-й — сундук.</p>
       <button class="btn sm" data-go="talk">Поговорить с Yomi</button></div>
     <h3 class="sub-h">Задания дня</h3>
     <div class="qlist">${g.quests.map(questCard).join('')}
@@ -1382,8 +1436,9 @@ function showPath(){
     <div class="qlist">${g.weekly.map(questCard).join('')}</div>`;
   // кролик стоит на своём уровне; если уровень вырос с прошлого раза — прыгает по кружкам до нового
   const pb = $('#pbunny'), seen = Math.max(start, Math.min(g.level, store.get('yomi_seenlvl', g.level)));
-  const put = l => { const p = pos(l); pb.style.left = p.x + '%'; pb.style.top = (p.y - 78) + 'px'; };
+  const put = l => { const p = pos(l); pb.style.left = p.x + 'px'; pb.style.top = (p.y - 78) + 'px'; };
   put(seen);
+  const sc = $('#pathScroll'); sc.scrollLeft = pos(g.level).x - sc.clientWidth / 2;
   if(seen < g.level){
     let l = seen;
     const step = () => { l++; pb.classList.remove('jump'); void pb.offsetWidth; pb.classList.add('jump'); put(l); sfx('hop');
@@ -1401,63 +1456,84 @@ $('#pathBox').onclick = async e => {
   showPath();
 };
 // праздник нового уровня: карточка с прыгающим кроликом и наградой
-function celebrate(level, reward){
+function celebrate(level, reward, got = []){
   sfx('happy'); hop();
   sheet(`<div class="lvlup"><div class="confetti" aria-hidden="true">${[...Array(14)].map((_, i) => `<i style="--i:${i}"></i>`).join('')}</div>
     <div class="lvlup-b">${miniBunny(G.equip.char, G.equip.color, G.equip.hat)}</div>
     <h2>Уровень ${level}!</h2><p class="lead">${level % 5 === 0 ? 'Сундук уровня открыт: ' : 'Награда: '}+${reward} 🪙. Кролик уже прыгнул на новый кружок в «Пути».</p>
+    ${got.length ? `<div class="lvl-got">${got.map(k => { const [slot, id] = k.split(':'), pet = G.petOnly?.[k], e = G.equip, look = {char: pet || e.char, color: e.color, hat: e.hat, wear: e.wear, glasses: e.glasses, [slot]: id}; return `<div>${miniBunny(look.char, look.color, look.hat, look.wear, look.glasses)}<b>${itemName(k)}</b><small>${slot === 'char' ? 'новый персонаж' : 'новая вещь'}</small></div>`; }).join('')}</div>` : ''}
     <div class="actions"><button class="btn" data-lvlok>Ура!</button><button class="btn line" data-lvlpath>Посмотреть путь</button></div></div>`);
   $('#sheetIn').onclick = e => { if(e.target.closest('[data-lvlok]')) closeSheet(); if(e.target.closest('[data-lvlpath]')){ closeSheet(); tab('path'); } };
 }
 /* ---------- мини-игры со словами: «Угадай перевод», «Собери фразу», «Блиц» ---------- */
 // запасные слова и фразы — если своих слов ещё мало
-const STARTER = [['apple','яблоко'],['house','дом'],['friend','друг'],['water','вода'],['city','город'],['book','книга'],['window','окно'],['tree','дерево'],['weather','погода'],['journey','путешествие'],
-  ['kitchen','кухня'],['money','деньги'],['tired','уставший'],['happy','счастливый'],['angry','злой'],['quiet','тихий'],['expensive','дорогой'],['cheap','дешёвый'],['busy','занятой'],['early','рано'],
-  ['late','поздно'],['always','всегда'],['never','никогда'],['often','часто'],['to borrow','одолжить (взять)'],['to lend','одолжить (дать)'],['to remember','помнить'],['to forget','забыть'],['to choose','выбирать'],['to explain','объяснять'],
-  ['to wait','ждать'],['to arrive','прибывать'],['to leave','уходить, уезжать'],['to win','побеждать'],['to lose','проигрывать, терять'],['to grow','расти'],['neighbour','сосед'],['ticket','билет'],['answer','ответ'],['question','вопрос'],
-  ['knowledge','знание'],['opportunity','возможность'],['advice','совет'],['mistake','ошибка'],['to improve','улучшать'],['to achieve','достигать'],['enough','достаточно'],['although','хотя'],['however','однако'],['instead','вместо этого']];
-const PHRASES = [['I would like a cup of coffee','Я бы хотел чашку кофе'],['Where is the nearest station','Где ближайшая станция'],['I have never been to London','Я никогда не был в Лондоне'],
-  ['She is better at maths than me','Она лучше меня в математике'],['Could you help me with this','Не мог бы ты помочь мне с этим'],['I am looking forward to the weekend','Я жду не дождусь выходных'],
-  ['We should have left earlier','Нам следовало уйти раньше'],['How long have you been learning English','Как долго ты учишь английский'],['It depends on the weather','Это зависит от погоды'],
-  ['I did not know what to say','Я не знал, что сказать'],['Let me think about it','Дай мне подумать об этом'],['He used to play football every day','Раньше он играл в футбол каждый день'],
-  ['If I had more time I would travel','Если бы у меня было больше времени, я бы путешествовал'],['What do you usually do on Sundays','Что ты обычно делаешь по воскресеньям'],
-  ['I am not sure it is a good idea','Я не уверен, что это хорошая идея'],['The film was more interesting than the book','Фильм был интереснее книги'],['Do you mind if I open the window','Ты не против, если я открою окно'],
-  ['I have been waiting for an hour','Я жду уже час'],['She told me she was tired','Она сказала мне, что устала'],['I can not afford a new phone','Я не могу позволить себе новый телефон']];
+// слова и фразы по уровням: игра берёт твой уровень и уровень выше (чтобы было чему учиться)
+const WL = {
+  A2: [['neighbour','сосед'],['ticket','билет'],['journey','поездка'],['to arrive','прибывать'],['to forget','забывать'],['expensive','дорогой'],['enough','достаточно'],['careful','осторожный'],['to choose','выбирать'],['to explain','объяснять'],
+    ['healthy','здоровый'],['noisy','шумный'],['to invite','приглашать'],['to agree','соглашаться'],['cloudy','облачный'],['to share','делиться'],['lazy','ленивый'],['to repair','чинить'],['to miss','скучать; опаздывать'],['to borrow','взять в долг'],
+    ['to lend','дать в долг'],['to win','побеждать'],['to lose','терять; проигрывать'],['dangerous','опасный'],['to hurry','спешить']],
+  B1: [['although','хотя'],['however','однако'],['to achieve','достигать'],['opportunity','возможность'],['advice','совет'],['to improve','улучшать'],['knowledge','знание'],['to avoid','избегать'],['to suggest','предлагать'],['to rely on','полагаться на'],
+    ['to afford','позволить себе'],['to complain','жаловаться'],['reliable','надёжный'],['to persuade','убеждать'],['embarrassed','смущённый'],['to admit','признавать'],['to require','требовать'],['to increase','увеличивать'],['to reduce','сокращать'],['environment','окружающая среда'],
+    ['to expect','ожидать'],['to manage','справляться'],['grateful','благодарный'],['to apologise','извиняться'],['to deserve','заслуживать'],['to encourage','поощрять'],['crowded','переполненный'],['to doubt','сомневаться']],
+  B2: [['to acknowledge','признавать'],['to undermine','подрывать'],['to cope with','справляться с'],['to emphasise','подчёркивать'],['to postpone','откладывать'],['to overcome','преодолевать'],['reluctant','неохотный'],['inevitable','неизбежный'],['to anticipate','предвидеть'],['substantial','существенный'],
+    ['to deteriorate','ухудшаться'],['to convey','передавать (смысл)'],['consequence','последствие'],['to comply with','соблюдать'],['to pursue','добиваться'],['versatile','разносторонний'],['to thrive','процветать'],['ambiguous','двусмысленный'],['to outweigh','перевешивать'],['to tackle','браться за (проблему)'],
+    ['feasible','осуществимый'],['to diminish','уменьшаться'],['assumption','предположение'],['to hesitate','колебаться'],['thorough','тщательный'],['to enhance','улучшать, усиливать']],
+  C1: [['to scrutinise','тщательно изучать'],['ubiquitous','вездесущий'],['to alleviate','облегчать'],['meticulous','дотошный'],['to exacerbate','усугублять'],['discrepancy','несоответствие'],['to corroborate','подтверждать'],['resilient','стойкий'],['to deter','удерживать, отпугивать'],['conspicuous','заметный'],
+    ['to reconcile','примирять'],['tenuous','шаткий'],['to circumvent','обходить'],['pragmatic','прагматичный'],['to substantiate','обосновывать'],['elusive','неуловимый'],['to relinquish','отказываться от'],['nuance','нюанс'],['to bolster','укреплять'],['candid','откровенный'],
+    ['to entail','влечь за собой'],['intricate','запутанный'],['to mitigate','смягчать'],['complacent','самодовольный'],['to ponder','обдумывать'],['to undertake','предпринимать']],
+};
+const PL = {
+  B1: [['I would like a cup of coffee','Я бы хотел чашку кофе'],['I have never been to London','Я никогда не был в Лондоне'],['She is better at maths than me','Она лучше меня в математике'],['I am looking forward to the weekend','Я жду не дождусь выходных'],
+    ['We should have left earlier','Нам следовало уйти раньше'],['How long have you been learning English','Как долго ты учишь английский'],['He used to play football every day','Раньше он играл в футбол каждый день'],['If I had more time I would travel','Если бы у меня было больше времени, я бы путешествовал'],
+    ['Do you mind if I open the window','Ты не против, если я открою окно'],['I have been waiting for an hour','Я жду уже час'],['She told me she was tired','Она сказала мне, что устала'],['I can not afford a new phone','Я не могу позволить себе новый телефон']],
+  B2: [['I would rather stay at home than go out tonight','Я бы лучше остался дома, чем пошёл куда-то сегодня'],['If I had known about it I would have come','Если бы я знал об этом, я бы пришёл'],['She is used to getting up early','Она привыкла рано вставать'],
+    ['It is not worth worrying about','Об этом не стоит беспокоиться'],['I wish I had studied harder at school','Жаль, что я не учился усерднее в школе'],['By the time we arrived the film had started','К тому времени, как мы пришли, фильм уже начался'],
+    ['He is said to be very talented','Говорят, он очень талантлив'],['No matter how hard I try I can not remember','Как бы я ни старался, не могу вспомнить'],['I am supposed to finish it by Friday','Я должен закончить это к пятнице'],
+    ['You had better take an umbrella','Тебе лучше взять зонт'],['The house is being painted this week','Дом красят на этой неделе'],['I can not help thinking about it','Я не могу перестать об этом думать']],
+  C1: [['Hardly had I left the house when it started raining','Едва я вышел из дома, как начался дождь'],['Not only did he lie but he also blamed me','Он не только солгал, но и обвинил меня'],['Had I known the truth I would have acted differently','Знай я правду, я бы поступил иначе'],
+    ['It is high time we made a decision','Давно пора принять решение'],['Little did they know what was about to happen','Они и не подозревали, что вот-вот случится'],['Were it not for your help I would have failed','Если бы не твоя помощь, я бы провалился'],
+    ['The more you practise the easier it gets','Чем больше практикуешься, тем легче становится'],['Under no circumstances should you open that door','Ни при каких обстоятельствах не открывай ту дверь'],['Only later did I realise my mistake','Только потом я понял свою ошибку'],
+    ['She must have forgotten about our meeting','Она, должно быть, забыла о нашей встрече']],
+};
+const LV = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+const lvIdx = () => { const k = LV.indexOf(String(S.level || 'B1').toUpperCase().slice(0, 2)); return k < 0 ? 2 : k; };
+const levelWords = () => { const k = lvIdx(); return k <= 1 ? [...WL.A2, ...WL.B1] : k === 2 ? [...WL.B1, ...WL.B2] : [...WL.B2, ...WL.C1]; };
+const levelPhrases = () => { const k = lvIdx(); return k <= 2 ? [...PL.B1, ...PL.B2.slice(0, 6)] : k === 3 ? [...PL.B2, ...PL.C1] : [...PL.C1, ...PL.B2.slice(6)]; };
 const GAMES = {
   quiz: ['Угадай перевод', '8 слов — выбери правильный перевод. Победа: 6 из 8.', '+10'],
   build: ['Собери фразу', '5 фраз из кусочков-слов. Победа: 4 из 5 с первой попытки.', '+10'],
   blitz: ['Блиц на время', '60 секунд — сколько успеешь. Победа: 10 верных ответов.', 'до +25'],
 };
-let gm = null, gmWords = null, gmPhrases = null;
+let gm = null, gmMine = null, gmFixes = null, gmWords = [];
 const shuffle = a => { a = [...a]; for(let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const normPhrase = t => String(t).toLowerCase().replace(/[^a-z' ]+/g, ' ').replace(/\s+/g, ' ').trim();
 async function loadGameData(){
-  if(!gmWords){
+  if(!gmMine){
     if(!words.length){ const j = await api('words'); words = j.words || []; }
-    const mine = words.filter(w => w.word && w.translation).map(w => [w.word, w.translation]);
-    const seen = new Set(mine.map(([w]) => w.toLowerCase()));
-    gmWords = [...mine, ...STARTER.filter(([w]) => !seen.has(w))];
+    gmMine = words.filter(w => w.word && w.translation).map(w => [w.word, w.translation]);
   }
-  if(!gmPhrases){
+  if(!gmFixes){
     const j = await api('mistakes');
-    const fixes = (j.mistakes || []).map(m => m.fixed).filter(f => f && /^[A-Za-z',.?! ]+$/.test(f) && f.trim().split(/\s+/).length >= 3 && f.trim().split(/\s+/).length <= 9)
+    gmFixes = (j.mistakes || []).map(m => m.fixed).filter(f => f && /^[A-Za-z',.?! ]+$/.test(f) && f.trim().split(/\s+/).length >= 4 && f.trim().split(/\s+/).length <= 10)
       .map(f => [f.replace(/[.!?]+$/, ''), 'Собери правильный вариант своей фразы']);
-    gmPhrases = [...fixes.slice(0, 15), ...PHRASES];
   }
+  const seen = new Set(gmMine.map(([w]) => w.toLowerCase()));
+  gmWords = [...gmMine, ...levelWords().filter(([w]) => !seen.has(w))];   // для неправильных вариантов
 }
 function showGames(){
   stopGameTimer(); gm = null;
   const g = G, best = g?.best || {}, left = g?.paidWinsLeft ?? 10;
-  $('#gamesBox').innerHTML = `<h2>Мини-игры</h2><p class="lead">Тренируй свои слова и фразы. Победа — монетки: ${left ? `сегодня ещё ${left} ${plural(left, 'победа', 'победы', 'побед')} с наградой.` : 'на сегодня награды собраны, но опыт идёт.'}</p>
+  $('#gamesBox').innerHTML = `<h2>Мини-игры</h2><p class="lead">Слова и фразы под твой уровень (${LV[lvIdx()]} и выше) плюс твои слова и ошибки. Победа — монетки: ${left ? `сегодня ещё ${left} ${plural(left, 'победа', 'победы', 'побед')} с наградой.` : 'на сегодня награды собраны, но опыт идёт.'}</p>
     <div class="glist">${Object.entries(GAMES).map(([k, [n, d, r]]) => `<button class="gcard" data-game="${k}">${tile(k)}<div class="q-main"><b>${n}</b><small>${d}</small>${best[k] ? `<small class="gbest">Рекорд: ${best[k]}</small>` : ''}</div><span class="q-rew">${r} 🪙</span></button>`).join('')}</div>`;
 }
 async function startGame(kind){
   $('#gamesBox').innerHTML = '<div class="empty">Готовлю игру…</div>';
   await loadGameData();
   gm = {kind, i: 0, ok: 0, done: false};
-  if(kind === 'quiz'){ gm.total = 8; gm.items = shuffle(gmWords).slice(0, 8); }
-  if(kind === 'build'){ gm.total = 5; gm.items = shuffle(gmPhrases).slice(0, 5); }
-  if(kind === 'blitz'){ gm.total = 0; gm.items = shuffle(gmWords); gm.end = Date.now() + 60000; gm.timer = setInterval(tickBlitz, 250); }
+  // твои слова — не больше трети, остальное по уровню (своего уровня и выше)
+  if(kind === 'quiz'){ gm.total = 8; gm.items = shuffle([...shuffle(gmMine).slice(0, 3), ...shuffle(levelWords()).slice(0, 8)]).slice(0, 8); }
+  if(kind === 'build'){ gm.total = 5; gm.items = shuffle([...shuffle(gmFixes).slice(0, 2), ...shuffle(levelPhrases()).slice(0, 5)]).slice(0, 5); }
+  if(kind === 'blitz'){ gm.total = 0; gm.items = shuffle([...shuffle(gmMine).slice(0, 10), ...levelWords()]); gm.end = Date.now() + 60000; gm.timer = setInterval(tickBlitz, 250); }
   drawGame();
 }
 // вопрос с 4 вариантами: слово → перевод (в блице иногда наоборот)
@@ -1519,9 +1595,12 @@ $('#gamesBox').onclick = e => {
     opt.classList.add(good ? 'ok' : 'bad');
     if(!good) document.querySelectorAll('#gamesBox [data-opt]').forEach(b => { if(b.dataset.opt === gm.q.right) b.classList.add('ok'); });
     if(good){ gm.ok++; sfx(gm.kind === 'blitz' ? 'coin' : 'hop'); if(gm.ok % 3 === 0) hop(); } else sfx('oops');
-    setTimeout(() => { if(gm){ gm.lock = false; nextQ(); } }, gm.kind === 'blitz' ? (good ? 250 : 700) : (good ? 600 : 1300));
+    if(!good && gm.kind !== 'blitz'){ $('#gamesBox').insertAdjacentHTML('beforeend', '<div class="gnext"><button class="btn" data-gnext>Дальше →</button></div>'); return; }
+    setTimeout(() => { if(gm){ gm.lock = false; nextQ(); } }, gm.kind === 'blitz' ? (good ? 250 : 900) : 600);
     return;
   }
+  if(t.closest('[data-gnext]')){ gm.lock = false; return nextQ(); }
+  if(t.closest('[data-gretry]')){ gm.lock = false; gm.picked = []; return drawGame(); }
   if(t.closest('[data-gclear]')){ gm.picked = []; return drawGame(); }
   const tok = t.closest('[data-tok]');
   if(tok && gm.kind === 'build' && !gm.lock){
@@ -1532,8 +1611,8 @@ $('#gamesBox').onclick = e => {
       const en = gm.items[gm.i][0], good = normPhrase(gm.picked.map(y => y.t).join(' ')) === normPhrase(en);
       const ans = $('#ganswer'); ans.classList.add(good ? 'ok' : 'bad');
       if(good){ if(gm.first) gm.ok++; sfx('happy'); hop(); gm.lock = true; setTimeout(() => { if(gm){ gm.lock = false; nextQ(); } }, 900); }
-      else { gm.first = false; sfx('oops'); ans.insertAdjacentHTML('afterend', `<p class="gfix">Правильно: <b>${esc(en)}</b></p>`);
-        gm.lock = true; setTimeout(() => { if(gm){ gm.lock = false; gm.picked = []; drawGame(); } }, 1800); }
+      else { gm.first = false; sfx('oops'); gm.lock = true;
+        ans.insertAdjacentHTML('afterend', `<div class="gfix"><p>Правильно: <b>${esc(en)}</b></p><button class="btn sm" data-gretry>Понятно, соберу сам</button></div>`); }
     }
   }
 };

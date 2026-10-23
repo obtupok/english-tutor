@@ -619,8 +619,30 @@ const SHOP: Record<string, number> = {
   'hat:none': 0, 'hat:bow': 40, 'hat:flower': 50, 'hat:cap': 80, 'hat:headphones': 120, 'hat:wizard': 180, 'hat:crown': 200,
   'hat:party': 60, 'hat:beanie': 70, 'hat:beret': 90, 'hat:chef': 110, 'hat:santa': 120, 'hat:halo': 250,
   'wear:scarf': 0, 'wear:none': 0, 'wear:bowtie': 60, 'wear:bell': 80, 'wear:tie': 90, 'wear:sweater': 120, 'wear:overalls': 140, 'wear:medal': 150, 'wear:cape': 220,
+  'wear:dress': 110, 'wear:hoodie': 100, 'wear:jersey': 90, 'wear:raincoat': 130, 'hat:twinbows': 60, 'hat:cowboy': 120, 'hat:pirate': 140,
   'glasses:none': 0, 'glasses:round': 70, 'glasses:heart': 90, 'glasses:star': 110, 'glasses:sun': 130, 'glasses:monocle': 160,
 };
+// награды уровней: персонаж (если уже куплен — 100 монет) или вещь, которую не купить в магазине
+const LEVEL_UNLOCKS: [number, string][] = [
+  [2, 'hat:gradcap'], [3, 'hat:carrotcap'], [4, 'hat:daisies'], [5, 'char:cat'], [6, 'wear:fishcharm'], [7, 'wear:pinkbell'], [8, 'wear:tutu'],
+  [9, 'char:bear'], [10, 'hat:rangerhat'], [11, 'wear:apron'], [12, 'hat:tiara'], [13, 'char:fox'], [14, 'hat:detective'], [15, 'hat:leaves'],
+  [16, 'wear:suit'], [17, 'char:panda'], [18, 'hat:hachimaki'], [19, 'hat:sakura'],
+];
+const LOCKED: Record<string, number> = Object.fromEntries(LEVEL_UNLOCKS.filter(([, id]) => !id.startsWith('char:')).map(([l, id]) => [id, l]));
+for (const id of Object.keys(LOCKED)) SHOP[id] = 0;
+// вещи своего питомца: видны только на нём
+const PET_ONLY: Record<string, string> = {
+  'hat:carrotcap': 'bunny', 'hat:daisies': 'bunny', 'wear:fishcharm': 'cat', 'wear:pinkbell': 'cat', 'hat:rangerhat': 'bear', 'wear:apron': 'bear',
+  'hat:detective': 'fox', 'hat:leaves': 'fox', 'hat:hachimaki': 'panda', 'hat:sakura': 'panda',
+};
+function grantUnlocks(g: any) {
+  const lvl = levelOf(g.xp).level; g.unlocked ??= [];
+  for (const [l, id] of LEVEL_UNLOCKS) {
+    if (l > lvl || g.unlocked.includes(l)) continue;
+    g.unlocked.push(l);
+    if (!g.owned.includes(id)) g.owned.push(id); else if (id.startsWith('char:')) g.coins += 100;
+  }
+}
 type Quest = { id: string; metric: string; goal: number; reward: number; title: string };
 const QUESTS: Quest[] = [
   { id: 'talk10', metric: 'phrases', goal: 10, reward: 15, title: 'Скажи 10 фраз' },
@@ -682,12 +704,14 @@ function game(st: any) {
   for (const free of ['wear:scarf', 'wear:none', 'glasses:none']) if (!g.owned.includes(free)) g.owned.push(free);
   if (g.day !== today()) { g.day = today(); g.counts = {}; g.claimed = []; g.bonus = false; }
   if (g.week !== weekKey()) { g.week = weekKey(); g.wcounts = {}; g.wclaimed = []; }
+  grantUnlocks(g);
   return g;
 }
 function addXp(g: any, n: number) {
   g.xp += n;
   const now = levelOf(g.xp).level;
   while (g.level < now) { g.level++; g.coins += levelReward(g.level); }
+  grantUnlocks(g);
 }
 // событие: фраза, фраза без ошибок, повтор слова и т. д.; за многие сразу монетка и опыт
 const COIN_FOR: Record<string, number> = { phrases: 1, clean: 1, reviews: 1 };
@@ -732,6 +756,7 @@ function gameView(st: any) {
   return {
     coins: g.coins, owned: g.owned, equip: g.equip, loginStreak: g.loginStreak || 0, prices: SHOP,
     voices: Object.fromEntries(Object.keys(CHARS).map((c) => [c, voiceFor(st, c)])),
+    unlocks: LEVEL_UNLOCKS, petOnly: PET_ONLY,
     best: g.best || {}, paidWinsLeft: Math.max(0, GAME_PAID_WINS - (g.counts.gamewins || 0)),
     xp: g.xp, level: lv.level, levelXp: lv.into, levelNeed: lv.need, nextReward: levelReward(lv.level + 1),
     quests: daily, weekly: view(weeklyQuests(g.week), g.wcounts, g.wclaimed), weekEnds,
@@ -832,6 +857,7 @@ async function web(req: Request) {
     case 'buy': {
       const g = game(owner), id = String(b.item || ''), price = SHOP[id];
       if (price === undefined) return json({ error: 'bad' }, 400);
+      if (LOCKED[id] && !g.owned.includes(id)) return json({ error: 'locked', level: LOCKED[id], game: gameView(owner) });
       if (!g.owned.includes(id)) {
         if (g.coins < price) return json({ error: 'no_coins', game: gameView(owner) });
         g.coins -= price; g.owned.push(id);
