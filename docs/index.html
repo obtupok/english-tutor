@@ -225,6 +225,11 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
 .voice .w{flex:1}
 .voice .w b{display:block;font-family:var(--serif);font-size:18px;font-weight:500}
 .voice .w span{font-size:13px;color:var(--muted)}
+.vchars{display:flex;gap:8px;overflow-x:auto;margin:12px 0 4px;padding-bottom:2px}
+.vchars button{flex:none;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 10px 8px;border:1px solid var(--line);border-radius:12px;background:var(--sheet);color:var(--ink);font:inherit;font-size:12px;cursor:pointer}
+.vchars button.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.vchars .buddy.mini{--bsize:50px}
+.vtrait{margin:8px 0 0;font-size:13px;color:var(--muted)}.vtrait b{color:var(--ink);font-weight:600}
 
 /* листы: сценарии и тренировка */
 .sheet{position:fixed;inset:0;z-index:45;display:none;background:rgba(20,16,12,.45);align-items:flex-end;justify-content:center}
@@ -680,7 +685,11 @@ function gate(){
 /* ---------- состояние ---------- */
 let S = {mode:'free', scene:'smalltalk', history:[], stats:{}, plan:null, level:null, scenes:{}, due:0, words:0, stt:false, speaker:'hannah'};
 const VOICE_INFO = {hannah:['Hannah','женский'], diana:['Diana','женский'], autumn:['Autumn','женский'], troy:['Troy','мужской'], austin:['Austin','мужской'], daniel:['Daniel','мужской'],
-  leda:['Leda','юный, милый'], puck:['Puck','бодрый'], zephyr:['Zephyr','звонкий'], laomedeia:['Laomedeia','весёлый'], achernar:['Achernar','мягкий'], sadachbia:['Sadachbia','живой']};
+  leda:['Leda','юный, милый'], puck:['Puck','бодрый'], zephyr:['Zephyr','звонкий'], laomedeia:['Laomedeia','весёлый'], achernar:['Achernar','мягкий'], sadachbia:['Sadachbia','живой'],
+  kore:['Kore','уверенный'], aoede:['Aoede','лёгкий'], despina:['Despina','бархатный'], sulafat:['Sulafat','тёплый'], achird:['Achird','дружелюбный'], fenrir:['Fenrir','азартный'], charon:['Charon','низкий, спокойный'], algenib:['Algenib','с хрипотцой']};
+// характер персонажей (сервер говорит за них так же) и как они себя называют
+const CHAR_INFO = {bunny:['bunny', 'весёлый и прыгучий, обожает морковку'], cat:['kitten', 'немного дерзкий и ленивый, любит поспать и рыбку, иногда мурчит'], bear:['bear cub', 'спокойный и тёплый, как обнимашки, любит мёд'], fox:['fox cub', 'хитрый и умный, любит загадки и игры со словами'], panda:['panda', 'расслабленный и сонный, любит бамбук и не спешить']};
+let vChar = null;   // чей голос настраиваем в «Yomi → Настройки»
 let CH = store.get('yomi_ch', 'learn') === 'talk' ? 'talk' : 'learn';   // какой чат открыт: «Учёба» или «Болтовня» (у каждого своя лента)
 const chatKey = () => CH === 'talk' ? 'yomi_chat_talk' : 'yomi_chat';
 let chat = store.get(chatKey(), []);       // что видно в ленте (с исправлениями и словами)
@@ -766,11 +775,11 @@ function speakLocal(text, lang){
   });
 }
 const ttsCache = new Map();
-async function sayText(text, lang = 'en', speaker = S.speaker){
+async function sayText(text, lang = 'en', speaker = S.speaker, char = G?.equip?.char || 'bunny'){
   stopAudio();
-  const key = [lang, speaker, $('#buddy')?.dataset.p || 'kind', text].join('|');
+  const key = [lang, speaker, char, $('#buddy')?.dataset.p || 'kind', text].join('|');
   let a = ttsCache.get(key);
-  if(!a){ const j = await api('tts', {text, lang, speaker, emotion: $('#buddy')?.dataset.p || 'kind'}); if(j.audio){ a = {b: j.audio, mime: j.mime}; ttsCache.set(key, a); } }
+  if(!a){ const j = await api('tts', {text, lang, speaker, char, emotion: $('#buddy')?.dataset.p || 'kind'}); if(j.audio){ a = {b: j.audio, mime: j.mime}; ttsCache.set(key, a); } }
   return a ? playB64(a.b, a.mime) : speakLocal(text, lang);
 }
 function stopAudio(){ try{ player.pause(); }catch{} try{ speechSynthesis.cancel(); }catch{} mouth(false); }
@@ -1168,6 +1177,7 @@ function applyGame(g){
   const before = G; G = g;
   $('#coins').hidden = false; $('#coins b').textContent = g.coins;
   const b = $('#buddy'); if(b){ b.dataset.char = g.equip.char; b.dataset.color = g.equip.color; b.dataset.hat = g.equip.hat; b.dataset.wear = g.equip.wear || 'scarf'; b.dataset.glasses = g.equip.glasses || 'none'; }
+  if(g.voices?.[g.equip.char]) S.speaker = g.voices[g.equip.char];
   $('#pathDot').hidden = !questReady(g);
   if(!before) return;
   const gained = g.coins - before.coins;
@@ -1226,6 +1236,17 @@ function showYomi(){
   if(!G) api('game').then(j => { if(j.game){ applyGame(j.game); showYomi(); } });
 }
 /* ---------- вкладка «Yomi»: кролик на экране, эмоции, звуки, голос ---------- */
+// голоса персонажей: выбираешь персонажа (из купленных) и голос для него
+function voicesHtml(){
+  const g = G, mine = SKINS.char.filter(([id]) => !g || g.owned.includes('char:' + id));
+  const vc = mine.some(([id]) => id === vChar) ? vChar : g?.equip.char || 'bunny', cur = g?.voices?.[vc] || S.speaker;
+  return `<div class="plan"><h3>Голоса персонажей</h3><p>У каждого персонажа свой голос и характер. Выбери, кого настроить, и нажми ▶, чтобы послушать. Голос надетого персонажа звучит и на сайте, и в боте.</p>
+    <div class="vchars" role="tablist">${mine.map(([id, n]) => `<button role="tab" data-vc="${id}" class="${vc === id ? 'on' : ''}">${miniBunny(id, g?.equip.color || 'classic', 'none', 'none', 'none')}<span>${n}</span></button>`).join('')}</div>
+    <p class="vtrait"><b>Характер:</b> ${CHAR_INFO[vc][1]}</p>
+    <div class="voices">${(S.speakers || Object.keys(VOICE_INFO).slice(0, 6)).filter(k => VOICE_INFO[k]).map(k => [k, ...VOICE_INFO[k]]).map(([k, n, d]) => `<div class="voice${cur === k ? ' on' : ''}"><button class="ib" data-vp="${k}" aria-label="Послушать ${n}"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>
+      <div class="w"><b>${n}</b><span>${d}</span></div><button class="btn${cur === k ? '' : ' line'} sm" data-vs="${k}">${cur === k ? 'Выбран' : 'Выбрать'}</button></div>`).join('')}</div></div>`;
+}
+const voiceChar = () => { const vc = document.querySelector('[data-vc].on'); return vc ? vc.dataset.vc : G?.equip.char || 'bunny'; };
 function showYomiSettings(box){
   box.innerHTML = `<p class="lead">Твой кролик-помощник ходит за тобой по всему сайту. Зажми его на мгновение и перетащи куда удобно, води по нему пальцем — погладишь.</p>
     <div class="plan"><h3>Кролик на экране</h3>
@@ -1235,9 +1256,7 @@ function showYomiSettings(box){
     <div class="plan"><h3>Эмоции</h3><p>Их ${EMOS.length}, Yomi выбирает их сам по ходу разговора. Нажми, чтобы посмотреть.</p>
       <div class="emos">${EMOS.map(([k, e, n]) => `<button data-emo="${k}"><span aria-hidden="true">${e}</span>${n}</button>`).join('')}</div></div>
     <div class="plan"><h3>Звуки кролика</h3><p>Писк, «боинг», ворчание, хихиканье и другие звуки-реакции.</p><button class="btn${sfxOn ? ' line' : ''} sm" data-sfx style="margin-top:10px">${sfxOn ? 'Выключить звуки' : 'Включить звуки'}</button></div>
-    <div class="plan"><h3>Голос Yomi</h3><p>Нажми, чтобы послушать. Выбранный голос будет и на сайте, и в боте.</p>
-      <div class="voices">${(S.speakers || Object.keys(VOICE_INFO).slice(0, 6)).filter(k => VOICE_INFO[k]).map(k => [k, ...VOICE_INFO[k]]).map(([k, n, g]) => `<div class="voice${S.speaker === k ? ' on' : ''}"><button class="ib" data-vp="${k}" aria-label="Послушать ${n}">${ICON.speak}</button>
-        <div class="w"><b>${n}</b><span>${g}</span></div><button class="btn${S.speaker === k ? '' : ' line'} sm" data-vs="${k}">${S.speaker === k ? 'Выбран' : 'Выбрать'}</button></div>`).join('')}</div></div>`;
+    ${voicesHtml()}`;
   $('#bsizeIn').oninput = e => { bsize = +e.target.value; store.set('yomi_bsize', bsize); placeBunny(); };
 }
 $('#yomiBox').onclick = async e => {
@@ -1248,9 +1267,12 @@ $('#yomiBox').onclick = async e => {
   if(e.target.closest('[data-bpos]')){ bpos = null; store.set('yomi_bpos', null); placeBunny(); hop(); }
   if(emo){ if(!bunnyOn){ bunnyOn = true; store.set('yomi_bunny', true); placeBunny(); showYomi(); }
     const b = $('#buddy'); b.dataset.p = emo.dataset.emo; sfx(EMO_SOUND[emo.dataset.emo] || 'hop'); }
-  if(vp) sayText(S.engine === 'gemini' ? "Hi, I'm Yomi! Привет, я Йоми. Let's practise English together!" : "Hi, I'm Yomi. Let's practise English together. How was your day?", 'en', vp.dataset.vp);
+  const vcb = e.target.closest('[data-vc]');
+  if(vcb){ vChar = vcb.dataset.vc; showYomi(); return; }
+  if(vp){ const c = voiceChar(), noun = CHAR_INFO[c][0];
+    sayText(S.engine === 'gemini' ? `Hi, I'm Yomi the ${noun}! Привет, я Йоми. Let's practise English together!` : `Hi, I'm Yomi the ${noun}. Let's practise English together. How was your day?`, 'en', vp.dataset.vp, c); }
   if(e.target.closest('[data-sfx]')){ sfxOn = !sfxOn; store.set('yomi_sfx', sfxOn); showYomi(); if(sfxOn) sfx('happy'); }
-  if(vs && vs.dataset.vs !== S.speaker){ const j = await api('speaker', {speaker: vs.dataset.vs}); if(j.ok){ S.speaker = j.speaker; showYomi(); } }
+  if(vs && !vs.closest('.voice.on')){ const c = voiceChar(), j = await api('speaker', {speaker: vs.dataset.vs, char: c}); if(j.ok){ if(j.game) applyGame(j.game); S.speaker = j.speaker; vChar = c; showYomi(); } }
 };
 
 let wSub = 'words';
