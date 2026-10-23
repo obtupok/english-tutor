@@ -640,6 +640,8 @@ const QUESTS: Quest[] = [
   { id: 'q3', metric: 'question', goal: 3, reward: 10, title: 'Задай Yomi 3 вопроса' },
   { id: 'coach3', metric: 'coach', goal: 3, reward: 10, title: '3 фразы в «Как учить»' },
   { id: 'voice10', metric: 'voice', goal: 10, reward: 15, title: 'Скажи голосом 10 фраз' },
+  { id: 'games3', metric: 'games', goal: 3, reward: 15, title: 'Сыграй 3 мини-игры' },
+  { id: 'wins2', metric: 'gamewins', goal: 2, reward: 20, title: 'Выиграй 2 мини-игры' },
 ];
 const WEEKLY: Quest[] = [
   { id: 'w_phr150', metric: 'phrases', goal: 150, reward: 100, title: '150 фраз за неделю' },
@@ -649,8 +651,12 @@ const WEEKLY: Quest[] = [
   { id: 'w_scene10', metric: 'scene', goal: 10, reward: 60, title: '10 реплик в сценариях' },
   { id: 'w_long20', metric: 'long', goal: 20, reward: 70, title: '20 длинных фраз' },
   { id: 'w_voice60', metric: 'voice', goal: 60, reward: 70, title: '60 фраз голосом' },
+  { id: 'w_games20', metric: 'games', goal: 20, reward: 80, title: '20 мини-игр за неделю' },
 ];
 const DAY_BONUS = 25;   // сундучок дня: все задания дня выполнены
+// мини-игры со словами: монетки за победу, но не больше 10 оплаченных побед в день
+const GAME_KINDS = ['quiz', 'build', 'blitz'], GAME_PAID_WINS = 10;
+const gameReward = (kind: string, score: number) => (kind === 'blitz' ? Math.min(25, 5 + Math.floor(score / 2)) : 10);
 // выбор заданий зависит только от даты: n штук с разными метриками
 function pick(pool: Quest[], seed: string, n: number) {
   let h = 0; for (const c of seed) h = (h * 31 + c.charCodeAt(0)) >>> 0;
@@ -685,7 +691,7 @@ function addXp(g: any, n: number) {
 }
 // событие: фраза, фраза без ошибок, повтор слова и т. д.; за многие сразу монетка и опыт
 const COIN_FOR: Record<string, number> = { phrases: 1, clean: 1, reviews: 1 };
-const XP_FOR: Record<string, number> = { phrases: 10, clean: 5, reviews: 3, pet: 2, scene: 3, long: 5, question: 2, voice: 2, newwords: 2, test: 30 };
+const XP_FOR: Record<string, number> = { phrases: 10, clean: 5, reviews: 3, pet: 2, scene: 3, long: 5, question: 2, voice: 2, newwords: 2, test: 30, games: 5, gamewins: 10 };
 function gameEvent(st: any, metric: string, n = 1) {
   const g = game(st);
   if (g.activeDay !== today()) { g.activeDay = today(); g.wcounts.days = (g.wcounts.days || 0) + 1; }
@@ -726,6 +732,7 @@ function gameView(st: any) {
   return {
     coins: g.coins, owned: g.owned, equip: g.equip, loginStreak: g.loginStreak || 0, prices: SHOP,
     voices: Object.fromEntries(Object.keys(CHARS).map((c) => [c, voiceFor(st, c)])),
+    best: g.best || {}, paidWinsLeft: Math.max(0, GAME_PAID_WINS - (g.counts.gamewins || 0)),
     xp: g.xp, level: lv.level, levelXp: lv.into, levelNeed: lv.need, nextReward: levelReward(lv.level + 1),
     quests: daily, weekly: view(weeklyQuests(g.week), g.wcounts, g.wclaimed), weekEnds,
     bonus: { reward: DAY_BONUS, ready: daily.every((q) => q.claimed) && !g.bonus, claimed: !!g.bonus },
@@ -833,6 +840,18 @@ async function web(req: Request) {
       return json({ ok: true, game: gameView(owner) });
     }
     case 'delword': await admin.from('english_words').delete().eq('id', b.id); return json({ ok: true });
+    case 'minigame': {
+      const kind = String(b.kind || ''), score = Math.max(0, Math.min(60, Math.floor(Number(b.score) || 0))), won = !!b.won;
+      if (!GAME_KINDS.includes(kind)) return json({ error: 'bad' }, 400);
+      const g = game(owner), paid = g.counts.gamewins || 0;
+      const reward = won && paid < GAME_PAID_WINS ? gameReward(kind, score) : 0;
+      gameEvent(owner, 'games');
+      if (won) gameEvent(owner, 'gamewins');
+      g.coins += reward;
+      g.best = { ...(g.best || {}), [kind]: Math.max(g.best?.[kind] || 0, score) };
+      await save(owner);
+      return json({ ok: true, reward, best: g.best[kind], left: Math.max(0, GAME_PAID_WINS - (g.counts.gamewins || 0)), game: gameView(owner) });
+    }
     case 'mistakes': {
       const { data } = await admin.from('english_mistakes').select('*').order('at', { ascending: false }).limit(200);
       return json({ mistakes: data || [] });

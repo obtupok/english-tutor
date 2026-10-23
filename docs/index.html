@@ -157,6 +157,27 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
 .coins{display:inline-flex;align-items:center;gap:4px;padding:2px 10px;border:1px solid var(--line-2);border-radius:99px;background:var(--sheet);color:var(--ink);font-size:14px;font-weight:600}
 .badge.dot{min-width:10px;height:10px;padding:0;top:7px}
 .ysub{margin:0 0 16px}
+.glist{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+.gcard{display:flex;align-items:center;gap:12px;padding:14px 12px;border:1px solid var(--line);border-radius:14px;background:var(--sheet);color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.gcard:active{transform:scale(.98)}.gcard .q-main small{display:block;margin-top:2px}.gcard .gbest{color:var(--accent);font-weight:600}
+.ghead{display:flex;align-items:center;gap:10px;margin:2px 0 10px}.ghead b{flex:1;font-family:var(--serif);font-size:19px;font-weight:500}
+.gcount,.gtimer{font-weight:700;font-variant-numeric:tabular-nums}.gtimer{min-width:44px;text-align:center;padding:4px 10px;border-radius:99px;background:var(--accent);color:var(--accent-ink)}
+.gbar{height:8px;border-radius:99px;background:var(--line);overflow:hidden}.gbar i{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .25s linear}
+.gscore{margin:8px 0 0;color:var(--muted);font-size:14px}.gscore b{color:var(--ink)}
+.gq{display:flex;align-items:center;justify-content:center;gap:8px;min-height:110px;padding:18px 8px;text-align:center}
+.gq b{font-family:var(--serif);font-size:32px;font-weight:500;line-height:1.15}.gq small{font-size:18px;color:var(--ink);line-height:1.4}
+.gopts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.gopt{min-height:64px;padding:10px;border:1px solid var(--line-2);border-radius:14px;background:var(--sheet);color:var(--ink);font:inherit;font-size:15px;font-weight:600;cursor:pointer;transition:background .15s,border-color .15s}
+.gopt.ok{background:var(--green-bg);border-color:var(--green);color:var(--green)}.gopt.bad{background:color-mix(in srgb,#d24b3a 14%,transparent);border-color:#d24b3a;color:#d24b3a;animation:g-shake .35s}
+@keyframes g-shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.ganswer{display:flex;flex-wrap:wrap;gap:8px;min-height:62px;padding:10px;border:2px dashed var(--line-2);border-radius:14px;margin-bottom:14px;align-items:center}
+.ganswer.ok{border-color:var(--green);border-style:solid;background:var(--green-bg)}.ganswer.bad{border-color:#d24b3a;border-style:solid;animation:g-shake .35s}
+.ghint{color:var(--muted);font-size:14px}
+.gtokens{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.gtok{padding:9px 14px;border:1px solid var(--line-2);border-bottom-width:3px;border-radius:12px;background:var(--sheet);color:var(--ink);font:inherit;font-size:16px;font-weight:600;cursor:pointer}
+.gfix{margin:-6px 0 12px;font-size:14px;color:var(--muted)}.gfix b{color:var(--ink)}
+.gend{text-align:center;padding:10px 0}.gend .buddy.mini{--bsize:110px}.gend .actions{justify-content:center}
+#gamesBox .actions{display:flex;gap:10px;align-items:center;margin-top:16px}
 .lvlcard{display:flex;align-items:center;gap:14px;padding:16px;border-radius:16px;background:var(--ink);color:var(--paper);margin-bottom:6px}
 .lvl-badge{flex:none;width:66px;height:66px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 35%,transparent)}
 .lvl-badge small{font-size:10px;letter-spacing:.1em;text-transform:uppercase;opacity:.85}.lvl-badge b{font-family:var(--serif);font-size:28px;line-height:1}
@@ -497,7 +518,7 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
         <form class="typebox" id="typebox"><input id="typeIn" placeholder="Type in English…" autocomplete="off" aria-label="Сообщение"><button aria-label="Отправить"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></form>
       </div>
     </section>
-    <section class="view" id="v-words"><div class="scroll"><div class="chats ysub" id="wseg" role="tablist"><button data-w="words" class="on" role="tab">Слова</button><button data-w="mist" role="tab">Ошибки</button></div><div id="wordsBox"></div><div id="mistBox" hidden></div></div></section>
+    <section class="view" id="v-words"><div class="scroll"><div class="chats ysub" id="wseg" role="tablist"><button data-w="words" class="on" role="tab">Слова</button><button data-w="mist" role="tab">Ошибки</button><button data-w="games" role="tab">Игры</button></div><div id="wordsBox"></div><div id="mistBox" hidden></div><div id="gamesBox" hidden></div></div></section>
     <section class="view" id="v-path"><div class="scroll"><div id="pathBox"></div><div id="progBox"></div></div></section>
     <section class="view" id="v-yomi"><div class="scroll" id="yomiBox"></div></section>
   </main>
@@ -1278,8 +1299,9 @@ $('#yomiBox').onclick = async e => {
 let wSub = 'words';
 function showWordsTab(){
   document.querySelectorAll('#wseg [data-w]').forEach(b => b.classList.toggle('on', b.dataset.w === wSub));
-  $('#wordsBox').hidden = wSub !== 'words'; $('#mistBox').hidden = wSub !== 'mist';
-  if(wSub === 'words') showWords(); else showMistakes();
+  $('#wordsBox').hidden = wSub !== 'words'; $('#mistBox').hidden = wSub !== 'mist'; $('#gamesBox').hidden = wSub !== 'games';
+  if(wSub !== 'games') stopGameTimer();
+  if(wSub === 'words') showWords(); else if(wSub === 'mist') showMistakes(); else showGames();
 }
 $('#wseg').onclick = e => { const b = e.target.closest('[data-w]'); if(b){ wSub = b.dataset.w; showWordsTab(); } };
 /* ---------- «Путь»: уровни-тропинка, задания дня и недели, сундучок дня ---------- */
@@ -1299,6 +1321,11 @@ const ICO = {
   voice: ['#d9668f', '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>'],
   days: ['#5b8def', '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M9 15l2 2 4-4"/>'],
   gift: ['#d9a21b', '<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M5 12v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8M12 8v13"/><path d="M12 8C10.5 4 6.5 4 7 6.5S10 8 12 8zM12 8c1.5-4 5.5-4 5-1.5S14 8 12 8z"/>'],
+  games: ['#7a6fe0', '<rect x="2.5" y="7" width="19" height="11" rx="5.5"/><path d="M7 10.5v4M5 12.5h4"/><circle cx="15.5" cy="11.5" r=".9" fill="currentColor"/><circle cx="17.5" cy="13.8" r=".9" fill="currentColor"/>'],
+  gamewins: ['#d9a21b', '<path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8.5 20h7M10 17h4"/>'],
+  quiz: ['#4a8fd9', '<rect x="3" y="4" width="12" height="16" rx="2"/><path d="M15 7l4.5 1.2a1.5 1.5 0 0 1 1 1.8l-2.6 9.7a1.5 1.5 0 0 1-1.8 1.1L12 19.6"/><path d="M7 9h4M7 12.5h4"/>'],
+  build: ['#3d9a8b', '<rect x="3" y="13" width="8" height="7" rx="1.5"/><rect x="13" y="13" width="8" height="7" rx="1.5"/><rect x="8" y="4" width="8" height="7" rx="1.5"/>'],
+  blitz: ['#e05d5d', '<path d="M13 2L4.5 13.5H11L10 22l9.5-12H13z"/>'],
   star: ['#d9a21b', '<path d="M12 3l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 16.8l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z"/>'],
 };
 const ico = k => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${(ICO[k] || ICO.star)[1]}</svg>`;
@@ -1367,6 +1394,134 @@ function celebrate(level, reward){
     <div class="actions"><button class="btn" data-lvlok>Ура!</button><button class="btn line" data-lvlpath>Посмотреть путь</button></div></div>`);
   $('#sheetIn').onclick = e => { if(e.target.closest('[data-lvlok]')) closeSheet(); if(e.target.closest('[data-lvlpath]')){ closeSheet(); tab('path'); } };
 }
+/* ---------- мини-игры со словами: «Угадай перевод», «Собери фразу», «Блиц» ---------- */
+// запасные слова и фразы — если своих слов ещё мало
+const STARTER = [['apple','яблоко'],['house','дом'],['friend','друг'],['water','вода'],['city','город'],['book','книга'],['window','окно'],['tree','дерево'],['weather','погода'],['journey','путешествие'],
+  ['kitchen','кухня'],['money','деньги'],['tired','уставший'],['happy','счастливый'],['angry','злой'],['quiet','тихий'],['expensive','дорогой'],['cheap','дешёвый'],['busy','занятой'],['early','рано'],
+  ['late','поздно'],['always','всегда'],['never','никогда'],['often','часто'],['to borrow','одолжить (взять)'],['to lend','одолжить (дать)'],['to remember','помнить'],['to forget','забыть'],['to choose','выбирать'],['to explain','объяснять'],
+  ['to wait','ждать'],['to arrive','прибывать'],['to leave','уходить, уезжать'],['to win','побеждать'],['to lose','проигрывать, терять'],['to grow','расти'],['neighbour','сосед'],['ticket','билет'],['answer','ответ'],['question','вопрос'],
+  ['knowledge','знание'],['opportunity','возможность'],['advice','совет'],['mistake','ошибка'],['to improve','улучшать'],['to achieve','достигать'],['enough','достаточно'],['although','хотя'],['however','однако'],['instead','вместо этого']];
+const PHRASES = [['I would like a cup of coffee','Я бы хотел чашку кофе'],['Where is the nearest station','Где ближайшая станция'],['I have never been to London','Я никогда не был в Лондоне'],
+  ['She is better at maths than me','Она лучше меня в математике'],['Could you help me with this','Не мог бы ты помочь мне с этим'],['I am looking forward to the weekend','Я жду не дождусь выходных'],
+  ['We should have left earlier','Нам следовало уйти раньше'],['How long have you been learning English','Как долго ты учишь английский'],['It depends on the weather','Это зависит от погоды'],
+  ['I did not know what to say','Я не знал, что сказать'],['Let me think about it','Дай мне подумать об этом'],['He used to play football every day','Раньше он играл в футбол каждый день'],
+  ['If I had more time I would travel','Если бы у меня было больше времени, я бы путешествовал'],['What do you usually do on Sundays','Что ты обычно делаешь по воскресеньям'],
+  ['I am not sure it is a good idea','Я не уверен, что это хорошая идея'],['The film was more interesting than the book','Фильм был интереснее книги'],['Do you mind if I open the window','Ты не против, если я открою окно'],
+  ['I have been waiting for an hour','Я жду уже час'],['She told me she was tired','Она сказала мне, что устала'],['I can not afford a new phone','Я не могу позволить себе новый телефон']];
+const GAMES = {
+  quiz: ['Угадай перевод', '8 слов — выбери правильный перевод. Победа: 6 из 8.', '+10'],
+  build: ['Собери фразу', '5 фраз из кусочков-слов. Победа: 4 из 5 с первой попытки.', '+10'],
+  blitz: ['Блиц на время', '60 секунд — сколько успеешь. Победа: 10 верных ответов.', 'до +25'],
+};
+let gm = null, gmWords = null, gmPhrases = null;
+const shuffle = a => { a = [...a]; for(let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const normPhrase = t => String(t).toLowerCase().replace(/[^a-z' ]+/g, ' ').replace(/\s+/g, ' ').trim();
+async function loadGameData(){
+  if(!gmWords){
+    if(!words.length){ const j = await api('words'); words = j.words || []; }
+    const mine = words.filter(w => w.word && w.translation).map(w => [w.word, w.translation]);
+    const seen = new Set(mine.map(([w]) => w.toLowerCase()));
+    gmWords = [...mine, ...STARTER.filter(([w]) => !seen.has(w))];
+  }
+  if(!gmPhrases){
+    const j = await api('mistakes');
+    const fixes = (j.mistakes || []).map(m => m.fixed).filter(f => f && /^[A-Za-z',.?! ]+$/.test(f) && f.trim().split(/\s+/).length >= 3 && f.trim().split(/\s+/).length <= 9)
+      .map(f => [f.replace(/[.!?]+$/, ''), 'Собери правильный вариант своей фразы']);
+    gmPhrases = [...fixes.slice(0, 15), ...PHRASES];
+  }
+}
+function showGames(){
+  stopGameTimer(); gm = null;
+  const g = G, best = g?.best || {}, left = g?.paidWinsLeft ?? 10;
+  $('#gamesBox').innerHTML = `<h2>Мини-игры</h2><p class="lead">Слова — из твоего словаря (и запасные, если своих мало), фразы — в том числе твои исправленные ошибки. ${left ? `Побед с наградой сегодня: ещё ${left}.` : 'Награды на сегодня собраны — но опыт за игры идёт.'}</p>
+    <div class="glist">${Object.entries(GAMES).map(([k, [n, d, r]]) => `<button class="gcard" data-game="${k}">${tile(k)}<div class="q-main"><b>${n}</b><small>${d}</small>${best[k] ? `<small class="gbest">Рекорд: ${best[k]}</small>` : ''}</div><span class="q-rew">${r} 🪙</span></button>`).join('')}</div>`;
+}
+async function startGame(kind){
+  $('#gamesBox').innerHTML = '<div class="empty">Готовлю игру…</div>';
+  await loadGameData();
+  gm = {kind, i: 0, ok: 0, done: false};
+  if(kind === 'quiz'){ gm.total = 8; gm.items = shuffle(gmWords).slice(0, 8); }
+  if(kind === 'build'){ gm.total = 5; gm.items = shuffle(gmPhrases).slice(0, 5); }
+  if(kind === 'blitz'){ gm.total = 0; gm.items = shuffle(gmWords); gm.end = Date.now() + 60000; gm.timer = setInterval(tickBlitz, 250); }
+  drawGame();
+}
+// вопрос с 4 вариантами: слово → перевод (в блице иногда наоборот)
+function quizQ(item, flip){
+  const [en, ru] = item, pool = shuffle(gmWords.filter(w => w[0] !== en)).slice(0, 3);
+  const opts = shuffle([item, ...pool]).map(w => flip ? w[0] : w[1]);
+  return {ask: flip ? ru : en, en, right: flip ? en : ru, opts};
+}
+function drawGame(){
+  const box = $('#gamesBox'); if(!gm) return;
+  const head = `<div class="ghead"><button class="btn line sm" data-gback>← Игры</button><b>${GAMES[gm.kind][0]}</b>${gm.kind === 'blitz' ? `<span class="gtimer" id="gtimer">${Math.ceil(Math.max(0, gm.end - Date.now()) / 1000)}</span>` : `<span class="gcount">${Math.min(gm.i + 1, gm.total)} / ${gm.total}</span>`}</div>
+    ${gm.kind === 'blitz' ? `<div class="gbar"><i id="gtbar" style="width:${Math.max(0, gm.end - Date.now()) / 600}%"></i></div><p class="gscore">Верно: <b>${gm.ok}</b></p>` : `<div class="gbar"><i style="width:${gm.i / gm.total * 100}%"></i></div>`}`;
+  if(gm.kind === 'build'){
+    const [en, ru] = gm.items[gm.i];
+    gm.tokens = gm.tokens || shuffle(en.split(/\s+/).map((t, k) => ({t, k}))); gm.picked = gm.picked || []; gm.first = gm.first ?? true;
+    box.innerHTML = head + `<div class="gq"><small>${esc(ru)}</small></div>
+      <div class="ganswer" id="ganswer">${gm.picked.map(x => `<button class="gtok" data-tok="${x.k}">${esc(x.t)}</button>`).join('') || '<span class="ghint">Нажимай на слова по порядку</span>'}</div>
+      <div class="gtokens">${gm.tokens.filter(x => !gm.picked.includes(x)).map(x => `<button class="gtok" data-tok="${x.k}">${esc(x.t)}</button>`).join('')}</div>
+      <div class="actions"><button class="btn line sm" data-gclear ${gm.picked.length ? '' : 'disabled'}>Сбросить</button><button class="ib" data-gsay="${esc(en)}" aria-label="Подсказка голосом">${ICON.speak}</button></div>`;
+    return;
+  }
+  gm.q = gm.q || quizQ(gm.items[gm.i % gm.items.length], gm.kind === 'blitz' && Math.random() < .4);
+  box.innerHTML = head + `<div class="gq"><b>${esc(gm.q.ask)}</b>${/[a-z]/i.test(gm.q.ask) ? `<button class="ib" data-gsay="${esc(gm.q.ask)}" aria-label="Послушать">${ICON.speak}</button>` : ''}</div>
+    <div class="gopts">${gm.q.opts.map(o => `<button class="gopt" data-opt="${esc(o)}">${esc(o)}</button>`).join('')}</div>`;
+}
+function nextQ(){ gm.i++; gm.q = null; gm.tokens = null; gm.picked = null; gm.first = null; if(gm.kind !== 'blitz' && gm.i >= gm.total) return finishGame(); drawGame(); }
+function tickBlitz(){
+  if(!gm || gm.kind !== 'blitz' || !$('#gtimer')){ return stopGameTimer(); }
+  const left = Math.max(0, gm.end - Date.now());
+  $('#gtimer').textContent = Math.ceil(left / 1000); $('#gtbar').style.width = (left / 600) + '%';
+  if(left <= 0) finishGame();
+}
+function stopGameTimer(){ if(gm?.timer){ clearInterval(gm.timer); gm.timer = null; } }
+async function finishGame(){
+  if(!gm || gm.done) return; gm.done = true; stopGameTimer();
+  const {kind, ok} = gm, total = kind === 'blitz' ? gm.i : gm.total;
+  const won = kind === 'quiz' ? ok >= 6 : kind === 'build' ? ok >= 4 : ok >= 10;
+  $('#gamesBox').innerHTML = '<div class="empty">Считаю очки…</div>';
+  const j = await api('minigame', {kind, score: ok, won});
+  if(j.game) applyGame(j.game);
+  if(won){ sfx('happy'); react('t-heart', 1300); } else sfx('oops');
+  $('#gamesBox').innerHTML = `<div class="gend">${miniBunny(G?.equip.char || 'bunny', G?.equip.color || 'classic', G?.equip.hat || 'none')}
+    <h2>${won ? 'Победа!' : 'Почти получилось'}</h2>
+    <p class="lead">${kind === 'blitz' ? `Верных ответов: <b>${ok}</b> из ${total}` : `Верно: <b>${ok}</b> из ${total}`}${j.best ? ` · рекорд ${j.best}` : ''}</p>
+    <p>${won ? (j.reward ? `Награда: +${j.reward} 🪙` : 'Победы с наградой на сегодня закончились — но опыт засчитан.') : kind === 'blitz' ? 'Для победы нужно 10 верных. Попробуй ещё!' : 'Для победы не хватило совсем чуть-чуть. Ещё разок?'}</p>
+    <div class="actions"><button class="btn" data-game="${kind}">Ещё раз</button><button class="btn line" data-gback>К играм</button></div></div>`;
+  gm = null;
+}
+$('#gamesBox').onclick = e => {
+  unlock();
+  const t = e.target;
+  if(t.closest('[data-gback]')) return showGames();
+  const start = t.closest('[data-game]'); if(start) return startGame(start.dataset.game);
+  const say = t.closest('[data-gsay]'); if(say){ sayText(say.dataset.gsay); return; }
+  if(!gm || gm.done) return;
+  const opt = t.closest('[data-opt]');
+  if(opt && !gm.lock){
+    const good = opt.dataset.opt === gm.q.right; gm.lock = true;
+    opt.classList.add(good ? 'ok' : 'bad');
+    if(!good) document.querySelectorAll('#gamesBox [data-opt]').forEach(b => { if(b.dataset.opt === gm.q.right) b.classList.add('ok'); });
+    if(good){ gm.ok++; sfx(gm.kind === 'blitz' ? 'coin' : 'hop'); if(gm.ok % 3 === 0) hop(); } else sfx('oops');
+    setTimeout(() => { if(gm){ gm.lock = false; nextQ(); } }, gm.kind === 'blitz' ? (good ? 250 : 700) : (good ? 600 : 1300));
+    return;
+  }
+  if(t.closest('[data-gclear]')){ gm.picked = []; return drawGame(); }
+  const tok = t.closest('[data-tok]');
+  if(tok && gm.kind === 'build' && !gm.lock){
+    const x = gm.tokens.find(y => y.k === +tok.dataset.tok);
+    gm.picked = gm.picked.includes(x) ? gm.picked.filter(y => y !== x) : [...gm.picked, x];
+    sfx('ear'); drawGame();
+    if(gm.picked.length === gm.tokens.length){
+      const en = gm.items[gm.i][0], good = normPhrase(gm.picked.map(y => y.t).join(' ')) === normPhrase(en);
+      const ans = $('#ganswer'); ans.classList.add(good ? 'ok' : 'bad');
+      if(good){ if(gm.first) gm.ok++; sfx('happy'); hop(); gm.lock = true; setTimeout(() => { if(gm){ gm.lock = false; nextQ(); } }, 900); }
+      else { gm.first = false; sfx('oops'); ans.insertAdjacentHTML('afterend', `<p class="gfix">Правильно: <b>${esc(en)}</b></p>`);
+        gm.lock = true; setTimeout(() => { if(gm){ gm.lock = false; gm.picked = []; drawGame(); } }, 1800); }
+    }
+  }
+};
 /* ---------- вкладки и запуск ---------- */
 function tab(v){
   document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
