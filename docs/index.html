@@ -187,9 +187,23 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
 .lvl-got .buddy.mini{--bsize:70px}.lvl-got b{font-size:14px}.lvl-got small{font-size:11px;color:var(--muted)}
 .wheelcard .q-ico{animation:none}.wheelcard.ready{border-color:var(--accent)}
 .wheelwrap{text-align:center}.wheelwrap .actions{justify-content:center}
-.wheel-box{position:relative;width:min(78vw,300px);margin:6px auto 10px}
-.wheel{width:100%;display:block;transition:transform 4s cubic-bezier(.15,.85,.2,1)}
-.wheel-ptr{position:absolute;left:50%;top:-6px;transform:translateX(-50%);width:0;height:0;border-left:13px solid transparent;border-right:13px solid transparent;border-top:24px solid var(--ink);z-index:2}
+.wheel-box{position:relative;width:min(80vw,300px);aspect-ratio:1;margin:30px auto 8px}
+.wheel-rim{position:absolute;inset:0;border-radius:50%;background:var(--ink);padding:12px;box-shadow:0 14px 34px rgba(0,0,0,.35)}
+.wheel{position:relative;width:100%;height:100%;border-radius:50%;overflow:hidden;will-change:transform;transform:translateZ(0) rotate(0deg);transition:transform 4.5s cubic-bezier(.12,.72,.14,1);box-shadow:inset 0 0 0 3px rgba(255,255,255,.35)}
+.wheel::after{content:"";position:absolute;inset:0;border-radius:50%;background:repeating-conic-gradient(from -22.5deg,rgba(42,36,29,.55) 0 .7deg,transparent .7deg 45deg)}
+.wseg{position:absolute;inset:0;transform:rotate(var(--a));z-index:1}
+.wseg span{position:absolute;left:50%;top:7%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;color:#2A241D;line-height:1}
+.wseg b{font-family:var(--serif);font-size:clamp(20px,6.5vw,26px);font-weight:600}.wseg i{font-style:normal;font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;opacity:.7;margin-top:3px}
+.wseg svg{width:26px;height:26px;color:#5B3FA0}
+.wheel-hub{position:absolute;left:50%;top:50%;width:30%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:var(--paper);border:4px solid var(--ink);display:grid;place-items:center;overflow:hidden;z-index:3}
+.wheel-hub .buddy.mini{--bsize:100%;width:110%}
+.wheel-lights{position:absolute;inset:0;z-index:2;pointer-events:none}
+.wheel-lights i{position:absolute;left:50%;top:50%;width:7px;height:7px;margin:-3.5px;border-radius:50%;background:#F7D774;box-shadow:0 0 6px #F7D774;transform:rotate(calc(var(--k) * 22.5deg)) translateY(calc(min(40vw,150px) - 6px))}
+.wheel-box.spinning .wheel-lights i{animation:w-blink .5s steps(1) infinite;animation-delay:calc(var(--k) % 2 * .25s)}
+@keyframes w-blink{50%{opacity:.25}}
+.wheel-ptr{position:absolute;left:50%;top:-18px;width:38px;transform:translateX(-50%);z-index:4;filter:drop-shadow(0 3px 4px rgba(0,0,0,.35))}
+.wheel-box.spinning .wheel-ptr{animation:w-tick .18s ease-in-out infinite alternate}
+@keyframes w-tick{to{transform:translateX(-50%) rotate(-10deg)}}
 .gpairs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
 .gcardp{min-height:78px;padding:6px;border:1px solid var(--line-2);border-bottom-width:3px;border-radius:14px;background:var(--accent);color:var(--accent-ink);font:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:transform .2s,background .2s}
 .gcardp span{display:block}.gcardp:not(.open):not(.found) span{font-size:22px;opacity:.85}
@@ -1489,19 +1503,22 @@ $('#pathBox').onclick = async e => {
 // колесо удачи: сектора в том же порядке, что на сервере
 const WHEEL = [10, 50, 20, 100, 10, 30, 20, 'item'];
 async function spin(){
-  const cols = ['#E07A5F', '#F2C94C', '#7AC7A3', '#D9475A', '#E07A5F', '#6FA8DC', '#7AC7A3', '#9B6BD1'];
-  const seg = (i) => { const a0 = (i * 45 - 22.5 - 90) * Math.PI / 180, a1 = a0 + Math.PI / 4, r = 110;
-    return `M120 120 L${120 + r * Math.cos(a0)} ${120 + r * Math.sin(a0)} A${r} ${r} 0 0 1 ${120 + r * Math.cos(a1)} ${120 + r * Math.sin(a1)}Z`; };
-  sheet(`<div class="wheelwrap"><h2>Колесо удачи</h2><div class="wheel-box"><div class="wheel-ptr"></div>
-    <svg class="wheel" id="wheelSvg" viewBox="0 0 240 240">${WHEEL.map((v, i) => `<path d="${seg(i)}" fill="${cols[i]}" stroke="#2A241D" stroke-width="2"/>
-      <text x="120" y="42" transform="rotate(${i * 45} 120 120)" text-anchor="middle" font-size="${v === 'item' ? 15 : 20}" font-weight="700" fill="#fff" stroke="#2A241D" stroke-width=".8">${v === 'item' ? 'ВЕЩЬ' : v}</text>`).join('')}
-      <circle cx="120" cy="120" r="16" fill="#FBF8F2" stroke="#2A241D" stroke-width="3"/></svg></div>
-    <p class="lead" id="wheelRes">Крутим…</p><div class="actions" id="wheelAct" hidden><button class="btn" data-wok>Забрать</button></div></div>`);
+  // колесо — обычный блок с conic-gradient: крутится на видеокарте, без дёрганья (SVG с текстом перерисовывался каждый кадр)
+  const cols = ['#F6A68F', '#F7D774', '#A6DCC0', '#F28C9B', '#F6A68F', '#A8CBEF', '#A6DCC0', '#C9B1EE'];
+  const grad = `conic-gradient(from -22.5deg, ${cols.map((c, i) => `${c} ${i * 45}deg ${(i + 1) * 45}deg`).join(', ')})`;
+  sheet(`<div class="wheelwrap"><h2>Колесо удачи</h2><p class="ch-hint">Раз в день — бесплатно</p>
+    <div class="wheel-box">
+      <svg class="wheel-ptr" viewBox="0 0 40 48" aria-hidden="true"><path d="M20 46 L4 16 A17 17 0 1 1 36 16 Z" fill="var(--accent)" stroke="var(--ink)" stroke-width="3" stroke-linejoin="round"/><circle cx="20" cy="17" r="6" fill="var(--paper)"/></svg>
+      <div class="wheel-rim"><div class="wheel-lights">${[...Array(16)].map((_, k) => `<i style="--k:${k}"></i>`).join('')}</div>
+        <div class="wheel" id="wheelSvg" style="background:${grad}">${WHEEL.map((v, i) => `<div class="wseg" style="--a:${i * 45}deg"><span>${v === 'item' ? ico('gift') + '<i>вещь</i>' : `<b>${v}</b><i>монет</i>`}</span></div>`).join('')}</div>
+        <div class="wheel-hub">${miniBunny(G.equip.char, G.equip.color, G.equip.hat, G.equip.wear, G.equip.glasses)}</div></div>
+    </div>
+    <p class="lead" id="wheelRes">Удачи!</p><div class="actions" id="wheelAct" hidden><button class="btn" data-wok>Забрать</button></div></div>`);
   $('#sheetIn').onclick = e => { if(e.target.closest('[data-wok]')){ closeSheet(); showPath(); } };
-  const j = await api('spin');
+  const [j] = await Promise.all([api('spin'), new Promise(r => setTimeout(r, 450))]);   // ждём, пока шторка доедет
   if(!j.ok){ $('#wheelRes').textContent = 'Сегодня колесо уже крутили — приходи завтра!'; $('#wheelAct').hidden = false; if(j.game) applyGame(j.game); return; }
-  const w = $('#wheelSvg'); void w.getBoundingClientRect();
-  w.style.transform = `rotate(${360 * 6 - j.index * 45 + (Math.random() * 20 - 10)}deg)`;
+  const w = $('#wheelSvg'); $('.wheel-box').classList.add('spinning');
+  requestAnimationFrame(() => requestAnimationFrame(() => { w.style.transform = `rotate(${360 * 6 - j.index * 45 + (Math.random() * 24 - 12)}deg)`; }));
   sfx('boing');
   setTimeout(() => {
     sfx('happy'); hop();
@@ -1509,8 +1526,8 @@ async function spin(){
       $('#wheelRes').innerHTML = `<div class="lvl-got"><div>${miniBunny(look.char, look.color, look.hat, look.wear, look.glasses)}<b>${itemName(j.item)}</b><small>новая вещь — уже в гардеробе</small></div></div>`; }
     else $('#wheelRes').innerHTML = `Выпало <b>+${j.coins} 🪙</b>!`;
     if(j.game) applyGame(j.game);
-    $('#wheelAct').hidden = false;
-  }, 4200);
+    $('#wheelAct').hidden = false; $('.wheel-box')?.classList.remove('spinning');
+  }, 4700);
 }
 // праздник нового уровня: карточка с прыгающим кроликом и наградой
 function celebrate(level, reward, got = []){
