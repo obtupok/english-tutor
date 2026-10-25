@@ -4,29 +4,63 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
-<meta name="theme-color" content="#F4EFE6" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#17140F" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#F4F5FA" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1D2029" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Yomi — English</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-/* Бумажный блокнот: тёплая бумага, чернила, один терракотовый акцент. Тёмная тема — та же бумага ночью. */
+/* Мягкая тема: спокойный светлый фон, не чёрный текст, мягкий синий акцент. Тёмная — графит с синевой, без чисто белого. */
 :root{
-  --paper:#F4EFE6; --sheet:#FBF8F2; --ink:#1F1B16; --ink-2:#4A443B; --muted:#756C60; --line:#E1D8C8; --line-2:#CFC4B0;
-  --accent:#B4432B; --accent-ink:#FFFFFF; --green:#2F6B45; --green-bg:#E7EFE3; --amber:#8A5D0E; --amber-bg:#F5EAD3; --red-bg:#F6E1DA;
-  --serif:"Newsreader",Georgia,"Times New Roman",serif;
-  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --paper:#F4F5FA; --sheet:#FFFFFF; --ink:#2F3342; --ink-2:#4D5265; --muted:#8A8FA2; --line:#E5E7EF; --line-2:#D3D7E3;
+  --accent:#6A86F5; --accent-ink:#FFFFFF; --green:#3E9A6A; --green-bg:#E4F4EB; --amber:#C08A1E; --amber-bg:#FBF1DC; --red-bg:#FBE6E3;
+  --serif:"Nunito",-apple-system,"Segoe UI",Roboto,sans-serif;
+  --sans:"Nunito",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
   --safe-b:env(safe-area-inset-bottom,0px);
   color-scheme:light;
 }
 :root[data-theme="dark"]{
-  --paper:#17140F; --sheet:#201C16; --ink:#EDE6DA; --ink-2:#CFC6B7; --muted:#A39A8C; --line:#332D25; --line-2:#463E33;
-  --accent:#E07A5F; --accent-ink:#17140F; --green:#86C09A; --green-bg:#1E2A21; --amber:#E2B661; --amber-bg:#2C2416; --red-bg:#33201A;
+  --paper:#1D2029; --sheet:#262A35; --ink:#E2E5EE; --ink-2:#C2C7D3; --muted:#8E94A7; --line:#323746; --line-2:#424859;
+  --accent:#8FA5FF; --accent-ink:#1D2029; --green:#8ED3A9; --green-bg:#1F3029; --amber:#EEC56F; --amber-bg:#352E1F; --red-bg:#3A2529;
   color-scheme:dark;
 }
+/* ---------- лицо для звонка ---------- */
+.face{position:fixed;inset:0;z-index:40;background:var(--paper);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:24px 24px calc(28px + var(--safe-b));text-align:center;--fc:#B9BECD;--lvl:0}
+.face-mode{position:absolute;top:18px;left:0;right:0;margin:0;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.face-stage{position:relative;padding:0;border:0;background:none;cursor:pointer}
+.pill{width:min(72vw,300px);display:block;overflow:visible}
+.pill-body{fill:var(--sheet);stroke:var(--fc);stroke-width:7;transition:stroke .3s;filter:drop-shadow(0 0 calc(4px + var(--lvl) * 26px) color-mix(in srgb,var(--fc) 75%,transparent))}
+.pill-eyes ellipse{fill:var(--ink);transform-box:fill-box;transform-origin:center;animation:p-blink 4.5s infinite}
+.pill-happy,.pill-brow,.pill-mouth{fill:none;stroke:var(--ink);stroke-width:5;stroke-linecap:round}
+.pill-happy,.pill-brow,.pill-open,.flames,.face-dots{display:none}
+.pill-open{fill:var(--ink)}
+@keyframes p-blink{0%,94%,100%{transform:scaleY(1)}97%{transform:scaleY(.1)}}
+.face[data-s="listen"],.face[data-s="speak"]{--fc:#5B82FF}
+.face[data-s="speak"] .pill-body{animation:p-glow 1.4s ease-in-out infinite}
+@keyframes p-glow{50%{filter:drop-shadow(0 0 22px color-mix(in srgb,var(--fc) 70%,transparent))}}
+.face[data-s="think"]{--fc:#A88BF5}.face[data-s="think"] .pill-eyes{transform:translate(6px,-6px);transition:transform .3s}
+.face[data-s="think"] .face-dots{display:flex;position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);gap:6px}
+.face-dots i{width:8px;height:8px;border-radius:50%;background:var(--fc);animation:p-dot 1s infinite}.face-dots i:nth-child(2){animation-delay:.15s}.face-dots i:nth-child(3){animation-delay:.3s}
+@keyframes p-dot{50%{transform:translateY(-6px);opacity:.4}}
+.face.talking .pill-mouth{display:none}.face.talking .pill-open{display:inline;transform-box:fill-box;transform-origin:center;animation:p-talk .2s ease-in-out infinite alternate}
+@keyframes p-talk{from{transform:scaleY(.35)}to{transform:scaleY(1.1)}}
+.face[data-mood="angry"]{--fc:#F0553A}.face[data-mood="angry"] .flames{display:inline;transform-box:fill-box;transform-origin:50% 100%;animation:p-fire .35s ease-in-out infinite alternate}
+.face[data-mood="angry"] .pill-brow{display:inline}.face[data-mood="angry"] .pill-eyes ellipse{ry:8}
+@keyframes p-fire{to{transform:scaleY(1.08) skewX(-2deg)}}
+.face[data-mood="happy"]{--fc:#F5B53D}.face[data-mood="happy"] .pill-eyes{display:none}.face[data-mood="happy"] .pill-happy{display:inline}
+.face[data-mood="sad"]{--fc:#8FA3C8}
+.face-cap{max-width:420px;min-height:3em;margin:14px 0 0;font-size:19px;line-height:1.45;font-weight:600;color:var(--ink)}
+.face-cap.user{color:var(--muted);font-weight:500;font-style:italic}
+.face-fix{max-width:420px;padding:10px 14px;border-radius:14px;background:var(--green-bg);color:var(--ink);font-size:15px;text-align:left}.face-fix b{color:var(--green)}
+.face-status{margin:4px 0 0;font-size:14px;color:var(--muted)}
+.face-btns{position:absolute;left:0;right:0;bottom:calc(22px + var(--safe-b));display:flex;justify-content:center;gap:40px}
+.face-btn{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.face-btn svg{width:56px;height:56px;padding:16px;border-radius:50%;background:var(--sheet);border:1px solid var(--line);color:var(--ink)}
+.face-btn.end svg{background:#F06A5A;border-color:#F06A5A;color:#fff}
+.facechip{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(178px + var(--safe-b));z-index:6;padding:8px 16px;border-radius:99px;background:var(--sheet);border:1px solid var(--line-2);font-size:13px;font-weight:700;color:var(--ink);box-shadow:0 4px 14px rgba(0,0,0,.12)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 [hidden]{display:none!important}
 html,body{margin:0;height:100%;background:var(--paper);color:var(--ink);font:16px/1.5 var(--sans)}
@@ -564,7 +598,7 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
         <div class="dock-row">
           <button class="side" id="kbBtn" aria-label="Написать текстом"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M6 9h.01M10 9h.01M14 9h.01M18 9h.01M7 15h10"/></svg></button>
           <button class="mic" id="mic" aria-label="Говорить"><svg class="i-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><svg class="i-stop" viewBox="0 0 24 24" fill="currentColor"><rect x="7" y="7" width="10" height="10" rx="1.5"/></svg></button>
-          <button class="side" id="endBtn" aria-label="Закончить разговор"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+          <button class="side" id="endBtn" aria-label="Закончить разговор"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button><button class="facechip" id="faceBtn" hidden>Показать лицо</button>
         </div>
         <form class="typebox" id="typebox"><input id="typeIn" placeholder="Type in English…" autocomplete="off" aria-label="Сообщение"><button aria-label="Отправить"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></form>
       </div>
@@ -579,6 +613,29 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
     <button data-v="path"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h6.5a3.5 3.5 0 0 0 0-7h-5a3.5 3.5 0 0 1 0-7H16"/></svg>Путь<span class="badge dot" id="pathDot" hidden></span></button>
     <button data-v="yomi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 9.5C7 6 7.2 2.5 8.6 2.4S10.8 5.8 10.6 9M15.5 9.5C17 6 16.8 2.5 15.4 2.4S13.2 5.8 13.4 9"/><ellipse cx="12" cy="15" rx="7.5" ry="6.5"/><path d="M9.6 14.6h.01M14.4 14.6h.01M11 17.2q1 .8 2 0"/></svg>Yomi</button>
   </nav>
+</div>
+<div class="face" id="face" hidden data-s="idle">
+  <p class="face-mode" id="faceMode"></p>
+  <button class="face-stage" id="faceStage" aria-label="Лицо Yomi: нажми, чтобы отправить или перебить">
+    <svg class="pill" viewBox="0 0 240 150" aria-hidden="true">
+      <defs><linearGradient id="flg" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#F0553A"/><stop offset="1" stop-color="#FFB13B"/></linearGradient></defs>
+      <g class="flames"><path fill="url(#flg)" d="M42 60 C38 38 52 40 52 22 C62 36 70 30 72 12 C82 28 92 24 96 6 C106 24 114 20 120 0 C126 20 134 24 144 6 C148 24 158 28 168 12 C170 30 178 36 188 22 C188 40 202 38 198 60Z"/><path fill="#FFD66B" d="M70 60 C70 46 80 46 82 34 C88 44 96 40 98 28 C104 40 112 38 120 24 C128 38 136 40 142 28 C144 40 152 44 158 34 C160 46 170 46 170 60Z"/></g>
+      <rect class="pill-body" x="18" y="44" width="204" height="98" rx="49"/>
+      <g class="pill-eyes"><ellipse cx="88" cy="88" rx="9" ry="11"/><ellipse cx="152" cy="88" rx="9" ry="11"/></g>
+      <path class="pill-happy" d="M77 92 q11 -14 22 0 M141 92 q11 -14 22 0"/>
+      <path class="pill-brow" d="M72 68 L102 78 M168 68 L138 78"/>
+      <path class="pill-mouth" d="M110 116 H130"/>
+      <ellipse class="pill-open" cx="120" cy="116" rx="9" ry="7"/>
+    </svg>
+    <span class="face-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+  </button>
+  <p class="face-cap" id="faceCap"></p>
+  <div class="face-fix" id="faceFix" hidden></div>
+  <p class="face-status" id="faceStatus"></p>
+  <div class="face-btns">
+    <button class="face-btn" id="faceChat" aria-label="Показать чат"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-8l-5 4v-4H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/></svg><span>Чат</span></button>
+    <button class="face-btn end" id="faceEnd" aria-label="Завершить разговор"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg><span>Завершить</span></button>
+  </div>
 </div>
 <div class="buddy" id="buddy" data-s="idle" data-p="kind" title="Yomi — погладь меня" aria-hidden="true"><svg viewBox="-14 -8 188 172">
           <g class="b-all">
@@ -770,7 +827,7 @@ const plural = (n, one, few, many) => { const a = n % 10, b = n % 100; return a 
 const TG = window.Telegram?.WebApp;
 const dark = TG?.initData ? TG.colorScheme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
 document.documentElement.dataset.theme = dark ? 'dark' : 'light';
-if(TG?.initData){ TG.ready(); TG.expand(); TG.disableVerticalSwipes?.(); const c = dark ? '#17140F' : '#F4EFE6'; TG.setHeaderColor?.(c); TG.setBackgroundColor?.(c); TG.setBottomBarColor?.(c); }
+if(TG?.initData){ TG.ready(); TG.expand(); TG.disableVerticalSwipes?.(); const c = dark ? '#1D2029' : '#F4F5FA'; TG.setHeaderColor?.(c); TG.setBackgroundColor?.(c); TG.setBottomBarColor?.(c); }
 const hashKey = (location.hash.match(/k=([0-9a-f]{20,})/) || [])[1];
 if(hashKey){ store.set('yomi_key', hashKey); history.replaceState(null, '', location.pathname); }
 const AUTH = TG?.initData ? {initData: TG.initData} : store.get('yomi_key', '') ? {key: store.get('yomi_key', '')} : null;
@@ -863,9 +920,9 @@ function unlock(){ sfxReady(); if(unlocked) return; unlocked = true; player.src 
 function playB64(b64, mime = 'audio/mpeg'){
   return new Promise(res => {
     if(!b64) return res();
-    player.onended = player.onerror = () => res();
+    player.onended = () => res(true); player.onerror = () => res(false);   // false — не проигралось
     player.src = `data:${mime};base64,` + b64;
-    player.play().catch(() => res());
+    player.play().catch(() => res(false));
   });
 }
 function speakLocal(text, lang){
@@ -956,7 +1013,31 @@ function setState(s){
   mic.setAttribute('aria-label', {idle:'Говорить', listen:'Отправить', think:'Думаю', speak:'Перебить'}[s]);
   $('#status').textContent = s === 'idle' && !canRecord() ? 'Микрофон недоступен — можно писать текстом' : s === 'idle' && CH === 'talk' ? 'Нажми и говори — по-русски или по-английски' : STATUS[s];
   $('#endBtn').style.visibility = inCall ? 'visible' : 'hidden';
-  buddyState(s);
+  $('#faceBtn').hidden = !inCall || !$('#face').hidden;
+  buddyState(s); faceState(s);
+}
+/* ---------- лицо (режим звонка как в GoPrep): светится, когда слушает и говорит; злится на ошибки ---------- */
+let faceOn = store.get('yomi_face', true);
+const FACE_STATUS = {idle: 'Нажми на лицо, чтобы продолжить', listen: 'Слушаю… говори', think: 'Думаю…', speak: 'Нажми на лицо, чтобы перебить'};
+function showFace(on){
+  $('#face').hidden = !on;
+  $('#buddy').style.visibility = on ? 'hidden' : '';
+  $('#faceBtn').hidden = !inCall || on;
+  if(on) $('#faceMode').textContent = CH === 'talk' ? 'Болтовня' : ({free: 'Разговор', test: 'Тест уровня', coach: 'Как учить', scenario: 'Сценарий'}[S.mode] || 'Разговор');
+}
+function faceState(s){
+  const f = $('#face'); if(!f) return;
+  f.dataset.s = s; $('#faceStatus').textContent = FACE_STATUS[s];
+  if(s === 'listen'){ delete f.dataset.mood; $('#faceCap').textContent = ''; $('#faceCap').classList.remove('user'); $('#faceFix').hidden = true; }
+}
+const FACE_HAPPY = new Set(['excited', 'proud', 'love', 'cute', 'funny', 'surprised']);
+function faceReply(out, heard){
+  const f = $('#face'); if(!f) return;
+  f.dataset.mood = out.fix || out.emotion === 'angry' ? 'angry' : FACE_HAPPY.has(out.emotion) ? 'happy' : out.emotion === 'sad' ? 'sad' : '';
+  if(!f.dataset.mood) delete f.dataset.mood;
+  $('#faceCap').textContent = out.reply; $('#faceCap').classList.remove('user');
+  const fx = $('#faceFix'); fx.hidden = !out.fix;
+  if(out.fix) fx.innerHTML = `Лучше так: <b>${esc(out.fix.fixed)}</b>`;
 }
 /* ---------- кролик ---------- */
 let mouthTimer = 0, moodTimer = 0;
@@ -1055,6 +1136,7 @@ function buddyState(s){
 }
 // рот двигается, пока реально звучит голос — ответ, «Послушать», слово в тренировке, пример голоса
 function mouth(on){
+  $('#face')?.classList.toggle('talking', !!on);
   const b = $('#buddy'), m = b?.querySelector('.b-mouth'); clearTimeout(mouthTimer); if(!m) return;
   m.classList.remove('mo'); b.classList.toggle('talking', !!on); if(!on) return;
   const flap = () => { m.classList.toggle('mo'); mouthTimer = setTimeout(flap, 90 + Math.random() * 140); }; flap();
@@ -1074,6 +1156,7 @@ async function startCall(){
   if(actx.state === 'suspended') await actx.resume();
   if(!analyser){ analyser = actx.createAnalyser(); analyser.fftSize = 1024; actx.createMediaStreamSource(stream).connect(analyser); }
   inCall = true; errText = '';
+  if(faceOn) showFace(true);
   if(!chat.length) await switchMode(S.mode);   // первая реплика репетитора
   else listen();
 }
@@ -1083,7 +1166,7 @@ function endCall(){
   stopAudio();
   stream?.getTracks().forEach(t => t.stop()); stream = null; analyser = null;
   if(actx){ actx.close().catch(() => {}); actx = null; }
-  setState('idle'); drawChat();
+  showFace(false); setState('idle'); drawChat();
 }
 function listen(){
   if(!inCall) return;
@@ -1100,12 +1183,13 @@ function listen(){
     analyser.getFloatTimeDomainData(buf);
     let sum = 0; for(const v of buf) sum += v * v;
     const rms = Math.sqrt(sum / buf.length), now = Date.now();
-    if(now - t0 < 400) floor = Math.max(floor, rms * 0.9);           // первые 0.4 с — уровень шума
-    const loud = rms > Math.max(0.02, floor * 2.5);
-    const lvl = Math.min(1, rms * 8).toFixed(2); $('#mic').style.setProperty('--lvl', lvl); document.querySelectorAll('.b-ear').forEach(e => e.style.setProperty('--lvl', lvl));
-    if(loud){ speechMs += 50; spoke = spoke || speechMs > 250; lastLoud = now; }
+    if(now - t0 < 500) floor = Math.max(floor, rms * 0.9);           // первые 0.5 с — уровень шума
+    const loud = now - t0 > 500 && rms > Math.max(0.03, floor * 3);
+    const lvl = Math.min(1, rms * 8).toFixed(2); $('#mic').style.setProperty('--lvl', lvl); document.querySelectorAll('.b-ear').forEach(e => e.style.setProperty('--lvl', lvl)); $('#face').style.setProperty('--lvl', lvl);
+    if(loud){ speechMs += 50; spoke = spoke || speechMs > 400; lastLoud = now; }
     // пауза «эээ…» посреди фразы не обрывает её: короткую фразу ждём дольше (2.2 c), длинную — 1.7 c
     if((spoke && now - lastLoud > (speechMs < 1500 ? 2200 : 1700)) || now - t0 > 60000) finishUtterance();
+    if(!spoke && now - t0 > 25000){ clearInterval(vadTimer); rec.onstop = null; rec.stop(); setState('idle'); }
   }, 50);
 }
 function finishUtterance(){ clearInterval(vadTimer); if(rec?.state === 'recording') rec.stop(); }
@@ -1143,13 +1227,17 @@ async function handleTalk(j, typed){
   if(j.game) applyGame(j.game);
   drawHead();
   const before = $('#buddy')?.dataset.p;
-  onReply(j.out, j.heard || typed);
+  onReply(j.out, j.heard || typed); faceReply(j.out, j.heard || typed);
   if(j.out.emotion !== 'angry') buddyMood(j.out.fix ? 'oops' : 'happy');   // злость — сама по себе реакция на ошибку
   await sfx(replySound(j.out, before));
   setState('speak');
-  await (j.out.audio ? playB64(j.out.audio, j.out.mime) : speakLocal(j.out.reply, j.out.english ? 'en' : 'ru'));
+  await sayReply(j.out);
   if(state !== 'speak') return;           // перебили
-  if(inCall) listen(); else setState('idle');
+  if(inCall) setTimeout(() => { if(inCall && state === 'speak') listen(); }, 450); else setState('idle');   // пауза: эхо голоса Yomi не попадает в запись
+}
+async function sayReply(out){
+  const ok = out.audio ? await playB64(out.audio, out.mime) : false;
+  if(!ok && state === 'speak') await speakLocal(out.reply, out.english ? 'en' : 'ru');
 }
 async function switchMode(mode, scene){
   stopAudio(); clearInterval(vadTimer); if(rec?.state === 'recording'){ rec.onstop = null; rec.stop(); }
@@ -1159,11 +1247,11 @@ async function switchMode(mode, scene){
   if(j.error){ errText = 'Не получилось начать. Попробуй ещё раз.'; drawChat(); setState('idle'); return; }
   if(CH === 'learn') Object.assign(S, {mode: j.mode, scene: j.scene, level: j.level, plan: j.plan, stats: j.stats});
   drawModes(); drawHead();
-  onReply(j.out);
+  onReply(j.out); faceReply(j.out);
   setState('speak');
-  await (j.out.audio ? playB64(j.out.audio, j.out.mime) : speakLocal(j.out.reply, j.out.english ? 'en' : 'ru'));
+  await sayReply(j.out);
   if(state !== 'speak') return;
-  if(inCall) listen(); else setState('idle');
+  if(inCall) setTimeout(() => { if(inCall && state === 'speak') listen(); }, 450); else setState('idle');
 }
 
 $('#mic').onclick = () => {
@@ -1173,6 +1261,10 @@ $('#mic').onclick = () => {
   else if(state === 'speak'){ stopAudio(); setState('idle'); if(inCall) listen(); }
 };
 $('#endBtn').onclick = endCall;
+$('#faceEnd').onclick = endCall;
+$('#faceChat').onclick = () => { faceOn = false; store.set('yomi_face', false); showFace(false); };
+$('#faceBtn').onclick = () => { faceOn = true; store.set('yomi_face', true); showFace(true); faceState(state); };
+$('#faceStage').onclick = () => { unlock(); if(state === 'idle' && inCall) listen(); else $('#mic').click(); };
 function toggleType(on){ const t = $('#typebox'); t.classList.toggle('on', on ?? !t.classList.contains('on')); $('#kbBtn').classList.toggle('on', t.classList.contains('on')); if(t.classList.contains('on')) $('#typeIn').focus(); }
 $('#kbBtn').onclick = () => toggleType();
 $('#typebox').onsubmit = e => { e.preventDefault(); const v = $('#typeIn').value; $('#typeIn').value = ''; sendText(v); };
