@@ -27,6 +27,37 @@
   --accent:#8FA5FF; --accent-ink:#1D2029; --green:#8ED3A9; --green-bg:#1F3029; --amber:#EEC56F; --amber-bg:#352E1F; --red-bg:#3A2529;
   color-scheme:dark;
 }
+/* ---------- «Экзамены» ---------- */
+.exgrid{display:flex;flex-direction:column;gap:10px;margin:4px 0 6px}
+.excard{display:flex;align-items:center;gap:14px;padding:16px 14px;border:1px solid var(--line);border-radius:18px;background:var(--sheet);text-align:left;box-shadow:0 2px 10px rgba(30,40,80,.05)}
+.excard:active{transform:scale(.985)}.excard .q-ico{width:50px;height:50px;border-radius:14px}
+.excard .q-main b{font-size:17px}.excard small{display:block;margin-top:3px;color:var(--muted);font-size:13px;line-height:1.4}.excard em{display:inline-block;margin-top:6px;font-style:normal;font-size:12px;font-weight:700;color:var(--accent)}
+.exres{display:flex;gap:16px;align-items:center;padding:16px;border-radius:18px;background:var(--sheet);border:1px solid var(--line)}
+.exscore{flex:none;width:96px;height:96px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent)}
+.exscore small{font-size:9px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;max-width:80px;text-align:center;line-height:1.1}.exscore b{font-size:32px;line-height:1.1;font-weight:800}.exscore span{font-size:11px;font-weight:700}
+.excrit{flex:1;min-width:0;display:flex;flex-direction:column;gap:7px}
+.excrit div{display:grid;grid-template-columns:1fr 64px 28px;align-items:center;gap:8px;font-size:12px;color:var(--ink-2)}
+.excrit span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.excrit i{height:7px;border-radius:9px;background:var(--line)}.excrit u{display:block;height:100%;border-radius:9px;background:var(--accent)}.excrit b{text-align:right;color:var(--ink)}
+.exsum{margin:10px 2px 0;color:var(--ink-2);font-size:15px;line-height:1.5}.exmore{margin-top:10px}
+.exhist{display:flex;flex-direction:column;gap:8px}.exrow{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:var(--sheet);border:1px solid var(--line)}
+.exrow span{flex:1;min-width:0}.exrow b{display:block;font-size:14px}.exrow small{color:var(--muted);font-size:12px}.exrow em{font-style:normal;font-weight:800;color:var(--accent)}
+.excom{padding:12px 0;border-bottom:1px solid var(--line)}.excom b{font-size:14px}.excom p{margin:4px 0 0;color:var(--ink-2);font-size:14px}
+.extwo ul{margin:0;padding-left:18px;color:var(--ink-2);font-size:14px}.extwo li{margin:4px 0}
+.exans{border:1px solid var(--line);border-radius:14px;background:var(--sheet);margin-bottom:8px;padding:0 14px}
+.exans summary{padding:12px 0;cursor:pointer;font-weight:600;font-size:15px;list-style:none}.exans summary em{display:block;font-style:normal;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.exans p{font-size:14px;color:var(--ink-2)}.exans .you{color:var(--muted);font-style:italic}
+.exbetter{position:relative;padding:10px 44px 10px 12px;margin:0 0 14px;border-radius:12px;background:var(--green-bg)}.exbetter b{font-size:12px;color:var(--green)}.exbetter p{margin:4px 0 0;color:var(--ink)}.exbetter .ib{position:absolute;right:6px;top:8px}
+.exwords{display:flex;flex-wrap:wrap;gap:8px}.exwords button{padding:7px 12px;border-radius:99px;background:var(--sheet);border:1px solid var(--line);font-size:13px;color:var(--ink-2)}.exwords b{color:var(--ink)}
+.exrole{width:100%;min-height:48px;padding:10px 14px;border-radius:12px;border:1px solid var(--line-2);background:var(--sheet);color:var(--ink);font:inherit;margin:6px 0 4px}
+/* лицо во время экзамена */
+.face-timer{margin:0;padding:6px 14px;border-radius:99px;background:var(--sheet);border:1px solid var(--line);font-weight:800;font-size:15px;font-variant-numeric:tabular-nums;color:var(--ink)}
+.face-timer.low{color:#E0533F;border-color:#E0533F}
+.face[data-exam]{justify-content:flex-start;padding-top:52px;padding-bottom:calc(120px + var(--safe-b));overflow-y:auto}
+.face[data-exam] .pill{width:min(52vw,220px)}
+.face[data-exam] .face-cap{font-size:18px;min-height:0}
+.face-card{max-width:440px;width:100%;max-height:34vh;overflow-y:auto;padding:12px 14px;border-radius:14px;background:var(--sheet);border:1px solid var(--line);text-align:left;font-size:15px;line-height:1.5;color:var(--ink-2)}
+.face-card ul{margin:6px 0 0;padding-left:18px}.face-card p{margin:0}
+.face-btn.go svg{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 /* ---------- лицо для звонка ---------- */
 .face{position:fixed;inset:0;z-index:40;background:var(--paper);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:24px 24px calc(28px + var(--safe-b));text-align:center;--fc:#B9BECD;--lvl:0}
 .face-mode{position:absolute;top:18px;left:0;right:0;margin:0;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
@@ -589,7 +620,8 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
 <div class="app">
   <header><div class="brand">Yomi<small>English</small></div><div class="meta"><button class="coins" id="coins" hidden title="Монетки и задания">🪙 <b>0</b></button><span id="streak" hidden></span><span class="lv" id="lvl" hidden></span></div></header>
   <main id="main">
-    <section class="view on" id="v-talk">
+    <section class="view on" id="v-exam"><div class="scroll"><div id="examBox"></div></div></section>
+    <section class="view" id="v-talk">
       <div class="chats" id="chats" role="tablist"><button data-ch="learn" role="tab">Учёба</button><button data-ch="talk" role="tab">Болтовня</button></div>
       <div class="modes" id="modes" role="tablist"></div>
       <div class="scroll" id="chatWrap"><div class="chat" id="chat" aria-live="polite"></div></div>
@@ -608,14 +640,15 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
     <section class="view" id="v-yomi"><div class="scroll" id="yomiBox"></div></section>
   </main>
   <nav id="nav">
-    <button data-v="talk" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Говорить</button>
+    <button data-v="exam" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 9L12 4 2 9l10 5 10-5z"/><path d="M6 11v5c3 2.5 9 2.5 12 0v-5M22 9v6"/></svg>Экзамены</button>
+    <button data-v="talk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Разговор</button>
     <button data-v="words"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7" width="19" height="11" rx="5.5"/><path d="M7 10.5v4M5 12.5h4"/><circle cx="15.5" cy="11.5" r=".9" fill="currentColor"/><circle cx="17.5" cy="13.8" r=".9" fill="currentColor"/></svg>Практика<span class="badge" id="dueBadge" hidden></span></button>
-    <button data-v="path"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h6.5a3.5 3.5 0 0 0 0-7h-5a3.5 3.5 0 0 1 0-7H16"/></svg>Путь<span class="badge dot" id="pathDot" hidden></span></button>
-    <button data-v="yomi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 9.5C7 6 7.2 2.5 8.6 2.4S10.8 5.8 10.6 9M15.5 9.5C17 6 16.8 2.5 15.4 2.4S13.2 5.8 13.4 9"/><ellipse cx="12" cy="15" rx="7.5" ry="6.5"/><path d="M9.6 14.6h.01M14.4 14.6h.01M11 17.2q1 .8 2 0"/></svg>Yomi</button>
+    <button data-v="yomi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 9.5C7 6 7.2 2.5 8.6 2.4S10.8 5.8 10.6 9M15.5 9.5C17 6 16.8 2.5 15.4 2.4S13.2 5.8 13.4 9"/><ellipse cx="12" cy="15" rx="7.5" ry="6.5"/><path d="M9.6 14.6h.01M14.4 14.6h.01M11 17.2q1 .8 2 0"/></svg>Профиль<span class="badge dot" id="pathDot" hidden></span></button>
   </nav>
 </div>
 <div class="face" id="face" hidden data-s="idle">
   <p class="face-mode" id="faceMode"></p>
+  <p class="face-timer" id="faceTimer" hidden></p>
   <button class="face-stage" id="faceStage" aria-label="Лицо Yomi: нажми, чтобы отправить или перебить">
     <svg class="pill" viewBox="0 0 240 150" aria-hidden="true">
       <defs><linearGradient id="flg" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#F0553A"/><stop offset="1" stop-color="#FFB13B"/></linearGradient></defs>
@@ -631,9 +664,11 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
   </button>
   <p class="face-cap" id="faceCap"></p>
   <div class="face-fix" id="faceFix" hidden></div>
+  <div class="face-card" id="faceCard" hidden></div>
   <p class="face-status" id="faceStatus"></p>
   <div class="face-btns">
     <button class="face-btn" id="faceChat" aria-label="Показать чат"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-8l-5 4v-4H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/></svg><span>Чат</span></button>
+    <button class="face-btn go" id="faceGo" hidden><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg><span id="faceGoT">Готово</span></button>
     <button class="face-btn end" id="faceEnd" aria-label="Завершить разговор"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg><span>Завершить</span></button>
   </div>
 </div>
@@ -1261,10 +1296,10 @@ $('#mic').onclick = () => {
   else if(state === 'speak'){ stopAudio(); setState('idle'); if(inCall) listen(); }
 };
 $('#endBtn').onclick = endCall;
-$('#faceEnd').onclick = endCall;
+$('#faceEnd').onclick = () => EX ? exStop() : endCall();
 $('#faceChat').onclick = () => { faceOn = false; store.set('yomi_face', false); showFace(false); };
 $('#faceBtn').onclick = () => { faceOn = true; store.set('yomi_face', true); showFace(true); faceState(state); };
-$('#faceStage').onclick = () => { unlock(); if(state === 'idle' && inCall) listen(); else $('#mic').click(); };
+$('#faceStage').onclick = () => { unlock(); if(EX) return EX.skip?.(); if(state === 'idle' && inCall) listen(); else $('#mic').click(); };
 function toggleType(on){ const t = $('#typebox'); t.classList.toggle('on', on ?? !t.classList.contains('on')); $('#kbBtn').classList.toggle('on', t.classList.contains('on')); if(t.classList.contains('on')) $('#typeIn').focus(); }
 $('#kbBtn').onclick = () => toggleType();
 $('#typebox').onsubmit = e => { e.preventDefault(); const v = $('#typeIn').value; $('#typeIn').value = ''; sendText(v); };
@@ -1372,7 +1407,7 @@ const PET_NAMES = {bunny: 'кролика', cat: 'котика', bear: 'медв
 const lockLevel = (g, key) => (g.unlocks || []).find(([, id]) => id === key)?.[0];
 const itemName = key => { const [slot, id] = key.split(':'); return SKINS[slot]?.find(([x]) => x === id)?.[1] || id; };
 const SLOT_NAMES = {char: 'Персонажи', color: 'Окрас', wear: 'Одежда', hat: 'Шапки', glasses: 'Очки'};
-let G = null, ySub = 'char';
+let G = null, ySub = 'path';
 const questReady = g => [...(g?.quests || []), ...(g?.weekly || []), ...(g?.achievements || [])].some(q => !q.claimed && q.progress >= q.goal) || !!g?.bonus?.ready || !!g?.spinReady;
 function applyGame(g){
   if(!g) return;
@@ -1403,7 +1438,7 @@ function notify(text){
   const t = $('#toastx'); t.textContent = text; t.classList.add('on');
   clearTimeout(notify.t); notify.t = setTimeout(() => t.classList.remove('on'), 3200);
 }
-$('#coins').onclick = () => tab('path');
+$('#coins').onclick = () => { ySub = 'path'; tab('yomi'); };
 function miniBunny(char, color, hat, wear = G?.equip?.wear || 'scarf', glasses = G?.equip?.glasses || 'none'){
   const svg = $('#buddy svg').cloneNode(true);
   const d = document.createElement('div'); d.className = 'buddy mini'; Object.assign(d.dataset, {char, color, hat, wear, glasses, p: 'kind', s: 'idle'});
@@ -1434,8 +1469,11 @@ async function gameClick(e){
   return false;
 }
 function showYomi(){
-  const box = $('#yomiBox');
-  box.innerHTML = `<h2>Yomi</h2><div class="chats ysub" role="tablist">${[['char', 'Персонаж'], ['shop', 'Гардероб'], ['settings', 'Настройки']].map(([k, n]) => `<button role="tab" data-ysub="${k}" class="${ySub === k ? 'on' : ''}">${n}</button>`).join('')}</div><div id="ySubBox"></div>`;
+  const box = $('#yomiBox'), park = $('#v-path .scroll');
+  if(!park.contains($('#pathBox'))) park.append($('#pathBox'), $('#progBox'));   // «Путь» и статистику не стираем вместе с вкладкой
+  if(ySub === 'path'){ box.innerHTML = `<h2>Профиль</h2><div class="chats ysub" role="tablist">${[['path', 'Путь'], ['char', 'Персонаж'], ['shop', 'Гардероб'], ['settings', 'Настройки']].map(([k, n]) => `<button role="tab" data-ysub="${k}" class="${ySub === k ? 'on' : ''}">${n}</button>`).join('')}</div>`;
+    box.append($('#pathBox'), $('#progBox')); showPath(); showProgress(); return; }
+  box.innerHTML = `<h2>Профиль</h2><div class="chats ysub" role="tablist">${[['path', 'Путь'], ['char', 'Персонаж'], ['shop', 'Гардероб'], ['settings', 'Настройки']].map(([k, n]) => `<button role="tab" data-ysub="${k}" class="${ySub === k ? 'on' : ''}">${n}</button>`).join('')}</div><div id="ySubBox"></div>`;
   const sb = $('#ySubBox');
   if(ySub === 'settings') return showYomiSettings(sb);
   sb.innerHTML = ySub === 'char' ? charHtml() : shopHtml();
@@ -1519,6 +1557,11 @@ const ICO = {
   quiz: ['#4a8fd9', '<rect x="3" y="4" width="12" height="16" rx="2"/><path d="M15 7l4.5 1.2a1.5 1.5 0 0 1 1 1.8l-2.6 9.7a1.5 1.5 0 0 1-1.8 1.1L12 19.6"/><path d="M7 9h4M7 12.5h4"/>'],
   build: ['#3d9a8b', '<rect x="3" y="13" width="8" height="7" rx="1.5"/><rect x="13" y="13" width="8" height="7" rx="1.5"/><rect x="8" y="4" width="8" height="7" rx="1.5"/>'],
   blitz: ['#e05d5d', '<path d="M13 2L4.5 13.5H11L10 22l9.5-12H13z"/>'],
+  ex_ielts: ['#e05d5d', '<path d="M22 9L12 4 2 9l10 5 10-5z"/><path d="M6 11v5c3 2.5 9 2.5 12 0v-5"/>'],
+  ex_toefl: ['#4a8fd9', '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>'],
+  ex_interview: ['#3d9a8b', '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/>'],
+  ex_talk: ['#9b6bd1', '<path d="M5 5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-8l-5 4v-4H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/><path d="M8 10h8M8 13h5"/>'],
+  exam: ['#e05d5d', '<path d="M22 9L12 4 2 9l10 5 10-5z"/><path d="M6 11v5c3 2.5 9 2.5 12 0v-5"/>'],
   wheel: ['#e07a5f', '<circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6L5.6 18.4"/><circle cx="12" cy="12" r="2" fill="currentColor"/>'],
   pairs: ['#9b6bd1', '<rect x="3" y="5" width="8" height="11" rx="1.5"/><rect x="13" y="8" width="8" height="11" rx="1.5"/><path d="M7 9v3M17 12v3"/>'],
   listen: ['#3d9a8b', '<path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="3" y="14" width="4" height="6" rx="1.5"/><rect x="17" y="14" width="4" height="6" rx="1.5"/>'],
@@ -1811,13 +1854,167 @@ $('#gamesBox').onclick = e => {
     }
   }
 };
+/* ---------- «Экзамены» — главная: IELTS, TOEFL, собеседование, разговор; экзамен идёт на экране с лицом ---------- */
+const EXAM_KINDS = {
+  ielts: ['IELTS Speaking', 'Три части как на экзамене: вопросы, карточка (минута на подготовку, две — на речь), обсуждение.', 'Band 0–9 · ≈ 14 мин'],
+  toefl: ['TOEFL Speaking', 'Четыре задания: мнение, ситуация в кампусе, понятие из лекции, пересказ лекции.', '0–30 · ≈ 17 мин'],
+  interview: ['Собеседование', 'Шесть вопросов как на настоящем интервью — разбор по STAR и пример сильного ответа.', '0–10 · ≈ 12 мин'],
+  talk: ['Свободный разговор', 'Просто говори с Yomi голосом: он поддержит беседу и поправит ошибки.', 'без оценки'],
+};
+const scoreText = (kind, v) => kind === 'ielts' ? `Band ${v}` : kind === 'toefl' ? `${v} / 30` : `${v} / 10`;
+const critMax = kind => kind === 'ielts' ? 9 : kind === 'toefl' ? 4 : 10;
+let EX = null, exStream = null, exCtx = null, exAn = null;
+function showExamHome(){
+  const box = $('#examBox'), exams = S.stats?.exams || [], last = S.stats?.examLast;
+  box.innerHTML = `<h2>К чему готовимся?</h2><p class="lead">Отвечай голосом — Yomi проведёт экзамен с таймерами и в конце даст оценку по критериям и разбор каждого ответа.</p>
+    <div class="exgrid">${Object.entries(EXAM_KINDS).map(([k, [n, d, t]]) => `<button class="excard" data-exam="${k}">${tile('ex_' + k)}<div class="q-main"><b>${n}</b><small>${d}</small><em>${t}</em></div></button>`).join('')}</div>
+    ${last ? `<h3 class="sub-h">Последний результат</h3>${resultHead(last)}<button class="btn line sm exmore" data-exres>Подробный разбор</button>` : ''}
+    ${exams.length > 1 ? `<h3 class="sub-h">История</h3><div class="exhist">${exams.slice().reverse().slice(0, 12).map(e => `<div class="exrow">${tile('ex_' + e.kind, 'h-ico')}<span><b>${EXAM_KINDS[e.kind]?.[0] || e.kind}</b><small>${esc(e.topic || '')} · ${new Date(e.at).toLocaleDateString('ru', {day: 'numeric', month: 'short'})}</small></span><em>${scoreText(e.kind, e.overall)}</em></div>`).join('')}</div>` : ''}`;
+}
+function resultHead(r){
+  const m = critMax(r.kind);
+  return `<div class="exres"><div class="exscore"><small>${EXAM_KINDS[r.kind]?.[0] || ''}</small><b>${r.kind === 'ielts' ? r.overall : r.overall}</b><span>${r.kind === 'ielts' ? 'band' : r.kind === 'toefl' ? 'из 30' : 'из 10'}</span></div>
+    <div class="excrit">${(r.criteria || []).map(c => `<div><span>${esc(c.name)}</span><i><u style="width:${Math.round(c.score / m * 100)}%"></u></i><b>${c.score}</b></div>`).join('')}</div></div>
+    <p class="exsum">${esc(r.summary || '')}</p>`;
+}
+function showResult(r){
+  const box = $('#examBox');
+  box.innerHTML = `<button class="btn line sm" data-exhome>← Все экзамены</button><h2>Результат</h2>${resultHead(r)}
+    ${(r.criteria || []).map(c => `<div class="excom"><b>${esc(c.name)} · ${c.score}</b><p>${esc(c.comment)}</p></div>`).join('')}
+    <div class="extwo"><div><h3 class="sub-h">Получилось</h3><ul>${(r.strengths || []).map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>
+      <div><h3 class="sub-h">Что подтянуть</h3><ul>${(r.improve || []).map(x => `<li>${esc(x)}</li>`).join('')}</ul></div></div>
+    <h3 class="sub-h">Разбор ответов</h3>
+    ${(r.items || []).map((it, i) => { const a = (r.answers || []).find(x => x.i === i) || {};
+      return `<details class="exans"><summary><em>${esc(it.part)}</em>${esc(it.q)}</summary>
+        <p class="you"><b>Ты сказал:</b> ${esc(r.said?.[i] || '— (нет ответа)')}</p>
+        <p>${esc(a.feedback || '')}</p>
+        <div class="exbetter"><b>Как сказать сильнее</b><p>${esc(a.better || '')}</p><button class="ib" data-gsay="${esc(a.better || '')}" aria-label="Послушать">${ICON.speak}</button></div></details>`; }).join('')}
+    ${(r.words || []).length ? `<h3 class="sub-h">Полезные слова</h3><div class="exwords">${r.words.map(w => `<button data-gsay="${esc(w.word)}"><b>${esc(w.word)}</b> — ${esc(w.translation)}</button>`).join('')}</div>` : ''}
+    <div class="actions"><button class="btn" data-exam="${r.kind}">Пройти ещё раз</button></div>`;
+  box.scrollTop = 0; $('#v-exam .scroll').scrollTop = 0;
+}
+$('#examBox').onclick = e => {
+  unlock();
+  const t = e.target;
+  if(t.closest('[data-exhome]')) return showExamHome();
+  if(t.closest('[data-exres]')) return showResult(S.stats.examLast);
+  const say = t.closest('[data-gsay]'); if(say) return sayText(say.dataset.gsay);
+  const ex = t.closest('[data-exam]'); if(!ex) return;
+  const k = ex.dataset.exam;
+  if(k === 'talk'){ tab('talk'); faceOn = true; store.set('yomi_face', true); return startCall(); }
+  if(k === 'interview') return sheetRole();
+  runExam(k);
+};
+function sheetRole(){
+  sheet(`<h2>Собеседование</h2><p class="lead">На какую должность? Можно оставить пустым — вопросы будут общие.</p>
+    <input class="exrole" id="exRole" placeholder="Например: junior frontend developer" maxlength="80">
+    <div class="actions"><button class="btn" data-exgo>Начать</button></div>`);
+  setTimeout(() => $('#exRole')?.focus(), 250);
+  $('#sheetIn').onclick = e => { if(e.target.closest('[data-exgo]')){ const role = $('#exRole').value; closeSheet(); runExam('interview', role); } };
+}
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const fmt = s => `${Math.floor(s / 60)}:${String(Math.max(0, s) % 60).padStart(2, '0')}`;
+function exUI(on, name){
+  const f = $('#face');
+  f.toggleAttribute('data-exam', on); $('#faceChat').hidden = on; $('#faceGo').hidden = true; $('#faceTimer').hidden = true; $('#faceCard').hidden = true; $('#faceFix').hidden = true;
+  if(on){ showFace(true); $('#faceMode').textContent = name; $('#faceCap').textContent = ''; } else { showFace(false); f.removeAttribute('data-exam'); }
+}
+function exCard(html){ const c = $('#faceCard'); c.hidden = !html; c.innerHTML = html || ''; c.scrollTop = 0; }
+// таймер на экране; кнопка (если есть) завершает раньше
+function exTimer(sec, label, btn){
+  return new Promise(res => {
+    const end = Date.now() + sec * 1000, t = $('#faceTimer'), go = $('#faceGo');
+    t.hidden = false; go.hidden = !btn; if(btn) $('#faceGoT').textContent = btn;
+    const done = () => { clearInterval(iv); go.hidden = true; t.hidden = true; EX.skip = null; res(); };
+    EX.skip = done;
+    const tick = () => { const left = Math.ceil((end - Date.now()) / 1000); t.textContent = `${label} · ${fmt(left)}`; t.classList.toggle('low', left <= 10); if(left <= 0 || EX.stop) done(); };
+    const iv = setInterval(tick, 250); tick();
+  });
+}
+// запись ответа: до конца времени, по кнопке «Готово», а в коротких ответах — и по паузе в 3.5 с
+async function exRecord(maxSec, vad){
+  const mime = ['audio/webm;codecs=opus', 'audio/mp4', 'audio/webm', 'audio/ogg'].find(t => MediaRecorder.isTypeSupported?.(t)) || '';
+  const r = new MediaRecorder(exStream, mime ? {mimeType: mime} : undefined), parts = [];
+  r.ondataavailable = e => { if(e.data.size) parts.push(e.data); };
+  const stopped = new Promise(res => r.onstop = res);
+  r.start(250); faceState('listen'); $('#faceCap').textContent = EX.q || ''; $('#faceStatus').textContent = vad ? 'Говори — пауза или «Готово» закончит ответ' : 'Говори, пока не закончится время, или нажми «Готово»';
+  const buf = new Float32Array(exAn.fftSize), t0 = Date.now();
+  let floor = .01, spoke = false, last = 0, ms = 0;
+  const vadIv = setInterval(() => {
+    exAn.getFloatTimeDomainData(buf); let sum = 0; for(const v of buf) sum += v * v;
+    const rms = Math.sqrt(sum / buf.length), now = Date.now();
+    if(now - t0 < 500) floor = Math.max(floor, rms * .9);
+    $('#face').style.setProperty('--lvl', Math.min(1, rms * 8).toFixed(2));
+    if(now - t0 > 500 && rms > Math.max(.03, floor * 3)){ ms += 50; spoke = spoke || ms > 400; last = now; }
+    if(vad && spoke && now - last > 3500) EX.skip?.();
+  }, 50);
+  await exTimer(maxSec, 'Ответ', 'Готово');
+  clearInterval(vadIv); $('#face').style.setProperty('--lvl', 0);
+  if(r.state === 'recording') r.stop();
+  await stopped;
+  return new Blob(parts, {type: r.mimeType || 'audio/webm'});
+}
+async function runExam(kind, role = ''){
+  if(EX) return;
+  try{ exStream = await navigator.mediaDevices.getUserMedia({audio: {echoCancellation: true, noiseSuppression: true, autoGainControl: true}}); }
+  catch{ notify('Разреши доступ к микрофону — экзамен идёт голосом'); return; }
+  exCtx = new (window.AudioContext || window.webkitAudioContext)(); exAn = exCtx.createAnalyser(); exAn.fftSize = 1024; exCtx.createMediaStreamSource(exStream).connect(exAn);
+  EX = {kind, stop: false};
+  exUI(true, EXAM_KINDS[kind][0]);
+  faceState('think'); $('#faceCap').textContent = 'Готовлю вопросы…';
+  const j = await api('exam_start', {kind, role}).catch(() => ({error: 'failed'}));
+  if(j.error || !j.items){ exClose(); notify('Не получилось начать экзамен — попробуй ещё раз'); return; }
+  const items = j.items;
+  for(let i = 0; i < items.length && !EX.stop; i++){
+    const it = items[i];
+    $('#faceMode').textContent = `${EXAM_KINDS[kind][0]} · ${it.part} · ${i + 1}/${items.length}`;
+    delete $('#face').dataset.mood; exCard('');
+    if(it.read){ faceState('think'); $('#faceCap').textContent = 'Прочитай текст'; exCard(`<p>${esc(it.read)}</p>`); await exTimer(45, 'Чтение', 'Прочитал'); }
+    if(EX.stop) break;
+    if(it.listen){ exCard(''); $('#faceCap').textContent = 'Слушай внимательно…'; faceState('speak'); await sayText(it.listen, 'en'); }
+    if(EX.stop) break;
+    $('#faceCap').textContent = it.q;
+    exCard(it.bullets?.length ? `<b>You should say:</b><ul>${it.bullets.map(b => `<li>${esc(b)}</li>`).join('')}</ul>` : '');
+    faceState('speak'); await sayText(it.q, 'en');
+    if(EX.stop) break;
+    if(it.prep){ faceState('think'); $('#faceStatus').textContent = 'Подумай, что скажешь.'; await exTimer(it.prep, 'Подготовка', 'Начать сразу'); }
+    if(EX.stop) break;
+    EX.q = it.q;
+    const blob = await exRecord(it.speak, !/^(Part 2|Task)/i.test(it.part));
+    if(EX.stop) break;
+    faceState('think'); $('#faceStatus').textContent = 'Записываю ответ…';
+    const audio = await new Promise(res => { const fr = new FileReader(); fr.onload = () => res(String(fr.result).split(',')[1] || ''); fr.readAsDataURL(blob); });
+    const a = blob.size > 2000 ? await api('exam_answer', {i, audio, mime: blob.type}).catch(() => ({})) : {words: 0};
+    if((a.words ?? 0) < 6){   // как в GoPrep: на пустой или слишком короткий ответ злится
+      $('#face').dataset.mood = 'angry'; sfx('angry');
+      $('#faceCap').textContent = a.words ? 'Слишком коротко! На экзамене так нельзя — развивай мысль: причины, примеры, подробности.' : 'Я ничего не услышал… Говори громче и ближе к телефону.';
+      await sleep(2600);
+    }
+  }
+  if(EX.stop){ exClose(); return; }
+  exCard(''); faceState('think'); $('#faceCap').textContent = 'Считаю оценку и готовлю разбор…'; $('#faceStatus').textContent = 'Это займёт несколько секунд';
+  const r = await api('exam_finish').catch(() => ({error: 'failed'}));
+  exClose();
+  if(!r.result){ notify('Не получилось посчитать оценку — попробуй ещё раз'); return; }
+  S.stats = {...S.stats, exams: r.exams, examLast: r.result};
+  if(r.game) applyGame(r.game);
+  tab('exam'); showResult(r.result); sfx('happy');
+}
+function exStop(){ if(!EX) return; EX.stop = true; EX.skip?.(); stopAudio(); }
+function exClose(){
+  exStream?.getTracks().forEach(t => t.stop()); exStream = null;
+  exCtx?.close().catch(() => {}); exCtx = null; exAn = null;
+  EX = null; exUI(false); setState('idle');
+}
+$('#faceGo').onclick = () => EX?.skip?.();
 /* ---------- вкладки и запуск ---------- */
 function tab(v){
+  if(v === 'path'){ ySub = 'path'; v = 'yomi'; }   // «Путь» живёт в «Профиле»
   document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
   document.querySelectorAll('.view').forEach(s => s.classList.toggle('on', s.id === 'v-' + v));
   if(v !== 'talk' && inCall) endCall();
+  if(v === 'exam') showExamHome();
   if(v === 'words') showWordsTab();
-  if(v === 'path'){ showPath(); showProgress(); }
   if(v === 'yomi') showYomi();
 }
 // переключение «Учёба» ↔ «Болтовня»: у каждого чата своя лента и своя история на сервере
@@ -1832,7 +2029,7 @@ $('#nav').onclick = e => { const b = e.target.closest('[data-v]'); if(b) tab(b.d
 
 (async () => {
   if(!AUTH) return gate();
-  drawModes(); drawChat(); setState('idle');
+  drawModes(); drawChat(); setState('idle'); showExamHome();
   const j = await api('state').catch(() => ({error:'failed'}));
   if(j.error){ if(j.error !== 'auth'){ errText = 'Нет связи с сервером. Обнови страницу.'; drawChat(); } return; }
   Object.assign(S, j);
@@ -1842,6 +2039,7 @@ $('#nav').onclick = e => { const b = e.target.closest('[data-v]'); if(b) tab(b.d
   const last = chat.filter(m => m.role === 'tutor').pop()?.text, srv = (CH === 'talk' ? S.talk || [] : S.history).filter(m => m.role === 'assistant').pop()?.text;
   if(last !== srv) chat = serverChat();
   saveChat(); drawModes(); drawHead(); drawChat(); setState('idle');
+  if($('#v-exam').classList.contains('on')) showExamHome();
 })();
 </script>
 </body>

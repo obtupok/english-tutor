@@ -243,6 +243,57 @@ async function askGroq(system: string, msgs: { role: string; content: string }[]
   return null;
 }
 
+
+/* ---------- Пробные экзамены: IELTS Speaking, TOEFL Speaking, собеседование ---------- */
+// модель сначала пишет материалы экзамена (вопросы, карточку, тексты для чтения и лекции), потом оценивает ответы по критериям
+const EXAM_ITEMS_SCHEMA = {
+  type: 'object', additionalProperties: false, required: ['topic', 'items'],
+  properties: {
+    topic: { type: 'string' },
+    items: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['part', 'q', 'bullets', 'read', 'listen', 'prep', 'speak'],
+      properties: { part: { type: 'string' }, q: { type: 'string' }, bullets: { type: 'array', items: { type: 'string' } }, read: { type: 'string' }, listen: { type: 'string' }, prep: { type: 'integer' }, speak: { type: 'integer' } } } },
+  },
+};
+const EXAM_RESULT_SCHEMA = {
+  type: 'object', additionalProperties: false, required: ['overall', 'criteria', 'summary', 'strengths', 'improve', 'answers', 'words'],
+  properties: {
+    overall: { type: 'number' },
+    criteria: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['name', 'score', 'comment'], properties: { name: { type: 'string' }, score: { type: 'number' }, comment: { type: 'string' } } } },
+    summary: { type: 'string' },
+    strengths: { type: 'array', items: { type: 'string' } },
+    improve: { type: 'array', items: { type: 'string' } },
+    answers: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['i', 'feedback', 'better'], properties: { i: { type: 'integer' }, feedback: { type: 'string' }, better: { type: 'string' } } } },
+    words: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['word', 'translation'], properties: { word: { type: 'string' }, translation: { type: 'string' } } } },
+  },
+};
+const EXAMS: Record<string, { build: string; grade: string; max: number }> = {
+  ielts: { max: 9,
+    build: 'Create a realistic IELTS Speaking mock test. Part 1: exactly 4 short questions on familiar topics (home, work or study, hobbies, food, daily routine...) — part "Part 1", prep 0, speak 40. Part 2: exactly 1 cue card — part "Part 2", "q" starts with "Describe", "bullets" are the "You should say" points (3–4, the last one starts with "and explain"), prep 60, speak 120. Part 3: exactly 4 deeper discussion questions connected to the Part 2 topic — part "Part 3", prep 0, speak 60. "read" and "listen" are empty strings; "bullets" is empty except for Part 2. "topic" = the Part 2 topic in 2–4 words.',
+    grade: 'Grade like a certified IELTS examiner on the 4 official criteria, named exactly: "Fluency and Coherence", "Lexical Resource", "Grammatical Range and Accuracy", "Pronunciation". Each is a band 0–9 in steps of 0.5; "overall" is their average rounded to the nearest 0.5. You only see a speech-recognition transcript: judge pronunciation cautiously (odd or garbled words hint at unclear pronunciation) and mention that this criterion is approximate.' },
+  toefl: { max: 30,
+    build: 'Create a TOEFL iBT Speaking practice set of exactly 4 tasks. Task 1 (independent): part "Task 1", a question asking for a personal preference or opinion, prep 15, speak 45, "read" and "listen" empty. Task 2 (campus situation): part "Task 2", "read" = a short university announcement (80–100 words), "listen" = a student talking about it with an opinion and two reasons (100–120 words, natural spoken style), "q" asks to state the student\'s opinion and explain the reasons, prep 30, speak 60. Task 3 (academic concept): part "Task 3", "read" = a short textbook passage defining a concept (80–100 words), "listen" = a professor giving an example (110–130 words), "q" asks how the example illustrates the concept, prep 30, speak 60. Task 4 (lecture): part "Task 4", "read" empty, "listen" = a lecture (140–170 words) with two clear points or examples, "q" asks to summarize them, prep 20, speak 60. "bullets" always empty. "topic" = the lecture subject in 2–4 words.',
+    grade: 'Grade like a TOEFL iBT rater on 3 criteria, named exactly: "Delivery", "Language Use", "Topic Development" — each 0–4 in steps of 0.5 (for task 2–4 answers, topic development means using the reading and listening content accurately). "overall" = the TOEFL Speaking scaled score 0–30 (your average 0–4 × 7.5, rounded to an integer).' },
+  interview: { max: 10,
+    build: 'Create a realistic job interview in English for this role: ROLE. Exactly 6 questions: tell me about yourself; why this role or company; a strength with an example; a challenge or failure (behavioral, invites a STAR answer); teamwork or a conflict; "Do you have any questions for us?". part "Question 1" … "Question 6", prep 0, speak 90, "bullets", "read", "listen" empty. "topic" = the role in 2–4 words.',
+    grade: 'Grade like a friendly but honest interviewer on 4 criteria, named exactly: "Content and examples", "Structure (STAR)", "Language accuracy", "Confidence and fluency" — each 0–10 in steps of 0.5. "overall" = their average rounded to 0.5.' },
+};
+async function askJsonGroq(system: string, user: string, schema: any) {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + env('GROQ_API_KEY'), 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: GROQ_MODEL, reasoning_effort: 'medium', max_completion_tokens: 8000,
+        messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
+        response_format: { type: 'json_schema', json_schema: { name: 'exam', strict: true, schema } },
+      }),
+    });
+    const j = await r.json().catch(() => ({}));
+    try { return JSON.parse(j?.choices?.[0]?.message?.content || ''); } catch { console.error('exam', r.status, JSON.stringify(j).slice(0, 300)); }
+  }
+  return null;
+}
+
 /* ---------- Голос: распознавание (Groq Whisper) и озвучка (Google) ---------- */
 // Распознавание: полная модель Whisper (точнее на невнятной речи), с подсказкой — о чём спрашивал Yomi;
 // если она не ответит — быстрая turbo. Звуки-паузы «эээ», «ммм», «um», «uh» вырезаем.
@@ -699,6 +750,7 @@ const QUESTS: Quest[] = [
   { id: 'coach3', metric: 'coach', goal: 3, reward: 10, title: '3 фразы в «Как учить»' },
   { id: 'voice10', metric: 'voice', goal: 10, reward: 15, title: 'Скажи голосом 10 фраз' },
   { id: 'games3', metric: 'games', goal: 3, reward: 15, title: 'Сыграй 3 мини-игры' },
+  { id: 'exam1', metric: 'exam', goal: 1, reward: 30, title: 'Пройди пробный экзамен' },
   { id: 'wins2', metric: 'gamewins', goal: 2, reward: 20, title: 'Выиграй 2 мини-игры' },
 ];
 const WEEKLY: Quest[] = [
@@ -710,6 +762,7 @@ const WEEKLY: Quest[] = [
   { id: 'w_long20', metric: 'long', goal: 20, reward: 70, title: '20 длинных фраз' },
   { id: 'w_voice60', metric: 'voice', goal: 60, reward: 70, title: '60 фраз голосом' },
   { id: 'w_games20', metric: 'games', goal: 20, reward: 80, title: '20 мини-игр за неделю' },
+  { id: 'w_exam3', metric: 'exam', goal: 3, reward: 120, title: '3 пробных экзамена' },
 ];
 const DAY_BONUS = 25;   // сундучок дня: все задания дня выполнены
 // достижения: копятся за всё время (g.totals), награда — один раз
@@ -729,6 +782,8 @@ const ACH: Quest[] = [
   { id: 'a_streak7', metric: 'streak', goal: 7, reward: 100, title: '7 дней подряд' },
   { id: 'a_lvl10', metric: 'level', goal: 10, reward: 150, title: 'Дойди до 10 уровня' },
   { id: 'a_closet', metric: 'owned', goal: 30, reward: 120, title: 'Собери 30 вещей' },
+  { id: 'a_exam1', metric: 'exam', goal: 1, reward: 50, title: 'Первый пробный экзамен' },
+  { id: 'a_exam10', metric: 'exam', goal: 10, reward: 250, title: '10 пробных экзаменов' },
 ];
 const achProgress = (g: any, m: string) => m === 'streak' ? g.loginStreak || 0 : m === 'level' ? levelOf(g.xp).level : m === 'owned' ? g.owned.length : g.totals?.[m] || 0;
 // колесо удачи: раз в день; сектора на сайте идут в этом же порядке
@@ -786,8 +841,8 @@ function addXp(g: any, n: number) {
   grantUnlocks(g);
 }
 // событие: фраза, фраза без ошибок, повтор слова и т. д.; за многие сразу монетка и опыт
-const COIN_FOR: Record<string, number> = { phrases: 1, clean: 1, reviews: 1 };
-const XP_FOR: Record<string, number> = { phrases: 10, clean: 5, reviews: 3, pet: 2, scene: 3, long: 5, question: 2, voice: 2, newwords: 2, test: 30, games: 5, gamewins: 10 };
+const COIN_FOR: Record<string, number> = { phrases: 1, clean: 1, reviews: 1, exam: 20 };
+const XP_FOR: Record<string, number> = { phrases: 10, clean: 5, reviews: 3, pet: 2, scene: 3, long: 5, question: 2, voice: 2, newwords: 2, test: 30, games: 5, gamewins: 10, exam: 60 };
 function gameEvent(st: any, metric: string, n = 1) {
   const g = game(st);
   if (g.activeDay !== today()) { g.activeDay = today(); g.wcounts.days = (g.wcounts.days || 0) + 1; }
@@ -964,6 +1019,42 @@ async function web(req: Request) {
       const prize = spinWheel(g);
       await save(owner);
       return json({ ok: true, ...prize, game: gameView(owner) });
+    }
+    case 'exam_start': {
+      const kind = EXAMS[b.kind] ? b.kind : 'ielts', role = String(b.role || '').slice(0, 80).trim() || 'a junior specialist in their field';
+      const recent = (owner.stats?.exams || []).slice(-6).map((e: any) => e.topic).filter(Boolean).join('; ');
+      const out = await askJsonGroq(`You write speaking-exam materials. The learner's level is about ${owner.level || 'B1'}. Use fresh, varied topics${recent ? ` (not these recent ones: ${recent})` : ''}. Natural, exam-like English. Return JSON only.`, EXAMS[kind].build.replace('ROLE', role), EXAM_ITEMS_SCHEMA);
+      if (!out?.items?.length) return json({ error: 'failed' }, 502);
+      const items = out.items.slice(0, 10).map((it: any) => ({ ...it, prep: Math.max(0, Math.min(90, it.prep | 0)), speak: Math.max(20, Math.min(150, it.speak | 0)), bullets: (it.bullets || []).slice(0, 5) }));
+      owner.stats = { ...(owner.stats || {}), examCur: { kind, role, topic: out.topic, items, answers: [], at: new Date().toISOString() } };
+      await save(owner);
+      return json({ kind, items });
+    }
+    case 'exam_answer': {
+      const cur = owner.stats?.examCur, i = Number(b.i);
+      if (!cur?.items?.[i]) return json({ error: 'no_exam' }, 400);
+      let text = String(b.text || '').slice(0, 3000);
+      if (b.audio) {
+        const mime = String(b.mime || 'audio/webm'), ext = /mp4|m4a|aac/.test(mime) ? 'm4a' : /ogg/.test(mime) ? 'ogg' : /wav/.test(mime) ? 'wav' : 'webm';
+        text = await transcribe(new Blob([Uint8Array.from(atob(String(b.audio)), (c) => c.charCodeAt(0))], { type: mime }), 'answer.' + ext, 'en', cur.items[i].q);
+      }
+      cur.answers[i] = text;
+      await save(owner);
+      return json({ heard: text, words: text.split(/\s+/).filter(Boolean).length });
+    }
+    case 'exam_finish': {
+      const cur = owner.stats?.examCur;
+      if (!cur) return json({ error: 'no_exam' }, 400);
+      const qa = cur.items.map((it: any, i: number) => `#${i} [${it.part}]${it.read ? `\nReading: ${it.read}` : ''}${it.listen ? `\nListening: ${it.listen}` : ''}\nQ: ${it.q}${it.bullets?.length ? ` (${it.bullets.join('; ')})` : ''}\nA (transcript): ${cur.answers[i] || '(no answer)'}`).join('\n\n');
+      const res = await askJsonGroq(`You are an experienced speaking examiner. ${EXAMS[cur.kind].grade}
+Write "comment", "summary", "strengths", "improve" and "feedback" in Russian: short, concrete, quote the learner's own words. "better" = an improved model answer in natural spoken English, one level above the learner (2–4 sentences; up to 7 for long turns like IELTS Part 2), keeping the learner's ideas. "answers" has exactly one item per question, with its index "i". "words": 6–8 useful words or phrases for these topics with Russian translations. Be honest: empty, very short or off-topic answers score low.`, qa, EXAM_RESULT_SCHEMA);
+      if (!res) return json({ error: 'failed' }, 502);
+      const at = new Date().toISOString();
+      const last = { ...res, kind: cur.kind, topic: cur.topic, items: cur.items, said: cur.answers, max: EXAMS[cur.kind].max, at };
+      owner.stats = { ...owner.stats, examCur: null, examLast: last, exams: [...(owner.stats.exams || []), { kind: cur.kind, topic: cur.topic, overall: res.overall, at }].slice(-40) };
+      gameEvent(owner, 'exam');
+      await save(owner);
+      return json({ result: last, exams: owner.stats.exams, game: gameView(owner) });
     }
     case 'mistakes': {
       const { data } = await admin.from('english_mistakes').select('*').order('at', { ascending: false }).limit(200);
