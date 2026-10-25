@@ -59,15 +59,15 @@
 .face-card ul{margin:6px 0 0;padding-left:18px}.face-card p{margin:0}
 .face-btn.go svg{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 /* ---------- лицо для звонка ---------- */
-.face-stage{position:relative;display:grid;place-items:center;width:min(78vw,320px);aspect-ratio:1}
+.face-stage{position:relative;display:grid;place-items:center;width:min(86vw,340px);aspect-ratio:1}
 .face-slot{position:relative;z-index:2;display:grid;place-items:center}
-.buddy.staged{position:relative;left:auto;top:auto;z-index:1;--bsize:min(62vw,250px)!important;pointer-events:none;cursor:default}
+.buddy.staged{position:relative;left:auto;top:auto;z-index:1;--bsize:min(76vw,300px)!important;pointer-events:none;cursor:default}
 .face[data-exam] .face-stage{width:min(56vw,230px)}.face[data-exam] .buddy.staged{--bsize:min(44vw,180px)!important}
 .face-halo{position:absolute;inset:6%;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--fc) 45%,transparent) 0,color-mix(in srgb,var(--fc) 14%,transparent) 55%,transparent 72%);transform:scale(calc(.9 + var(--lvl) * .3));transition:transform .12s,background .3s}
-.face-halo::after{content:"";position:absolute;inset:14%;border-radius:50%;border:3px solid color-mix(in srgb,var(--fc) 70%,transparent);opacity:.7}
+
 .face[data-s="speak"] .face-halo{animation:h-pulse 1.4s ease-in-out infinite}
 @keyframes h-pulse{50%{transform:scale(1.06)}}
-.face-flames{position:absolute;z-index:0;left:20%;width:60%;top:4%;display:none;transform-origin:50% 100%}
+.face-flames{position:absolute;z-index:0;left:0;width:100%;top:-26%;display:none;transform-origin:50% 90%;filter:drop-shadow(0 0 18px rgba(240,85,58,.45))}
 .face[data-mood="angry"] .face-flames{display:block;animation:p-fire .35s ease-in-out infinite alternate}
 .face[data-s="think"] .face-dots{bottom:4%}
 .face{position:fixed;inset:0;z-index:40;background:var(--paper);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:24px 24px calc(28px + var(--safe-b));text-align:center;--fc:#B9BECD;--lvl:0}
@@ -91,7 +91,7 @@
 @keyframes p-talk{from{transform:scaleY(.35)}to{transform:scaleY(1.1)}}
 .face[data-mood="angry"]{--fc:#F0553A}.face[data-mood="angry"] .flames{display:inline;transform-box:fill-box;transform-origin:50% 100%;animation:p-fire .35s ease-in-out infinite alternate}
 .face[data-mood="angry"] .pill-brow{display:inline}.face[data-mood="angry"] .pill-eyes ellipse{ry:8}
-@keyframes p-fire{to{transform:scaleY(1.08) skewX(-2deg)}}
+@keyframes p-fire{0%{transform:scale(1,1)}50%{transform:scale(1.03,1.07) skewX(-1.5deg)}100%{transform:scale(.99,1.03) skewX(1.5deg)}}
 .face[data-mood="happy"]{--fc:#F5B53D}.face[data-mood="happy"] .pill-eyes{display:none}.face[data-mood="happy"] .pill-happy{display:inline}
 .face[data-mood="sad"]{--fc:#8FA3C8}
 .face-cap{max-width:420px;min-height:3em;margin:14px 0 0;font-size:19px;line-height:1.45;font-weight:600;color:var(--ink)}
@@ -662,7 +662,7 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
   <p class="face-timer" id="faceTimer" hidden></p>
   <button class="face-stage" id="faceStage" aria-label="Лицо Yomi: нажми, чтобы отправить или перебить">
     <span class="face-halo" aria-hidden="true"></span>
-    <span class="face-slot" id="faceSlot"><svg class="face-flames" viewBox="0 0 240 70" aria-hidden="true"><defs><linearGradient id="flg" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#F0553A"/><stop offset="1" stop-color="#FFB13B"/></linearGradient></defs><g><path fill="url(#flg)" d="M42 60 C38 38 52 40 52 22 C62 36 70 30 72 12 C82 28 92 24 96 6 C106 24 114 20 120 0 C126 20 134 24 144 6 C148 24 158 28 168 12 C170 30 178 36 188 22 C188 40 202 38 198 60Z"/><path fill="#FFD66B" d="M70 60 C70 46 80 46 82 34 C88 44 96 40 98 28 C104 40 112 38 120 24 C128 38 136 40 142 28 C144 40 152 44 158 34 C160 46 170 46 170 60Z"/></g></svg></span>
+    <span class="face-slot" id="faceSlot"><svg class="face-flames" viewBox="0 0 200 200" aria-hidden="true"><defs><linearGradient id="flg2" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#E8432E"/><stop offset=".6" stop-color="#F4782F"/><stop offset="1" stop-color="#FFB13B"/></linearGradient></defs><path fill="url(#flg2)" d="M100 196 C46 196 18 160 22 118 C25 88 40 72 38 44 C52 58 58 70 60 84 C62 58 70 34 88 14 C86 40 94 56 102 64 C106 44 116 26 136 10 C132 36 140 54 150 70 C154 58 160 50 170 44 C168 66 178 86 178 118 C182 160 154 196 100 196Z"/><path fill="#FFD66B" opacity=".9" transform="translate(28 55) scale(.72)" d="M100 196 C46 196 18 160 22 118 C25 88 40 72 38 44 C52 58 58 70 60 84 C62 58 70 34 88 14 C86 40 94 56 102 64 C106 44 116 26 136 10 C132 36 140 54 150 70 C154 58 160 50 170 44 C168 66 178 86 178 118 C182 160 154 196 100 196Z"/></svg></span>
     <span class="face-dots" aria-hidden="true"><i></i><i></i><i></i></span>
   </button>
   <p class="face-cap" id="faceCap"></p>
