@@ -59,6 +59,17 @@
 .face-card ul{margin:6px 0 0;padding-left:18px}.face-card p{margin:0}
 .face-btn.go svg{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 /* ---------- лицо для звонка ---------- */
+.face-stage{position:relative;display:grid;place-items:center;width:min(78vw,320px);aspect-ratio:1}
+.face-slot{position:relative;z-index:2;display:grid;place-items:center}
+.buddy.staged{position:relative;left:auto;top:auto;z-index:auto;--bsize:min(62vw,250px);pointer-events:none;cursor:default}
+.face[data-exam] .face-stage{width:min(56vw,230px)}.face[data-exam] .buddy.staged{--bsize:min(44vw,180px)}
+.face-halo{position:absolute;inset:6%;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--fc) 45%,transparent) 0,color-mix(in srgb,var(--fc) 14%,transparent) 55%,transparent 72%);transform:scale(calc(.9 + var(--lvl) * .3));transition:transform .12s,background .3s}
+.face-halo::after{content:"";position:absolute;inset:14%;border-radius:50%;border:3px solid color-mix(in srgb,var(--fc) 70%,transparent);opacity:.7}
+.face[data-s="speak"] .face-halo{animation:h-pulse 1.4s ease-in-out infinite}
+@keyframes h-pulse{50%{transform:scale(1.06)}}
+.face-flames{position:absolute;z-index:1;left:22%;right:22%;top:8%;width:56%;display:none;transform-origin:50% 100%}
+.face[data-mood="angry"] .face-flames{display:block;animation:p-fire .35s ease-in-out infinite alternate}
+.face[data-s="think"] .face-dots{bottom:4%}
 .face{position:fixed;inset:0;z-index:40;background:var(--paper);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:24px 24px calc(28px + var(--safe-b));text-align:center;--fc:#B9BECD;--lvl:0}
 .face-mode{position:absolute;top:18px;left:0;right:0;margin:0;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .face-stage{position:relative;padding:0;border:0;background:none;cursor:pointer}
@@ -650,16 +661,9 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
   <p class="face-mode" id="faceMode"></p>
   <p class="face-timer" id="faceTimer" hidden></p>
   <button class="face-stage" id="faceStage" aria-label="Лицо Yomi: нажми, чтобы отправить или перебить">
-    <svg class="pill" viewBox="0 0 240 150" aria-hidden="true">
-      <defs><linearGradient id="flg" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#F0553A"/><stop offset="1" stop-color="#FFB13B"/></linearGradient></defs>
-      <g class="flames"><path fill="url(#flg)" d="M42 60 C38 38 52 40 52 22 C62 36 70 30 72 12 C82 28 92 24 96 6 C106 24 114 20 120 0 C126 20 134 24 144 6 C148 24 158 28 168 12 C170 30 178 36 188 22 C188 40 202 38 198 60Z"/><path fill="#FFD66B" d="M70 60 C70 46 80 46 82 34 C88 44 96 40 98 28 C104 40 112 38 120 24 C128 38 136 40 142 28 C144 40 152 44 158 34 C160 46 170 46 170 60Z"/></g>
-      <rect class="pill-body" x="18" y="44" width="204" height="98" rx="49"/>
-      <g class="pill-eyes"><ellipse cx="88" cy="88" rx="9" ry="11"/><ellipse cx="152" cy="88" rx="9" ry="11"/></g>
-      <path class="pill-happy" d="M77 92 q11 -14 22 0 M141 92 q11 -14 22 0"/>
-      <path class="pill-brow" d="M72 68 L102 78 M168 68 L138 78"/>
-      <path class="pill-mouth" d="M110 116 H130"/>
-      <ellipse class="pill-open" cx="120" cy="116" rx="9" ry="7"/>
-    </svg>
+    <span class="face-halo" aria-hidden="true"></span>
+    <svg class="face-flames" viewBox="0 0 240 70" aria-hidden="true"><defs><linearGradient id="flg" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#F0553A"/><stop offset="1" stop-color="#FFB13B"/></linearGradient></defs><g><path fill="url(#flg)" d="M42 60 C38 38 52 40 52 22 C62 36 70 30 72 12 C82 28 92 24 96 6 C106 24 114 20 120 0 C126 20 134 24 144 6 C148 24 158 28 168 12 C170 30 178 36 188 22 C188 40 202 38 198 60Z"/><path fill="#FFD66B" d="M70 60 C70 46 80 46 82 34 C88 44 96 40 98 28 C104 40 112 38 120 24 C128 38 136 40 142 28 C144 40 152 44 158 34 C160 46 170 46 170 60Z"/></g></svg>
+    <span class="face-slot" id="faceSlot"></span>
     <span class="face-dots" aria-hidden="true"><i></i><i></i><i></i></span>
   </button>
   <p class="face-cap" id="faceCap"></p>
@@ -1056,7 +1060,9 @@ let faceOn = store.get('yomi_face', true);
 const FACE_STATUS = {idle: 'Нажми на лицо, чтобы продолжить', listen: 'Слушаю… говори', think: 'Думаю…', speak: 'Нажми на лицо, чтобы перебить'};
 function showFace(on){
   $('#face').hidden = !on;
-  $('#buddy').style.visibility = on ? 'hidden' : '';
+  const b = $('#buddy');   // на экране разговора — сам кролик в твоём наряде, со всеми эмоциями
+  if(on && !b.classList.contains('staged')){ $('#faceSlot').append(b); b.classList.add('staged'); b.hidden = false; b.style.removeProperty('--bsize'); }
+  if(!on && b.classList.contains('staged')){ b.classList.remove('staged'); $('#face').after(b); placeBunny(); }
   $('#faceBtn').hidden = !inCall || on;
   if(on) $('#faceMode').textContent = CH === 'talk' ? 'Болтовня' : ({free: 'Разговор', test: 'Тест уровня', coach: 'Как учить', scenario: 'Сценарий'}[S.mode] || 'Разговор');
 }
@@ -1088,6 +1094,7 @@ let bsize = Math.max(60, Math.min(180, store.get('yomi_bsize', null) || bunnyDef
 let bunnyOn = store.get('yomi_bunny', true), bpos = store.get('yomi_bpos', null);
 function placeBunny(){
   const b = $('#buddy'); if(!b) return;
+  if(b.classList.contains('staged')){ b.hidden = false; return; }
   b.hidden = !bunnyOn;
   b.style.setProperty('--bsize', bsize + 'px');
   if(!bpos){ b.style.removeProperty('--bx'); b.style.removeProperty('--by'); return; }
