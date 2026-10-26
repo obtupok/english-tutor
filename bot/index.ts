@@ -16,6 +16,7 @@ const TOKEN = env('TUTOR_BOT_TOKEN');
 const API = `https://api.telegram.org/bot${TOKEN}`;
 const OWNER = 6712257660;
 const SITE = 'https://obtupok.github.io/english-tutor/';
+const SITE_WEB = 'https://yomiread.com/hopscore/';   // Hopscore как обычный сайт — на хостинге yomiread.com
 const MODEL = 'claude-opus-5-5';   // дешевле в ~40 раз: 'claude-haiku-5-5'
 const FALLBACK = !MODEL.includes('haiku');   // у Haiku нет запасной модели при отказе — параметр fallbacks он не принимает
 const TEST_QUESTIONS = 6, HISTORY = 30;
@@ -698,7 +699,7 @@ async function setMode(st: any, mode: string, scene?: string) {
 
 async function siteButtons(chat: number) {
   return tg('sendMessage', { chat_id: chat, text: 'Сайт для разговора «как звонок», тренировки слов и разбора ошибок.\n\nВ Telegram — первая кнопка. Для браузера — вторая (это твоя личная ссылка с ключом, никому её не отправляй).',
-    reply_markup: { inline_keyboard: [[{ text: '📱 Открыть здесь', web_app: { url: SITE } }], [{ text: '🌐 Ссылка для браузера', url: SITE + '#k=' + await webKey() }]] } });
+    reply_markup: { inline_keyboard: [[{ text: '📱 Открыть здесь', web_app: { url: SITE } }], [{ text: '🌐 Сайт Hopscore', url: SITE_WEB + '#k=' + await webKey() }]] } });
 }
 
 async function onMessage(m: any) {

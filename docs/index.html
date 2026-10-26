@@ -6,7 +6,7 @@
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#EEF2FF">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>Yomi Prep — IELTS и SAT</title>
+<title>Hopscore — IELTS и SAT с кроликом Yomi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -89,7 +89,7 @@ nav button.on{color:var(--primary);background:#E0E7FF}
 /* главная: кролик-герой с репликой */
 .hero{display:flex;align-items:flex-end;gap:6px;margin:4px 0 14px}
 .hero-slot{flex:none;width:132px;height:121px;display:grid;place-items:end center}
-.bubble{position:relative;flex:1;background:var(--card);border:3px solid var(--border);border-radius:20px 20px 20px 6px;padding:12px 14px;box-shadow:var(--clay-sm);margin-bottom:26px;font-weight:600}
+.bubble{position:relative;flex:1;background:var(--card);border:3px solid var(--border);border-radius:20px 20px 20px 6px;padding:12px 14px;box-shadow:var(--clay-sm);margin-bottom:26px;font-weight:600;font-size:15px;line-height:1.45}
 .bubble b{font-family:var(--head);font-size:18px;display:block;margin-bottom:2px}
 .goals{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .goal{display:flex;flex-direction:column;gap:6px;text-align:left;min-height:120px}
@@ -113,6 +113,8 @@ nav button.on{color:var(--primary);background:#E0E7FF}
 .hrow{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--card);border:2px solid var(--border);border-radius:16px}
 .hrow .ic{width:40px;height:40px;border-radius:12px}.hrow .ic svg{width:20px;height:20px}
 .hrow span{flex:1;min-width:0}.hrow b{display:block;font-weight:700}.hrow small{color:var(--muted);font-size:13px}
+.reading{background:linear-gradient(135deg,#4F46E5,#7C3AED);color:#fff;border:0;box-shadow:0 6px 0 #3730A3,0 14px 28px rgba(79,70,229,.25)}
+.reading .t small{color:#E0E7FF}.reading .go{color:#C7D2FE}.reading .ic{background:rgba(255,255,255,.18);box-shadow:none}
 .hrow em{font:900 18px var(--head);font-style:normal;color:var(--primary)}
 .seg{display:flex;gap:6px;padding:5px;background:var(--muted-bg);border-radius:16px}
 .seg button{flex:1;min-height:44px;border-radius:12px;font-weight:700;font-size:14px;color:var(--muted)}
@@ -277,7 +279,8 @@ label.lbl{display:block;font-weight:700;margin:12px 0 6px}
 .face[data-exam] .face-stage{width:min(56vw,230px,30vh);margin-top:6px}
 .face[data-exam] .buddy.staged{--bsize:min(44vw,180px,26vh)!important}
 .face[data-exam] .face-cap{font-size:18px}
-.hero-slot .buddy.staged{--bsize:132px!important}
+.hero-slot .buddy.staged{--bsize:176px!important}
+.hero-slot{width:176px!important;height:161px!important;margin-left:-10px}
 #satSlot .buddy.staged{--bsize:84px!important}#wrSlot .buddy.staged{--bsize:96px!important}
 /* смена наряда — короткая «вспышка» */
 .buddy.t-poof > svg{animation:b-poof .45s var(--ease)}
@@ -519,12 +522,14 @@ label.lbl{display:block;font-weight:700;margin:12px 0 6px}
 .buddy.mini::after{display:none}
 .buddy.mini > svg,.buddy.mini *{animation:none!important;filter:none}
 @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+.buddy:not([data-char="bunny"]):not([data-char="hamster"]) .b-tail{display:none}
+
 </style>
 </head>
 <body>
 <div class="app">
   <header class="top">
-    <div class="brand"><span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 9.5C7 6 7.2 2.5 8.6 2.4S10.8 5.8 10.6 9M15.5 9.5C17 6 16.8 2.5 15.4 2.4S13.2 5.8 13.4 9"/><ellipse cx="12" cy="15" rx="7.5" ry="6.5"/></svg></span>Yomi<small>PREP</small></div>
+    <div class="brand"><span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 9.5C7 6 7.2 2.5 8.6 2.4S10.8 5.8 10.6 9M15.5 9.5C17 6 16.8 2.5 15.4 2.4S13.2 5.8 13.4 9"/><path d="M4 20c3-6 6-8 8-8s5 2 8 8"/></svg></span>Hopscore</div>
     <span class="chip fire" id="streak" hidden></span>
     <button class="iconbtn" id="setBtn" aria-label="Настройки"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
   </header>
@@ -554,7 +559,7 @@ label.lbl{display:block;font-weight:700;margin:12px 0 6px}
     <button data-v="talk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Разговор</button>
   </nav>
 </div>
-<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><clipPath id="wearClip"><ellipse cx="80" cy="92" rx="49" ry="40"/><ellipse cx="80" cy="132" rx="27" ry="16"/></clipPath></defs></svg>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><radialGradient id="bShade" cx="38%" cy="28%" r="80%"><stop offset="0" stop-color="#fff" stop-opacity=".45"/><stop offset=".55" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#2A241D" stop-opacity=".10"/></radialGradient><clipPath id="wearClip"><ellipse cx="80" cy="92" rx="49" ry="40"/><ellipse cx="80" cy="132" rx="27" ry="16"/></clipPath></defs></svg>
 <div class="face" id="face" hidden data-s="idle">
   <p class="face-mode" id="faceMode"></p>
   <p class="face-timer" id="faceTimer" hidden></p>
@@ -576,6 +581,7 @@ label.lbl{display:block;font-weight:700;margin:12px 0 6px}
 <div class="buddy" id="buddy" data-s="idle" data-p="kind" title="Yomi — погладь меня" aria-hidden="true"><svg viewBox="-14 -8 188 172">
           <g class="b-all">
             <path class="w-cape" fill="#C2413A" stroke="var(--b-ink)" stroke-width="2.2" stroke-linejoin="round" d="M54 120 Q40 140 34 156 Q80 166 126 156 Q120 140 106 120Z"/>
+            <g class="b-tail"><circle class="b-line" cx="105" cy="141" r="8.5"/><path d="M100 137 q4 -3 9 0" fill="none" stroke="var(--b-ink)" stroke-width="1.4" opacity=".35"/></g>
             <g class="b-body">
               <ellipse class="b-line" cx="80" cy="132" rx="27" ry="16"/>
               <ellipse class="b-belly" cx="80" cy="136" rx="13" ry="9"/>
@@ -596,6 +602,7 @@ label.lbl{display:block;font-weight:700;margin:12px 0 6px}
               <g class="b-ear l"><g class="e-bunny"><path class="b-line" d="M54 82 C42 34 44 7 58 5 C72 3 77 32 75 82 Z"/><path class="b-inner" d="M60 58 C52 36 53 15 59 13 C65 12 67 34 66 56 Z"/></g><g class="e-cat"><path class="b-line" d="M48 80 L54 38 L80 60 Z"/><path class="b-inner" d="M55 66 L57 48 L71 59 Z"/></g><g class="e-round"><circle class="b-line" cx="52" cy="60" r="15"/><circle class="b-inner" cx="52" cy="60" r="8"/></g><g class="e-fox"><path class="b-line" d="M45 82 L48 24 L82 60 Z"/><path class="b-inner" d="M53 67 L54 38 L72 59 Z"/></g></g>
               <g class="b-ear r"><g class="e-bunny"><path class="b-line" d="M106 82 C118 34 116 7 102 5 C88 3 83 32 85 82 Z"/><path class="b-inner" d="M100 58 C108 36 107 15 101 13 C95 12 93 34 94 56 Z"/></g><g class="e-cat"><path class="b-line" d="M112 80 L106 38 L80 60 Z"/><path class="b-inner" d="M105 66 L103 48 L89 59 Z"/></g><g class="e-round"><circle class="b-line" cx="108" cy="60" r="15"/><circle class="b-inner" cx="108" cy="60" r="8"/></g><g class="e-fox"><path class="b-line" d="M115 82 L112 24 L78 60 Z"/><path class="b-inner" d="M107 67 L106 38 L88 59 Z"/></g></g>
               <ellipse class="b-line" cx="80" cy="92" rx="49" ry="40"/>
+              <path class="b-fluff" fill="none" stroke="var(--b-ink)" stroke-width="1.8" stroke-linecap="round" d="M31.5 90 l-4 -2 M31 97 l-4.5 1 M128.5 90 l4 -2 M129 97 l4.5 1"/>
               <!-- узоры персонажей -->
               <path class="m-fox" fill="#FFF7EC" d="M47 100 Q80 84 113 100 Q106 129 80 131 Q54 129 47 100Z"/>
               <ellipse class="m-bear" fill="#E7CDAA" cx="80" cy="104" rx="16" ry="11"/>
@@ -607,7 +614,9 @@ label.lbl{display:block;font-weight:700;margin:12px 0 6px}
               <ellipse class="b-shade" cx="80" cy="117" rx="36" ry="12"/>
               <path class="b-gloss" d="M50 70 Q58 59 71 55"/>
               <path class="b-stroke b-fluff" d="M33 95 l-4 3 4 3 M127 95 l4 3 -4 3"/>
+              <ellipse cx="80" cy="92" rx="48" ry="39" fill="url(#bShade)" pointer-events="none"/>
               <circle class="b-cheek" cx="50" cy="103" r="7.5"/><circle class="b-cheek" cx="110" cy="103" r="7.5"/>
+              <g class="b-blushl" fill="none" stroke="#E5737B" stroke-width="1.3" stroke-linecap="round" opacity=".7"><path d="M45 105 l2.5 -4 M49 106 l2.5 -4 M53 106.5 l2.5 -4 M107 106.5 l-2.5 -4 M111 106 l-2.5 -4 M115 105 l-2.5 -4"/></g>
               <path class="b-blush" d="M44 100 l3 -5 M49 101 l3 -5 M54 102 l3 -5 M104 102 l3 -5 M109 101 l3 -5 M114 100 l3 -5"/>
               <!-- глаза, которые следят за пальцем (.b-look): обычные и их варианты -->
               <g class="b-look">
@@ -1226,7 +1235,7 @@ function sheet(html){ $('#sheetIn').innerHTML = html; $('#sheet').classList.add(
 function closeSheet(){ $('#sheet').classList.remove('on'); }
 $('#sheet').onclick = e => { if(e.target.id === 'sheet') closeSheet(); };
 
-/* ================== Yomi Prep: Главная · IELTS · SAT · Разговор ================== */
+/* ================== Hopscore: Главная · IELTS · SAT · Разговор ================== */
 let G = null;
 function applyGame(g){ G = g; }   // монеты и магазин убраны: от игровых данных ничего не нужно
 function notify(text){ const t = $('#toastx'); t.textContent = text; t.classList.add('on'); clearTimeout(notify.t); notify.t = setTimeout(() => t.classList.remove('on'), 3200); }
@@ -1295,6 +1304,12 @@ function homeBunny(){
   if(slot) stageBunny(slot); else freeBunny();
 }
 
+/* ---------- чтение: книги на YomiRead под твой уровень (там перевод слова по нажатию) ---------- */
+const READ_LEVEL = () => { const l = String(S.level || 'B1').slice(0, 2).toLowerCase(); return ['a2', 'b1', 'b2', 'c1', 'c2'].includes(l) ? l : 'b1'; };
+const readingUrl = () => `https://yomiread.com/c/en-${READ_LEVEL()}.html`;
+const readingTile = (title = 'Читать книги на YomiRead') => `<button class="tile reading" data-act="read"><span class="ic">${I.book}</span><span class="t"><b>${title}</b><small>Книги уровня ${READ_LEVEL().toUpperCase()} · нажми на слово — перевод</small></span><span class="go">${I.chev}</span></button>`;
+function openReading(){ const u = readingUrl(); if(TG?.openLink) TG.openLink(u); else window.open(u, '_blank', 'noopener'); }
+
 /* ---------- главная ---------- */
 const TIPS = ['На IELTS Speaking важнее говорить долго и связно, чем идеально. Развивай ответ: причина, пример, вывод.',
   'SAT Reading & Writing: сначала прочитай вопрос, потом текст — так ты знаешь, что ищешь.',
@@ -1335,6 +1350,7 @@ function showHome(){
     </div>
     <div class="sec-h"><h3>Начать сейчас</h3></div>
     <div class="tiles">
+      ${readingTile()}
       ${tileHtml('data-act="call"', 'indigo', I.mic, 'Поговорить с Yomi', 'Голосом, как по телефону: исправит ошибки и подскажет слова')}
       ${tileHtml('data-act="ielts-full"', 'violet', I.cap, 'IELTS Speaking — пробный тест', '3 части с таймерами и оценкой band')}
       ${tileHtml('data-act="sat-math"', 'sky', I.calc, 'SAT Math · 10 задач', 'Объяснение после каждой задачи')}
@@ -1351,6 +1367,7 @@ $('#homeBox').onclick = e => {
   startAct(a.dataset.act);
 };
 function startAct(act){
+  if(act === 'read') return openReading();
   if(act === 'call'){ tab('talk'); faceOn = true; store.set('yomi_face', true); return startCall(); }
   if(act === 'ielts-full') return runExam('ielts', 0);
   if(act.startsWith('ielts-p')) return runExam('ielts', +act.slice(7));
@@ -1375,6 +1392,8 @@ function showIelts(){
       ${tileHtml('data-act="ielts-p2"', 'orange', I.card, 'Part 2 — карточка', '1 минута на подготовку, 2 — на речь')}
       ${tileHtml('data-act="ielts-p3"', 'sky', I.target, 'Part 3 — обсуждение', '4 глубоких вопроса по теме')}
     </div>
+    <div class="sec-h"><h3>Reading</h3></div>
+    <div class="tiles">${readingTile('Книги для IELTS Reading')}</div>
     <div class="sec-h"><h3>Writing</h3></div>
     <div class="tiles">${tileHtml('data-act="writing"', 'pink', I.pen, 'Task 2 — эссе', 'Тема, таймер 40 минут, band по 4 критериям и исправления')}</div>
     ${last ? `<div class="sec-h"><h3>Последний Speaking</h3></div><div class="card">${speakHead(last)}<div class="actions"><button class="btn line sm" data-res>Подробный разбор</button></div></div>` : ''}`;
@@ -1575,6 +1594,7 @@ function showSat(){
     <div class="seg" role="tablist">${[['easy', 'Лёгкие'], ['mixed', 'Смешанные'], ['hard', 'Сложные']].map(([k, n]) => `<button role="tab" data-lvl="${k}" class="${satLevel === k ? 'on' : ''}" aria-selected="${satLevel === k}">${n}</button>`).join('')}</div>
     <div class="sec-h"><h3>Практика</h3></div>
     <div class="tiles">
+      ${readingTile('Чтение для SAT Reading & Writing')}
       ${tileHtml('data-sat="rw"', 'green', I.book, 'Reading & Writing · 10 вопросов', 'Тексты, лексика, грамматика, логика')}
       ${tileHtml('data-sat="math"', 'sky', I.calc, 'Math · 10 задач', 'Алгебра, функции, данные, геометрия')}
       ${tileHtml('data-sat="mix"', 'orange', I.bolt, 'Разминка · 5 вопросов', 'Быстро: по чуть-чуть из обеих секций')}
