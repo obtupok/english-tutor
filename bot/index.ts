@@ -480,7 +480,7 @@ async function edgeTts(text: string, voice: string, pitch = 0, rate = 0): Promis
     let headEnd = -1;
     while ((headEnd = dec.decode(buf).indexOf('\r\n\r\n')) < 0) if (!(await more())) return null;
     const head = dec.decode(buf).slice(0, headEnd);
-    if (!/^HTTP\/1\.1 101/.test(head)) { console.error('edge-tts handshake', head.split('\r\n')[0]); return null; }
+    if (!/^HTTP\/1\.1 101/.test(head)) throw new Error('handshake: ' + head.slice(0, 300));
     buf = buf.slice(enc.encode(dec.decode(buf).slice(0, headEnd + 4)).length);
     const send = async (txt: string) => {   // текстовый кадр с маской (клиент обязан маскировать)
       const data = enc.encode(txt), mask = crypto.getRandomValues(new Uint8Array(4));
@@ -1189,8 +1189,8 @@ Deno.serve(async (req) => {
   if (!TOKEN) return new Response(JSON.stringify({ error: 'TUTOR_BOT_TOKEN is not set' }), { status: 500 });
   if (req.method === 'GET' && u.searchParams.has('setup')) return new Response(JSON.stringify(await setup()), { headers: { 'Content-Type': 'application/json' } });
   if (req.method === 'GET' && u.searchParams.has('edgeprobe')) {   // временная проверка голоса Edge: фиксированная фраза, только размер ответа
-    const t0 = Date.now(), mp3 = await edgeTts('Hi! Привет, я Йоми.', EDGE_VOICES.ava, 18, 4).catch((e) => { console.error('probe', String(e)); return null; });
-    return new Response(JSON.stringify({ ok: !!mp3, bytes: mp3?.length || 0, ms: Date.now() - t0 }), { headers: { 'Content-Type': 'application/json' } });
+    let err = ''; const t0 = Date.now(), mp3 = await edgeTts('Hi! Привет, я Йоми.', EDGE_VOICES.ava, 18, 4).catch((e) => { err = String(e); return null; });
+    return new Response(JSON.stringify({ ok: !!mp3, bytes: mp3?.length || 0, ms: Date.now() - t0, err }), { headers: { 'Content-Type': 'application/json' } });
   }
   if (req.method === 'POST' && u.searchParams.has('api')) {
     try { return await web(req); } catch (e) { console.error(e); return json({ error: 'failed' }, 500); }
