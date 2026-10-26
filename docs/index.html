@@ -648,6 +648,22 @@ nav button.on svg{color:var(--accent)}
 .in-how .t{display:flex;flex-direction:column;gap:2px}.in-how .t small{color:var(--muted);font-size:13px;line-height:1.4}
 .in-note{color:var(--muted);font-size:13px;margin-top:12px}
 .in-foot{display:flex;gap:10px;position:sticky;bottom:0;padding-top:10px;background:linear-gradient(transparent,var(--bg) 30%)}.in-foot .btn{flex:1;min-height:54px}.in-foot .btn.line{flex:0 0 auto;padding:0 20px}
+/* экран подписки */
+.pw-hero{display:grid;place-items:center;padding:4px 0 2px}.pw-hero .buddy.mini{--bsize:110px!important;width:auto;filter:none}
+.pw-feat{list-style:none;margin:4px 0 18px;padding:0;display:grid;gap:9px}
+.pw-feat li{display:flex;gap:10px;align-items:flex-start;font-size:15px;line-height:1.4;color:var(--fg-2)}
+.pw-feat svg{width:20px;height:20px;flex:none;color:var(--green);margin-top:1px}
+.pw-plans{display:grid;gap:10px}
+.pw-plan{position:relative;display:flex;align-items:center;gap:12px;width:100%;text-align:left;min-height:68px;padding:12px 14px;background:var(--card);border:1.5px solid var(--border);border-radius:16px;box-shadow:var(--clay-sm);transition:border-color var(--t-fast),box-shadow var(--t-fast),transform var(--t-fast) var(--ease)}
+.pw-plan:active{transform:scale(.985)}
+.pw-plan.on{border-color:var(--fg);box-shadow:0 0 0 1px var(--fg),var(--clay-sm)}
+.pw-flag{position:absolute;top:-10px;left:14px;padding:2px 9px;border-radius:99px;background:var(--accent);color:#fff;font-size:11px;font-weight:800;letter-spacing:.02em}
+.pw-radio{width:20px;height:20px;flex:none;border-radius:50%;border:2px solid var(--border-2);transition:border var(--t-fast)}
+.pw-plan.on .pw-radio{border:6px solid var(--fg)}
+.pw-t{flex:1;display:flex;flex-direction:column;gap:2px}.pw-t b{font-size:16px}.pw-t small{color:var(--muted);font-size:13px}.pw-t s{opacity:.7}
+.pw-d{display:flex;flex-direction:column;align-items:flex-end;line-height:1.15}.pw-d b{font-family:var(--head);font-weight:800;font-size:18px;letter-spacing:-.02em}.pw-d small{color:var(--muted);font-size:12px}
+.pw-d i{font-style:normal;font-size:11px;font-weight:800;color:var(--green);background:var(--green-bg);padding:1px 6px;border-radius:99px;margin-bottom:3px}
+.pw-fine{color:var(--muted);font-size:12.5px;line-height:1.5;margin-top:14px}
 
 </style>
 </head>
@@ -1818,6 +1834,7 @@ function openSettings(){
     <select class="inp" id="gSat">${Array.from({length: 17}, (_, k) => 800 + k * 50).map(v => `<option ${GOALS.sat == v ? 'selected' : ''}>${v}</option>`).join('')}</select>
     <div class="setrow" style="margin-top:12px"><span>Кролик на экране</span><button class="btn sm ${bunnyOn ? 'line' : ''}" data-bon>${bunnyOn ? 'Спрятать' : 'Показать'}</button></div>
     <div class="setrow"><span>Звуки кролика</span><button class="btn sm ${sfxOn ? 'line' : ''}" data-sfx>${sfxOn ? 'Выключить' : 'Включить'}</button></div>
+    <div class="setrow"><span>Подписка YomiRead + YomiScore</span><button class="btn sm" data-subs>Тарифы</button></div>
     <div class="setrow"><span>Вступление о YomiScore</span><button class="btn sm line" data-intro>Показать</button></div>`);
   $('#vbox').ontoggle = e => { voicesOpen = e.target.open; };
   $('#gIelts').onchange = e => { GOALS.ielts = +e.target.value; saveGoals(); tab(curTab); };
@@ -1829,6 +1846,7 @@ function openSettings(){
     if(vp){ unlock(); sayText(`Hi, I'm Yomi! Привет, я Йоми. Let's get you ready for the exam!`, 'en', vp.dataset.vp, LOOK.char); return; }
     if(vs){ const j = await api('speaker', {speaker: vs.dataset.vs, char: LOOK.char}); if(j.ok){ if(j.game) G = j.game; S.speaker = j.speaker; voicesOpen = false; openSettings(); } return; }
     if(t.closest('[data-bon]')){ bunnyOn = !bunnyOn; store.set('yomi_bunny', bunnyOn); placeBunny(); homeBunny(); return openSettings(); }
+    if(t.closest('[data-subs]')){ closeSheet(); return openPaywall(); }
     if(t.closest('[data-intro]')){ closeSheet?.(); return openIntro(); }
     if(t.closest('[data-sfx]')){ sfxOn = !sfxOn; store.set('yomi_sfx', sfxOn); return openSettings(); }
   };
@@ -2127,6 +2145,68 @@ function openIntro(){
   };
 }
 if(AUTH && !store.get('yomi_intro', 0)) openIntro();
+
+
+/* ---------- подписка «YomiRead + YomiScore»: оплата на YomiRead (/vip?plan=pro_N — сразу окно оплаты) ----------
+   Цены — те же, что в YomiRead (payments-config.js, create-payment, tg-bot): сервер YomiRead берёт цену только у себя. */
+const SUB_PLANS = [
+  {id: 'pro_12', m: 12, usd: 62.4, name: '12 месяцев', best: true},
+  {id: 'pro_6', m: 6, usd: 38.4, name: '6 месяцев'},
+  {id: 'pro_3', m: 3, usd: 21.6, name: '3 месяца'},
+  {id: 'pro_1', m: 1, usd: 8, name: '1 месяц'},
+];
+const SUB_FEATS = [
+  'Пробные экзамены IELTS Speaking с оценкой band',
+  'Задачи SAT Math и Reading & Writing с разбором',
+  'Проверка эссе IELTS Writing по 4 критериям',
+  'Разговор голосом с Yomi без лимитов',
+  'Все книги YomiRead — подписка там тоже включена',
+];
+const usd = n => '$' + (n % 1 ? n.toFixed(2) : n);
+const perDay = p => usd(Math.round(p.usd / (p.m * 30) * 100) / 100);
+const saveP = p => Math.round((1 - p.usd / (8 * p.m)) * 100);
+let subPick = 'pro_12';
+function drawPaywall(){
+  const box = $('#paywall'), p = SUB_PLANS.find(x => x.id === subPick);
+  box.innerHTML = `<div class="in-top"><span></span><button class="in-skip" data-pskip>Позже · доступ владельца</button></div>
+    <div class="in-body">
+      <div class="pw-hero">${miniBunny(LOOK.char, LOOK.color, 'gradcap', 'scarf', 'none')}</div>
+      <p class="eyebrow">YomiScore + YomiRead</p>
+      <h1>Готовься к экзамену без ограничений</h1>
+      <ul class="pw-feat">${SUB_FEATS.map(f => `<li>${I.check}<span>${f}</span></li>`).join('')}</ul>
+      <div class="pw-plans" role="radiogroup" aria-label="Срок подписки">${SUB_PLANS.map(x => `
+        <button class="pw-plan${x.id === subPick ? ' on' : ''}" role="radio" aria-checked="${x.id === subPick}" data-sp="${x.id}">
+          ${x.best ? '<span class="pw-flag">Выгоднее всего</span>' : ''}
+          <span class="pw-radio" aria-hidden="true"></span>
+          <span class="pw-t"><b>${x.name}</b><small>${usd(x.usd)}${x.m > 1 ? ` · <s>${usd(8 * x.m)}</s>` : ''}</small></span>
+          <span class="pw-d">${x.m > 1 ? `<i>−${saveP(x)}%</i>` : ''}<b>${perDay(x)}</b><small>в день</small></span>
+        </button>`).join('')}</div>
+      <p class="pw-fine">Оплата на YomiRead: звёзды Telegram или криптовалюта. Разовый платёж за весь срок, без автопродления. Подписка действует и в YomiRead, и в YomiScore.</p>
+    </div>
+    <div class="in-foot"><button class="btn" data-pbuy>Оформить за ${usd(p.usd)}</button></div>`;
+}
+function openPaywall(){
+  if($('#paywall')) return;
+  const box = document.createElement('div'); box.id = 'paywall'; box.className = 'intro paywall'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Подписка');
+  document.body.append(box); drawPaywall();
+  box.querySelectorAll('.in-body > *').forEach((el, k) => { if(RM) return; el.style.setProperty('--i', k); el.classList.add('pop'); });
+  box.onclick = e => {
+    const sp = e.target.closest('[data-sp]');
+    if(sp){ subPick = sp.dataset.sp; const y = box.scrollTop; drawPaywall(); box.scrollTop = y; return; }
+    if(e.target.closest('[data-pbuy]')){
+      const url = `https://yomiread.com/vip?plan=${subPick}`;
+      if(TG?.initData && TG.openLink) TG.openLink(url); else window.open(url, '_blank', 'noopener');
+      return;
+    }
+    if(e.target.closest('[data-pskip]')){ store.set('yomi_paywall', 1); box.classList.add('out'); setTimeout(() => box.remove(), RM ? 0 : 280); }
+  };
+}
+// сразу после вступления — экран подписки (пока YomiScore только для владельца, его можно отложить)
+{
+  const _close = closeIntro;
+  closeIntro = function(){ _close(); if(!store.get('yomi_paywall', 0)) setTimeout(openPaywall, RM ? 0 : 300); };
+  if(AUTH && store.get('yomi_intro', 0) && !store.get('yomi_paywall', 0)) openPaywall();
+}
 </script>
 </body>
 </html>
