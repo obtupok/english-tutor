@@ -1744,6 +1744,20 @@ $('#nav').onclick = e => { const b = e.target.closest('[data-v]'); if(b){ unlock
   saveChat(); drawModes(); drawHead(); drawChat(); setState('idle');
   tab(curTab);
 })();
+
+/* вход без Telegram: вставить ссылку из бота (/site → «Сайт Hopscore»); ключ запоминается в этом браузере */
+function gate(){
+  $('#main').innerHTML = `<div class="gate"><b>Это личный сайт</b><span>Напиши /site в @yomispeak_bot, скопируй ссылку «Сайт Hopscore» и вставь её сюда — один раз.</span>
+    <label class="lbl" for="keyIn" style="align-self:stretch;text-align:left">Ссылка из бота</label>
+    <input class="inp" id="keyIn" placeholder="https://yomiread.com/hopscore/#k=…" autocomplete="off" style="max-width:420px">
+    <button class="btn" id="keyGo" style="min-width:200px">Войти</button></div>`;
+  $('#nav').hidden = true;
+  $('#keyGo').onclick = () => {
+    const v = $('#keyIn').value.trim(), m = v.match(/k=([0-9a-f]{20,})/) || v.match(/^([0-9a-f]{20,})$/);
+    if(!m){ notify('Это не похоже на ссылку из бота'); return; }
+    store.set('yomi_key', m[1]); location.replace(location.pathname);
+  };
+}
 </script>
 </body>
 </html>
