@@ -406,8 +406,9 @@ const TTS_STYLE: Record<string, string> = {
 async function tts(text: string, lang: string, speaker = 'hannah', emotion = 'kind', noun = 'bunny'): Promise<{ data: Uint8Array; mime: string } | null> {
   if (useGemini()) {
     const style = (TTS_STYLE[emotion] || TTS_STYLE.kind).replace('bunny', noun), voice = GEMINI_VOICES.includes(speaker) ? speaker : 'leda';
-    const wav = await geminiTts(text, voice, style) || (voice !== 'leda' ? await geminiTts(text, 'leda', style) : null);
-    if (wav) return { data: wav, mime: 'audio/wav' };
+    // только голос Gemini: если он не ответил (лимит запросов) — ещё раз через секунду, потом Leda; чужой голос (Google) не подставляем
+    const wav = await geminiTts(text, voice, style) || await new Promise((r) => setTimeout(r, 1200)).then(() => geminiTts(text, voice, style)) || (voice !== 'leda' ? await geminiTts(text, 'leda', style) : null);
+    return wav ? { data: wav, mime: 'audio/wav' } : null;
   }
   const runs = langRuns(text);
   if (runs.every((r) => r.lang === 'en') && env('GROQ_API_KEY')) {

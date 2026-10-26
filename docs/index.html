@@ -969,6 +969,8 @@ function playB64(b64, mime = 'audio/mpeg'){
     player.play().catch(() => res(false));
   });
 }
+let voiceFailAt = 0;
+function voiceFail(){ if(Date.now() - voiceFailAt > 60000){ voiceFailAt = Date.now(); notify('Голос Yomi не загрузился — ответ можно прочитать'); } }
 function speakLocal(text, lang){
   return new Promise(res => {
     if(!('speechSynthesis' in window)) return res();
@@ -986,7 +988,8 @@ async function sayText(text, lang = 'en', speaker = S.speaker, char = G?.equip?.
   const key = [lang, speaker, char, $('#buddy')?.dataset.p || 'kind', text].join('|');
   let a = ttsCache.get(key);
   if(!a){ const j = await api('tts', {text, lang, speaker, char, emotion: $('#buddy')?.dataset.p || 'kind'}); if(j.audio){ a = {b: j.audio, mime: j.mime}; ttsCache.set(key, a); } }
-  return a ? playB64(a.b, a.mime) : speakLocal(text, lang);
+  if(!a){ voiceFail(); return false; }   // голос Yomi не пришёл — молчим, а не читаем чужим голосом
+  return playB64(a.b, a.mime);
 }
 function stopAudio(){ try{ player.pause(); }catch{} try{ speechSynthesis.cancel(); }catch{} mouth(false); }
 
@@ -1285,7 +1288,7 @@ async function handleTalk(j, typed){
 }
 async function sayReply(out){
   const ok = out.audio ? await playB64(out.audio, out.mime) : false;
-  if(!ok && state === 'speak') await speakLocal(out.reply, out.english ? 'en' : 'ru');
+  if(!ok && state === 'speak') await sayText(out.reply, out.english ? 'en' : 'ru');   // ещё одна попытка тем же голосом
 }
 async function switchMode(mode, scene){
   stopAudio(); clearInterval(vadTimer); if(rec?.state === 'recording'){ rec.onstop = null; rec.stop(); }
@@ -1726,7 +1729,7 @@ const GAMES = {
   build: ['Собери фразу', '5 фраз из кусочков-слов. Победа: 4 из 5 с первой попытки.', '+10'],
   blitz: ['Блиц на время', '60 секунд — сколько успеешь. 5 верных подряд — +3 секунды. Победа: 10 верных.', 'до +25'],
   pairs: ['Найди пары', '12 карточек: открывай и соединяй слово с переводом. Победа: не больше 6 промахов.', '+10'],
-  listen: ['На слух', 'Yomi произносит слово — выбери, какое прозвучало. Победа: 6 из 8.', '+10'],
+  listen: ['На слух', 'Yomi произносит слово своим голосом — выбери, какое прозвучало. Победа: 6 из 8.', '+10'],
 };
 let gm = null, gmMine = null, gmFixes = null, gmWords = [];
 const shuffle = a => { a = [...a]; for(let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
@@ -1789,7 +1792,7 @@ function drawGame(){
     return;
   }
   if(gm.kind === 'listen'){
-    if(!gm.q){ const [en, ru] = gm.items[gm.i], pool = shuffle(gmWords.filter(w => w[0] !== en)).slice(0, 3); gm.q = {ask: en, ru, right: en, opts: shuffle([en, ...pool.map(w => w[0])])}; setTimeout(() => speakLocal(en, 'en'), 300); }
+    if(!gm.q){ const [en, ru] = gm.items[gm.i], pool = shuffle(gmWords.filter(w => w[0] !== en)).slice(0, 3); gm.q = {ask: en, ru, right: en, opts: shuffle([en, ...pool.map(w => w[0])])}; setTimeout(() => sayText(en, 'en'), 300); }
     box.innerHTML = head + `<div class="gq"><button class="glisten" data-gsay="${esc(gm.q.ask)}" aria-label="Послушать ещё раз">${ICON.speak}<small>ещё раз</small></button></div>
       <div class="gopts">${gm.q.opts.map(o => `<button class="gopt" data-opt="${esc(o)}">${esc(o)}</button>`).join('')}</div>`;
     return;
@@ -1826,7 +1829,7 @@ $('#gamesBox').onclick = e => {
   const t = e.target;
   if(t.closest('[data-gback]')) return showGames();
   const start = t.closest('[data-game]'); if(start) return startGame(start.dataset.game);
-  const say = t.closest('[data-gsay]'); if(say){ if(gm?.kind === 'listen') speakLocal(say.dataset.gsay, 'en'); else sayText(say.dataset.gsay); return; }
+  const say = t.closest('[data-gsay]'); if(say){ sayText(say.dataset.gsay); return; }
   const card = t.closest('[data-card]');
   if(card && gm?.kind === 'pairs' && !gm.lock && !gm.done){
     const i = +card.dataset.card; if(gm.found.has(i) || gm.open.includes(i)) return;
