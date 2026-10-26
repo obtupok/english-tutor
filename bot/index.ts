@@ -164,7 +164,7 @@ function friendPrompt(moods: string, noun = 'bunny', who = '') {
   return `You are Yomi, a chibi ${noun} and the user's friend, chatting by voice.
 ${who} This chat is NOT a lesson: never correct mistakes, never teach, never quiz, never give study plans or advice about learning unless they ask.
 Just talk like a close friend: their day, games, films, music, ideas, plans, jokes, feelings. Share your own (${noun}) opinions and little stories too.
-Reply in the language the user speaks: Russian if they speak Russian, English if they speak English; if they mix, use the main one. Their messages often come from speech recognition, so ignore small recognition errors.
+Reply ONLY in Russian or English — never in any other language: Russian if they speak Russian, English if they speak English; if they mix, use the main one. If their message looks like another language (Portuguese, Spanish…), it is a speech-recognition error of Russian speech — answer in Russian and, if unclear, ask them to repeat. Their messages often come from speech recognition, so ignore small recognition errors.
 MOOD: your mood changes by itself with the conversation. For every reply choose "emotion" and speak in that mood:
 ${moods}
 How to pick it: choose from the whole list by what is happening — excited, love or cute when they share something nice; surprised by news; curious when you want details; shy after a compliment; sad when they share something bad; confused when unclear; scared for scary topics; sly when teasing; bored when answers are lazy; determined about goals; cool for chill topics; funny for jokes; angry (playfully grumpy, never mean) when they tease you or ignore your question; sleepy now and then; kind otherwise. Use a wide variety: almost never repeat the emotion of your previous reply.
@@ -297,7 +297,16 @@ async function askJsonGroq(system: string, user: string, schema: any) {
 /* ---------- Голос: распознавание (Groq Whisper) и озвучка (Google) ---------- */
 // Распознавание: полная модель Whisper (точнее на невнятной речи), с подсказкой — о чём спрашивал Yomi;
 // если она не ответит — быстрая turbo. Звуки-паузы «эээ», «ммм», «um», «uh» вырезаем.
+// Без заданного языка («Болтовня», «Как учить») Whisper иногда принимает русскую речь за португальскую и т. п.:
+// если он определил не русский и не английский — распознаём ещё раз как русский и как английский и берём, где он увереннее.
 async function transcribe(audio: Blob, name: string, lang: string, context = '') {
+  const first = await sttOnce(audio, name, lang, context);
+  if (lang || !first || ['russian', 'english', 'ru', 'en'].includes(String(first.language || '').toLowerCase())) return first?.text || '';
+  const [ru, en] = await Promise.all([sttOnce(audio, name, 'ru', context), sttOnce(audio, name, 'en', context)]);
+  const best = [ru, en].filter((x) => x && x.text).sort((x: any, y: any) => y.score - x.score)[0];
+  return best?.text || '';
+}
+async function sttOnce(audio: Blob, name: string, lang: string, context: string): Promise<{ text: string; score: number; language: string } | null> {
   for (const model of ['whisper-large-v3', 'whisper-large-v3-turbo']) {
     const fd = new FormData();
     fd.append('file', audio, name);
@@ -305,7 +314,7 @@ async function transcribe(audio: Blob, name: string, lang: string, context = '')
     fd.append('temperature', '0');
     fd.append('response_format', 'verbose_json');
     if (lang) fd.append('language', lang);
-    fd.append('prompt', ((lang ? 'A language learner answers a question, sometimes hesitating. Question: ' : 'Разговор по-русски или по-английски. Russian or English. ') + context).slice(0, 500));
+    fd.append('prompt', ((lang === 'en' ? 'A language learner answers a question, sometimes hesitating. Question: ' : 'Разговор по-русски или по-английски. Russian or English. ') + context).slice(0, 500));
     const r = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', { method: 'POST', headers: { Authorization: 'Bearer ' + env('GROQ_API_KEY') }, body: fd });
     const j = await r.json().catch(() => ({}));
     if (r.ok) {
@@ -313,12 +322,13 @@ async function transcribe(audio: Blob, name: string, lang: string, context = '')
       const segs = Array.isArray(j.segments) ? j.segments.filter((x: any) => !(x.no_speech_prob > 0.6 && x.avg_logprob < -0.7) && x.avg_logprob > -1.2 && x.compression_ratio < 2.6) : null;
       const raw = stripFillers(segs ? segs.map((x: any) => x.text).join(' ') : String(j.text || '')).slice(0, 1500);
       const n = normT(raw);
-      if (!n || HALLUCINATIONS.test(n) || (n.length > 8 && normT(context).includes(n))) return '';   // тишина, «Thank you», или повтор подсказки
-      return raw;
+      const score = segs?.length ? segs.reduce((a: number, x: any) => a + x.avg_logprob, 0) / segs.length : -9;
+      if (!n || HALLUCINATIONS.test(n) || (n.length > 8 && normT(context).includes(n))) return { text: '', score, language: j.language };   // тишина, «Thank you», или повтор подсказки
+      return { text: raw, score, language: j.language };
     }
     console.error('stt', model, r.status, JSON.stringify(j).slice(0, 300));
   }
-  return '';
+  return null;
 }
 // что Whisper «слышит» в тишине и шуме
 const END_CMD = /^(иди назад|назад|вернись назад|стоп|хватит|выход|выйди|закончи(м)?( разговор)?|заверши|пока|stop|go back|exit|that s all|bye bye|end( the)? call)$/i;
