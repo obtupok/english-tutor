@@ -1329,6 +1329,14 @@ function openScenes(){
   sheet(`<h2>Сценарий</h2><p class="lead">Yomi сыграет роль, а ты попрактикуешься в живой ситуации.</p><div class="scenes">${Object.entries(S.scenes).map(([k, n]) => `<button data-s="${k}">${esc(plain(n))}${ICON.chevron}</button>`).join('')}</div>`);
   $('#sheetIn').onclick = e => { const b = e.target.closest('[data-s]'); if(!b) return; closeSheet(); switchMode('scenario', b.dataset.s); };
 }
+// своё окно «да / нет» вместо системного confirm (там видно адрес сайта)
+function askYes(text, yes = 'Да'){
+  return new Promise(res => {
+    sheet(`<h2>${esc(text)}</h2><div class="actions"><button class="btn" data-yes>${esc(yes)}</button><button class="btn line" data-no>Отмена</button></div>`);
+    const done = v => { closeSheet(); res(v); };
+    $('#sheetIn').onclick = e => { if(e.target.closest('[data-yes]')) done(true); if(e.target.closest('[data-no]')) done(false); };
+  });
+}
 function sheet(html){ $('#sheetIn').innerHTML = html; $('#sheet').classList.add('on'); }
 function closeSheet(){ $('#sheet').classList.remove('on'); }
 $('#sheet').onclick = e => { if(e.target.id === 'sheet') closeSheet(); };
@@ -1350,7 +1358,7 @@ async function showWords(){
 $('#wordsBox').onclick = async e => {
   const s = e.target.closest('[data-ws]'), d = e.target.closest('[data-wd]');
   if(s){ unlock(); const w = words.find(x => x.id == s.dataset.ws); if(w) sayText(w.word); }
-  if(d && confirm('Удалить слово?')){ await api('delword', {id: +d.dataset.wd}); showWords(); }
+  if(d && await askYes('Удалить слово?', 'Удалить')){ await api('delword', {id: +d.dataset.wd}); showWords(); }
 };
 function train(list){
   unlock();
