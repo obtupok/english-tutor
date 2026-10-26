@@ -616,6 +616,16 @@ nav button.on svg{color:var(--accent)}
 .typing-cursor::after{content:"";display:inline-block;width:2px;height:1em;margin-left:2px;background:var(--muted);vertical-align:-2px;animation:blink .8s steps(1) infinite}
 @keyframes blink{50%{opacity:0}}
 .choice.ok,.choice.bad,.choice:disabled{box-shadow:none!important}
+/* свёрнутый список голосов в настройках */
+.vbox{margin-top:12px;background:var(--card);border:1px solid var(--border);border-radius:16px;box-shadow:var(--clay-sm)}
+.vbox summary{display:flex;align-items:center;gap:10px;min-height:56px;padding:8px 14px;cursor:pointer;list-style:none}
+.vbox summary::-webkit-details-marker{display:none}
+.vbox summary .lbl{margin:0}
+.vbox .vcur{flex:1;text-align:right;color:var(--muted);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vbox .chev{width:20px;height:20px;flex:none;color:var(--muted);transition:transform var(--t-med) var(--ease)}
+.vbox[open] .chev{transform:rotate(180deg)}
+.vbox .voices{padding:0 10px 10px}
+.vbox[open] .voices{animation:pop-in .3s var(--ease)}
 
 </style>
 </head>
@@ -1770,6 +1780,7 @@ function askYomiSat(){
 /* ---------- настройки: персонаж, окрас, голос, цели ---------- */
 const PETS = [['bunny', 'Кролик'], ['cat', 'Котик'], ['bear', 'Мишка'], ['fox', 'Лисёнок'], ['panda', 'Панда'], ['hamster', 'Хомячок'], ['dog', 'Щенок']];
 const COLORS = [['classic', '#FBF8F2'], ['choco', '#B88A62'], ['gray', '#C9C4BC'], ['pink', '#F7CCD5'], ['mint', '#CBEBDD'], ['sky', '#CFE2F5'], ['gold', '#F2D07A'], ['cream', '#F6EBD3'], ['peach', '#F9C9A8'], ['lavender', '#D9CCF2'], ['graphite', '#9A948E']];
+let voicesOpen = false;   // список голосов свёрнут, пока его не откроют
 function openSettings(){
   const cur = G?.voices?.[LOOK.char] || S.speaker;
   sheet(`<h2>Настройки</h2>
@@ -1777,14 +1788,15 @@ function openSettings(){
     <div class="pets">${PETS.map(([id, n]) => `<button data-pet="${id}" class="${LOOK.char === id ? 'on' : ''}" aria-pressed="${LOOK.char === id}">${miniBunny(id, LOOK.color)}<span>${n}</span></button>`).join('')}</div>
     <label class="lbl">Окрас</label>
     <div style="display:flex;flex-wrap:wrap;gap:10px">${COLORS.map(([id, c]) => `<button data-col="${id}" aria-label="Окрас ${id}" aria-pressed="${LOOK.color === id}" style="width:44px;height:44px;border-radius:14px;background:${c};border:3px solid ${LOOK.color === id ? 'var(--primary)' : 'var(--border)'}"></button>`).join('')}</div>
-    <label class="lbl">Голос</label>
-    <div class="voices">${(S.speakers || []).filter(k => VOICE_INFO[k]).map(k => `<div class="voice${cur === k ? ' on' : ''}"><button class="ib" data-vp="${k}" aria-label="Послушать ${VOICE_INFO[k][0]}">${I.play}</button><div class="w"><b>${VOICE_INFO[k][0]}</b><span>${VOICE_INFO[k][1]}</span></div><button class="btn ${cur === k ? '' : 'line'} sm" data-vs="${k}">${cur === k ? 'Выбран' : 'Выбрать'}</button></div>`).join('')}</div>
+    <details class="vbox" id="vbox"${voicesOpen ? ' open' : ''}><summary><span class="lbl">Голос</span><span class="vcur">${VOICE_INFO[cur] ? `${VOICE_INFO[cur][0]} · ${VOICE_INFO[cur][1]}` : ''}</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+    <div class="voices">${(S.speakers || []).filter(k => VOICE_INFO[k]).map(k => `<div class="voice${cur === k ? ' on' : ''}"><button class="ib" data-vp="${k}" aria-label="Послушать ${VOICE_INFO[k][0]}">${I.play}</button><div class="w"><b>${VOICE_INFO[k][0]}</b><span>${VOICE_INFO[k][1]}</span></div><button class="btn ${cur === k ? '' : 'line'} sm" data-vs="${k}">${cur === k ? 'Выбран' : 'Выбрать'}</button></div>`).join('')}</div></details>
     <label class="lbl" for="gIelts">Цель IELTS (band)</label>
     <select class="inp" id="gIelts">${[5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9].map(v => `<option ${GOALS.ielts == v ? 'selected' : ''}>${v}</option>`).join('')}</select>
     <label class="lbl" for="gSat">Цель SAT (400–1600)</label>
     <select class="inp" id="gSat">${Array.from({length: 17}, (_, k) => 800 + k * 50).map(v => `<option ${GOALS.sat == v ? 'selected' : ''}>${v}</option>`).join('')}</select>
     <div class="setrow" style="margin-top:12px"><span>Кролик на экране</span><button class="btn sm ${bunnyOn ? 'line' : ''}" data-bon>${bunnyOn ? 'Спрятать' : 'Показать'}</button></div>
     <div class="setrow"><span>Звуки кролика</span><button class="btn sm ${sfxOn ? 'line' : ''}" data-sfx>${sfxOn ? 'Выключить' : 'Включить'}</button></div>`);
+  $('#vbox').ontoggle = e => { voicesOpen = e.target.open; };
   $('#gIelts').onchange = e => { GOALS.ielts = +e.target.value; saveGoals(); tab(curTab); };
   $('#gSat').onchange = e => { GOALS.sat = +e.target.value; saveGoals(); tab(curTab); };
   $('#sheetIn').onclick = async e => {
@@ -1792,7 +1804,7 @@ function openSettings(){
     if(pet){ LOOK.char = pet.dataset.pet; store.set('yomi_look', LOOK); applyLook(true); hop(); return openSettings(); }
     if(col){ LOOK.color = col.dataset.col; store.set('yomi_look', LOOK); applyLook(true); return openSettings(); }
     if(vp){ unlock(); sayText(`Hi, I'm Yomi! Привет, я Йоми. Let's get you ready for the exam!`, 'en', vp.dataset.vp, LOOK.char); return; }
-    if(vs){ const j = await api('speaker', {speaker: vs.dataset.vs, char: LOOK.char}); if(j.ok){ if(j.game) G = j.game; S.speaker = j.speaker; openSettings(); } return; }
+    if(vs){ const j = await api('speaker', {speaker: vs.dataset.vs, char: LOOK.char}); if(j.ok){ if(j.game) G = j.game; S.speaker = j.speaker; voicesOpen = false; openSettings(); } return; }
     if(t.closest('[data-bon]')){ bunnyOn = !bunnyOn; store.set('yomi_bunny', bunnyOn); placeBunny(); homeBunny(); return openSettings(); }
     if(t.closest('[data-sfx]')){ sfxOn = !sfxOn; store.set('yomi_sfx', sfxOn); return openSettings(); }
   };
