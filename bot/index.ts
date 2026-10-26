@@ -305,7 +305,7 @@ async function transcribe(audio: Blob, name: string, lang: string, context = '')
     fd.append('temperature', '0');
     fd.append('response_format', 'verbose_json');
     if (lang) fd.append('language', lang);
-    fd.append('prompt', ('A language learner answers a question, sometimes hesitating. Question: ' + context).slice(0, 500));
+    fd.append('prompt', ((lang ? 'A language learner answers a question, sometimes hesitating. Question: ' : 'Разговор по-русски или по-английски. Russian or English. ') + context).slice(0, 500));
     const r = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', { method: 'POST', headers: { Authorization: 'Bearer ' + env('GROQ_API_KEY') }, body: fd });
     const j = await r.json().catch(() => ({}));
     if (r.ok) {
@@ -321,6 +321,7 @@ async function transcribe(audio: Blob, name: string, lang: string, context = '')
   return '';
 }
 // что Whisper «слышит» в тишине и шуме
+const END_CMD = /^(иди назад|назад|вернись назад|стоп|хватит|выход|выйди|закончи(м)?( разговор)?|заверши|пока|stop|go back|exit|that s all|bye bye|end( the)? call)$/i;
 const HALLUCINATIONS = /^(thanks? (you )?for watching|you|subtitles? by .*|продолжение следует|спасибо за просмотр|редактор субтитров.*)$/i;
 function stripFillers(t: string) {
   return t
@@ -943,6 +944,8 @@ async function web(req: Request) {
         if (!text) return json({ error: 'not_heard' });
       }
       if (!text) return json({ error: 'empty' }, 400);
+      // голосом «стоп», «назад», «хватит», «stop»… — закончить разговор, а не отвечать
+      if (heard && END_CMD.test(normT(heard))) return json({ command: 'end', heard });
       if (heard) gameEvent(owner, 'voice');
       const out = await turn(st, text);
       if (out && friend) { bumpStats(owner); gameEvent(owner, 'phrases'); gameEvent(owner, 'friend'); await save(owner); }   // фразы из «Болтовни» тоже идут в прогресс и монетки

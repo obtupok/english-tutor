@@ -52,17 +52,19 @@
 /* лицо во время экзамена */
 .face-timer{margin:0;padding:6px 14px;border-radius:99px;background:var(--sheet);border:1px solid var(--line);font-weight:800;font-size:15px;font-variant-numeric:tabular-nums;color:var(--ink)}
 .face-timer.low{color:#E0533F;border-color:#E0533F}
-.face[data-exam]{justify-content:flex-start;padding-top:52px;padding-bottom:calc(120px + var(--safe-b));overflow-y:auto}
+.face[data-exam]{padding-top:52px}
+.face[data-exam] .face-stage{margin-top:0}
 .face[data-exam] .pill{width:min(52vw,220px)}
 .face[data-exam] .face-cap{font-size:18px;min-height:0}
 .face-card{max-width:440px;width:100%;max-height:34vh;overflow-y:auto;padding:12px 14px;border-radius:14px;background:var(--sheet);border:1px solid var(--line);text-align:left;font-size:15px;line-height:1.5;color:var(--ink-2)}
 .face-card ul{margin:6px 0 0;padding-left:18px}.face-card p{margin:0}
 .face-btn.go svg{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 /* ---------- лицо для звонка ---------- */
-.face-stage{position:relative;display:grid;place-items:center;width:min(86vw,340px);aspect-ratio:1}
+.face-stage{position:relative;display:grid;place-items:center;flex:none;width:min(86vw,340px,46vh);aspect-ratio:1;margin-top:auto}
+.face-stage:focus,.face-stage:focus-visible{outline:none}
 .face-slot{position:relative;z-index:2;display:grid;place-items:center}
-.buddy.staged{position:relative;left:auto;top:auto;z-index:1;--bsize:min(76vw,300px)!important;pointer-events:none;cursor:default}
-.face[data-exam] .face-stage{width:min(56vw,230px)}.face[data-exam] .buddy.staged{--bsize:min(44vw,180px)!important}
+.buddy.staged{position:relative;left:auto;top:auto;z-index:1;--bsize:min(76vw,300px,40vh)!important;pointer-events:none;cursor:default}
+.face[data-exam] .face-stage{width:min(56vw,230px,30vh)}.face[data-exam] .buddy.staged{--bsize:min(44vw,180px,26vh)!important}
 .face-halo{position:absolute;inset:6%;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--fc) 45%,transparent) 0,color-mix(in srgb,var(--fc) 14%,transparent) 55%,transparent 72%);transform:scale(calc(.9 + var(--lvl) * .3));transition:transform .12s,background .3s}
 
 .face[data-s="speak"] .face-halo{animation:h-pulse 1.4s ease-in-out infinite}
@@ -70,7 +72,7 @@
 .face-flames{position:absolute;z-index:0;left:14%;width:72%;top:-8%;display:none;transform-origin:50% 90%;filter:drop-shadow(0 0 18px rgba(240,85,58,.45))}
 .face[data-mood="angry"] .face-flames{display:block;animation:p-fire .35s ease-in-out infinite alternate}
 .face[data-s="think"] .face-dots{bottom:4%}
-.face{position:fixed;inset:0;z-index:40;background:var(--paper);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:24px 24px calc(28px + var(--safe-b));text-align:center;--fc:#B9BECD;--lvl:0}
+.face{position:fixed;inset:0;z-index:40;background:var(--paper);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:8px;padding:48px 20px calc(18px + var(--safe-b));overflow-y:auto;text-align:center;--fc:#B9BECD;--lvl:0}
 .face-mode{position:absolute;top:18px;left:0;right:0;margin:0;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .face-stage{position:relative;padding:0;border:0;background:none;cursor:pointer}
 .pill{width:min(72vw,300px);display:block;overflow:visible}
@@ -94,11 +96,11 @@
 @keyframes p-fire{0%{transform:scale(1,1)}50%{transform:scale(1.03,1.07) skewX(-1.5deg)}100%{transform:scale(.99,1.03) skewX(1.5deg)}}
 .face[data-mood="happy"]{--fc:#F5B53D}.face[data-mood="happy"] .pill-eyes{display:none}.face[data-mood="happy"] .pill-happy{display:inline}
 .face[data-mood="sad"]{--fc:#8FA3C8}
-.face-cap{max-width:420px;min-height:3em;margin:14px 0 0;font-size:19px;line-height:1.45;font-weight:600;color:var(--ink)}
+.face-cap{max-width:420px;min-height:1.5em;margin:6px 0 0;font-size:19px;line-height:1.45;font-weight:600;color:var(--ink)}
 .face-cap.user{color:var(--muted);font-weight:500;font-style:italic}
 .face-fix{max-width:420px;padding:10px 14px;border-radius:14px;background:var(--green-bg);color:var(--ink);font-size:15px;text-align:left}.face-fix b{color:var(--green)}
 .face-status{margin:4px 0 0;font-size:14px;color:var(--muted)}
-.face-btns{position:absolute;left:0;right:0;bottom:calc(22px + var(--safe-b));display:flex;justify-content:center;gap:40px}
+.face-btns{flex:none;display:flex;justify-content:center;gap:40px;margin-top:auto;padding-top:12px}
 .face-btn{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
 .face-btn svg{width:56px;height:56px;padding:16px;border-radius:50%;background:var(--sheet);border:1px solid var(--line);color:var(--ink)}
 .face-btn.end svg{background:#F06A5A;border-color:#F06A5A;color:#fff}
@@ -1257,6 +1259,7 @@ async function sendText(text){
   await handleTalk(j, text);
 }
 async function handleTalk(j, typed){
+  if(j.command === 'end'){ notify('Хорошо, заканчиваем. Возвращайся!'); endCall(); return; }
   if(j.error){
     errText = {not_heard:'Не расслышал — повтори, пожалуйста', no_stt:'Распознавание речи не подключено', failed:'Не получилось получить ответ. Попробуй ещё раз.'}[j.error] || 'Ошибка: ' + j.error;
     drawChat();
