@@ -362,32 +362,27 @@ function ttsChunks(text: string) {
 // с интонацией по настроению. Без него: чисто английская фраза — Orpheus в Groq (WAV), остальное — Google (MP3),
 // причём русские и английские куски фразы читаются каждый своим произношением.
 const ORPHEUS = ['hannah', 'diana', 'autumn', 'troy', 'austin', 'daniel'];
-// Голоса Microsoft Edge («Читать вслух»): бесплатно и без дневного лимита; мультиязычные — один голос и для русского, и для английского
-const EDGE_VOICES: Record<string, string> = {
-  ava: 'en-US-AvaMultilingualNeural', emma: 'en-US-EmmaMultilingualNeural', vivienne: 'fr-FR-VivienneMultilingualNeural', seraphina: 'de-DE-SeraphinaMultilingualNeural',
-  andrew: 'en-US-AndrewMultilingualNeural', brian: 'en-US-BrianMultilingualNeural', william: 'en-AU-WilliamMultilingualNeural', remy: 'fr-FR-RemyMultilingualNeural', florian: 'de-DE-FlorianMultilingualNeural',
-};
 const GEMINI_VOICES = ['leda', 'puck', 'zephyr', 'laomedeia', 'achernar', 'sadachbia', 'kore', 'aoede', 'despina', 'sulafat', 'achird', 'fenrir', 'charon', 'algenib'];
 // персонажи из магазина: у каждого свой характер и свой голос (голос владелец может поменять, хранится в game.voices)
-const CHARS: Record<string, { noun: string; voice: string; orpheus: string; edge: string; pitch: number; rate: number; trait: string }> = {
-  bunny: { noun: 'bunny', voice: 'leda', orpheus: 'hannah', edge: 'ava', pitch: 18, rate: 4, trait: 'cheerful and bouncy, loves carrots and hopping around' },
-  cat: { noun: 'kitten', voice: 'zephyr', orpheus: 'diana', edge: 'emma', pitch: 10, rate: 0, trait: 'a little sassy and lazy, loves naps, fish and sunny windowsills; sometimes slips in a playful "purr-fect" or "meow"' },
-  bear: { noun: 'bear cub', voice: 'charon', orpheus: 'troy', edge: 'andrew', pitch: -6, rate: -6, trait: 'calm, warm and patient like a big hug, loves honey, forests and cosy evenings' },
-  fox: { noun: 'fox cub', voice: 'despina', orpheus: 'autumn', edge: 'vivienne', pitch: 6, rate: 2, trait: 'clever and sly, loves riddles, little tricks and smart word games' },
-  panda: { noun: 'panda', voice: 'achernar', orpheus: 'daniel', edge: 'brian', pitch: 0, rate: -10, trait: 'super chill and a bit sleepy, loves bamboo, snacks and doing things slowly but surely' },
-  hamster: { noun: 'hamster', voice: 'laomedeia', orpheus: 'autumn', edge: 'seraphina', pitch: 26, rate: 10, trait: 'tiny, fast and fussy, stuffs snacks into its cheeks, gets excited about small things' },
-  dog: { noun: 'puppy', voice: 'puck', orpheus: 'austin', edge: 'william', pitch: 8, rate: 6, trait: 'loyal, super friendly and energetic, loves walks, balls and praising the learner like a best friend' },
+const CHARS: Record<string, { noun: string; voice: string; orpheus: string; trait: string }> = {
+  bunny: { noun: 'bunny', voice: 'leda', orpheus: 'hannah', trait: 'cheerful and bouncy, loves carrots and hopping around' },
+  cat: { noun: 'kitten', voice: 'zephyr', orpheus: 'diana', trait: 'a little sassy and lazy, loves naps, fish and sunny windowsills; sometimes slips in a playful "purr-fect" or "meow"' },
+  bear: { noun: 'bear cub', voice: 'charon', orpheus: 'troy', trait: 'calm, warm and patient like a big hug, loves honey, forests and cosy evenings' },
+  fox: { noun: 'fox cub', voice: 'despina', orpheus: 'autumn', trait: 'clever and sly, loves riddles, little tricks and smart word games' },
+  panda: { noun: 'panda', voice: 'achernar', orpheus: 'daniel', trait: 'super chill and a bit sleepy, loves bamboo, snacks and doing things slowly but surely' },
+  hamster: { noun: 'hamster', voice: 'laomedeia', orpheus: 'autumn', trait: 'tiny, fast and fussy, stuffs snacks into its cheeks, gets excited about small things' },
+  dog: { noun: 'puppy', voice: 'puck', orpheus: 'austin', trait: 'loyal, super friendly and energetic, loves walks, balls and praising the learner like a best friend' },
 };
 const CHAR_OF = new WeakMap<object, string>();   // кто сейчас разговаривает (персонаж владельца) — для копии чата «Болтовни»
 const charOf = (st: any) => { const c = CHAR_OF.get(st) || st.game?.equip?.char; return CHARS[c] ? c : 'bunny'; };
 // голос персонажа: выбранный владельцем, иначе родной голос персонажа (у кролика — прежний общий выбор)
 function voiceFor(owner: any, c: string) {
   const v = owner.game?.voices?.[c] ?? (c === 'bunny' ? owner.speaker : undefined);
-  return speakersNow().includes(v) ? v : CHARS[c].edge;
+  return speakersNow().includes(v) ? v : useGemini() ? CHARS[c].voice : CHARS[c].orpheus;
 }
 const useGemini = () => !!env('GEMINI_API_KEY');
-const speakersNow = () => Object.keys(EDGE_VOICES);
-const SPEAKERS = Object.keys(EDGE_VOICES);
+const speakersNow = () => (useGemini() ? GEMINI_VOICES : ORPHEUS);
+const SPEAKERS = [...ORPHEUS, ...GEMINI_VOICES];
 const TTS_STYLE: Record<string, string> = {
   kind: 'a cute little cartoon bunny, warm, friendly and gentle',
   cute: 'a super cute little cartoon bunny, sweet, bubbly and high-pitched',
@@ -408,21 +403,7 @@ const TTS_STYLE: Record<string, string> = {
   bored: 'a cute little cartoon bunny, playfully bored and unimpressed',
   determined: 'a cute little cartoon bunny, determined and fired up',
 };
-const MOOD_PROSODY: Record<string, [number, number]> = {   // [высота Гц, темп %] поверх голоса персонажа
-  excited: [12, 10], cute: [10, 2], funny: [6, 6], angry: [-6, 6], sleepy: [-8, -14], sad: [-8, -10], surprised: [12, 6], scared: [8, 10],
-  shy: [4, -6], love: [8, -4], bored: [-6, -10], determined: [0, 6], cool: [-4, -4], proud: [2, 0], curious: [6, 2], confused: [2, -4], sly: [0, -2], kind: [0, 0],
-};
-async function tts(text: string, lang: string, speaker = 'ava', emotion = 'kind', noun = 'bunny'): Promise<{ data: Uint8Array; mime: string } | null> {
-  const ch = Object.values(CHARS).find((c) => c.noun === noun) || CHARS.bunny, [mp, mr] = MOOD_PROSODY[emotion] || [0, 0];
-  const voice = EDGE_VOICES[speaker] || EDGE_VOICES[ch.edge];
-  for (let attempt = 0; attempt < 3; attempt++) {   // тем же голосом, пока не получится
-    const mp3 = await edgeTts(text, voice, ch.pitch + mp, ch.rate + mr).catch((e) => { console.error('edge-tts', String(e)); return null; });
-    if (mp3?.length) return { data: mp3, mime: 'audio/mpeg' };
-    await new Promise((r) => setTimeout(r, 600 * (attempt + 1)));
-  }
-  return null;
-}
-async function ttsOld(text: string, lang: string, speaker = 'hannah', emotion = 'kind', noun = 'bunny'): Promise<{ data: Uint8Array; mime: string } | null> {
+async function tts(text: string, lang: string, speaker = 'hannah', emotion = 'kind', noun = 'bunny'): Promise<{ data: Uint8Array; mime: string } | null> {
   if (useGemini()) {
     const style = (TTS_STYLE[emotion] || TTS_STYLE.kind).replace('bunny', noun), voice = GEMINI_VOICES.includes(speaker) ? speaker : 'leda';
     // только голос Gemini: если он не ответил (лимит запросов) — ещё раз через секунду, потом Leda; чужой голос (Google) не подставляем
@@ -453,74 +434,6 @@ function langRuns(text: string) {
   return runs.filter((r) => /[\p{L}\p{N}]/u.test(r.text));
 }
 // Gemini TTS (Interactions API): ответ — WAV 24 кГц или «сырой» PCM, который оборачиваем в WAV
-
-// Edge TTS: веб-сокет к speech.platform.bing.com. Браузер туда не пускают (проверяют Origin), поэтому соединение — вручную через TLS,
-// с заголовками как у Edge. Ответ — MP3 кусками в бинарных кадрах, конец — текстовый кадр «Path:turn.end».
-const EDGE_TOKEN = '6A5AA1D4EAFF4E9FB37E23D68491D6F4';
-async function edgeSecGec() {
-  let t = Math.floor(Date.now() / 1000) + 11644473600; t -= t % 300;
-  const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode((BigInt(t) * 10000000n).toString() + EDGE_TOKEN));
-  return [...new Uint8Array(h)].map((b) => b.toString(16).padStart(2, '0')).join('').toUpperCase();
-}
-const xmlEsc = (t: string) => t.replace(/[<>&'"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', "'": '&apos;', '"': '&quot;' }[c]!));
-async function edgeTts(text: string, voice: string, pitch = 0, rate = 0): Promise<Uint8Array | null> {
-  const host = 'speech.platform.bing.com', id = crypto.randomUUID().replace(/-/g, '');
-  const path = `/consumer/speech/synthesize/readaloud/edge/v1?TrustedClientToken=${EDGE_TOKEN}&Sec-MS-GEC=${await edgeSecGec()}&Sec-MS-GEC-Version=1-130.0.2849.68&ConnectionId=${id}`;
-  const conn = await Deno.connectTls({ hostname: host, port: 443 });
-  const enc = new TextEncoder(), dec = new TextDecoder();
-  const timer = setTimeout(() => { try { conn.close(); } catch { /* уже закрыто */ } }, 20000);
-  try {
-    const key = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(16))));
-    await conn.write(enc.encode(`GET ${path} HTTP/1.1\r\nHost: ${host}\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: ${key}\r\nSec-WebSocket-Version: 13\r\n` +
-      `Origin: chrome-extension://jdiccldimpdaibmpdkjnbmckianbfold\r\nUser-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0\r\n` +
-      `Pragma: no-cache\r\nCache-Control: no-cache\r\nAccept-Language: en-US,en;q=0.9\r\n\r\n`));
-    let buf = new Uint8Array(0);
-    const more = async () => { const chunk = new Uint8Array(65536); const n = await conn.read(chunk); if (n === null) return false; const nb = new Uint8Array(buf.length + n); nb.set(buf); nb.set(chunk.subarray(0, n), buf.length); buf = nb; return true; };
-    // ответ на рукопожатие
-    let headEnd = -1;
-    while ((headEnd = dec.decode(buf).indexOf('\r\n\r\n')) < 0) if (!(await more())) return null;
-    const head = dec.decode(buf).slice(0, headEnd);
-    if (!/^HTTP\/1\.1 101/.test(head)) throw new Error('handshake: ' + head.slice(0, 300));
-    buf = buf.slice(enc.encode(dec.decode(buf).slice(0, headEnd + 4)).length);
-    const send = async (txt: string) => {   // текстовый кадр с маской (клиент обязан маскировать)
-      const data = enc.encode(txt), mask = crypto.getRandomValues(new Uint8Array(4));
-      const hdr = data.length < 126 ? [0x81, 0x80 | data.length] : data.length < 65536 ? [0x81, 0x80 | 126, data.length >> 8, data.length & 255] : null;
-      if (!hdr) throw new Error('too long');
-      const out = new Uint8Array(hdr.length + 4 + data.length); out.set(hdr); out.set(mask, hdr.length);
-      for (let i = 0; i < data.length; i++) out[hdr.length + 4 + i] = data[i] ^ mask[i & 3];
-      await conn.write(out);
-    };
-    const ts = new Date().toUTCString();
-    await send(`X-Timestamp:${ts}\r\nContent-Type:application/json; charset=utf-8\r\nPath:speech.config\r\n\r\n{"context":{"synthesis":{"audio":{"metadataoptions":{"sentenceBoundaryEnabled":"false","wordBoundaryEnabled":"false"},"outputFormat":"audio-24khz-48kbitrate-mono-mp3"}}}}`);
-    const ssml = `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'><voice name='${voice}'><prosody pitch='${pitch >= 0 ? '+' : ''}${pitch}Hz' rate='${rate >= 0 ? '+' : ''}${rate}%' volume='+0%'>${xmlEsc(text.slice(0, 1500))}</prosody></voice></speak>`;
-    await send(`X-RequestId:${id}\r\nContent-Type:application/ssml+xml\r\nX-Timestamp:${ts}Z\r\nPath:ssml\r\n\r\n${ssml}`);
-    // читаем кадры: бинарные — 2 байта длины заголовка, заголовок, затем MP3; текстовый turn.end — конец
-    const audio: Uint8Array[] = []; let msg: number[] = [], msgOp = 0;
-    for (;;) {
-      while (buf.length < 2) if (!(await more())) return null;
-      const fin = (buf[0] & 0x80) !== 0, op = buf[0] & 0x0f; let len = buf[1] & 0x7f, off = 2;
-      if (len === 126) { while (buf.length < 4) if (!(await more())) return null; len = (buf[2] << 8) | buf[3]; off = 4; }
-      else if (len === 127) { while (buf.length < 10) if (!(await more())) return null; len = Number(new DataView(buf.buffer, buf.byteOffset + 2, 8).getBigUint64(0)); off = 10; }
-      while (buf.length < off + len) if (!(await more())) return null;
-      const payload = buf.slice(off, off + len); buf = buf.slice(off + len);
-      if (op === 8) break;                                   // сервер закрыл соединение
-      if (op === 9 || op === 10) continue;                   // ping / pong
-      if (op !== 0) { msgOp = op; msg = []; }
-      for (const b of payload) msg.push(b);
-      if (!fin) continue;
-      const whole = Uint8Array.from(msg);
-      if (msgOp === 1) { if (dec.decode(whole).includes('Path:turn.end')) break; }
-      else if (msgOp === 2 && whole.length > 2) {
-        const hl = (whole[0] << 8) | whole[1], hdrTxt = dec.decode(whole.subarray(2, 2 + hl));
-        if (hdrTxt.includes('Path:audio')) audio.push(whole.subarray(2 + hl));
-      }
-    }
-    const total = audio.reduce((n, a) => n + a.length, 0);
-    if (!total) return null;
-    const out = new Uint8Array(total); let at = 0; for (const a of audio) { out.set(a, at); at += a.length; }
-    return out;
-  } finally { clearTimeout(timer); try { conn.close(); } catch { /* уже закрыто */ } }
-}
 async function geminiTts(text: string, voice: string, style: string) {
   const r = await fetch('https://generativelanguage.googleapis.com/v1beta/interactions', {
     method: 'POST',
@@ -1000,7 +913,7 @@ function gameView(st: any) {
 /* ---------- API сайта ---------- */
 const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'content-type', 'Access-Control-Allow-Methods': 'POST, OPTIONS' };
 const json = (b: unknown, status = 200) => new Response(JSON.stringify(b), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
-const view = (st: any) => ({ mode: st.mode, scene: st.scene, level: st.level, plan: st.plan, history: st.history, stats: st.stats || {}, voice: st.voice, speaker: voiceFor(st, charOf(st)), speakers: speakersNow(), engine: 'edge' });
+const view = (st: any) => ({ mode: st.mode, scene: st.scene, level: st.level, plan: st.plan, history: st.history, stats: st.stats || {}, voice: st.voice, speaker: voiceFor(st, charOf(st)), speakers: speakersNow(), engine: useGemini() ? 'gemini' : 'orpheus' });
 const scenes = Object.fromEntries(Object.entries(SCENES).map(([k, [n]]) => [k, n]));
 
 async function reply(out: any, voice: boolean, speaker: string, noun = 'bunny') {
@@ -1188,10 +1101,6 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
   if (!TOKEN) return new Response(JSON.stringify({ error: 'TUTOR_BOT_TOKEN is not set' }), { status: 500 });
   if (req.method === 'GET' && u.searchParams.has('setup')) return new Response(JSON.stringify(await setup()), { headers: { 'Content-Type': 'application/json' } });
-  if (req.method === 'GET' && u.searchParams.has('edgeprobe')) {   // временная проверка голоса Edge: фиксированная фраза, только размер ответа
-    let err = ''; const t0 = Date.now(), mp3 = await edgeTts('Hi! Привет, я Йоми.', EDGE_VOICES.ava, 18, 4).catch((e) => { err = String(e); return null; });
-    return new Response(JSON.stringify({ ok: !!mp3, bytes: mp3?.length || 0, ms: Date.now() - t0, err }), { headers: { 'Content-Type': 'application/json' } });
-  }
   if (req.method === 'POST' && u.searchParams.has('api')) {
     try { return await web(req); } catch (e) { console.error(e); return json({ error: 'failed' }, 500); }
   }
