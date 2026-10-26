@@ -626,6 +626,28 @@ nav button.on svg{color:var(--accent)}
 .vbox[open] .chev{transform:rotate(180deg)}
 .vbox .voices{padding:0 10px 10px}
 .vbox[open] .voices{animation:pop-in .3s var(--ease)}
+/* вступление при первом входе */
+.intro{position:fixed;inset:0;z-index:80;background:var(--bg);overflow-y:auto;display:flex;flex-direction:column;padding:calc(14px + var(--safe-t)) 20px calc(16px + var(--safe-b));animation:view-in .3s var(--ease)}
+.intro.out{opacity:0;transform:translateY(12px);transition:opacity .28s var(--ease),transform .28s var(--ease)}
+.intro>*{width:100%;max-width:480px;margin-inline:auto}
+.in-top{display:flex;align-items:center;justify-content:space-between;min-height:44px}
+.in-dots{display:flex;gap:6px}.in-dots i{width:8px;height:8px;border-radius:99px;background:var(--border-2);transition:width var(--t-med) var(--ease),background var(--t-med)}.in-dots i.on{width:24px;background:var(--accent)}
+.in-skip{min-height:44px;padding:0 6px;color:var(--muted);font-weight:700}
+.in-body{flex:1;padding:8px 0 20px}
+.in-body h1{font-family:var(--head);font-weight:800;font-size:clamp(26px,7.4vw,34px);line-height:1.12;letter-spacing:-.03em;margin:6px 0 12px}
+.in-lead{font-size:17px;line-height:1.55;color:var(--fg-2)}
+.in-hero{display:grid;place-items:center;padding:18px 0 10px}.in-hero .buddy.mini{--bsize:min(56vw,230px)!important;width:auto;filter:none}
+.in-hero.sm .buddy.mini{--bsize:120px!important}
+.in-facts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
+.in-fact{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:14px;box-shadow:var(--clay-sm);display:flex;flex-direction:column}
+.in-fact b{font-family:var(--head);font-weight:800;font-size:32px;letter-spacing:-.04em;line-height:1;color:var(--accent);font-variant-numeric:tabular-nums}
+.in-fact .t{font-weight:700;font-size:13px;margin-top:4px}
+.in-fact p{font-size:13px;line-height:1.45;color:var(--fg-2);margin:8px 0 10px;flex:1}
+.in-fact small{font-size:11px;color:var(--muted)}
+.in-how{display:grid;gap:10px;margin-top:6px}.in-how .hrow{align-items:center}.in-how .ic{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;flex:none}.in-how .ic svg{width:22px;height:22px}
+.in-how .t{display:flex;flex-direction:column;gap:2px}.in-how .t small{color:var(--muted);font-size:13px;line-height:1.4}
+.in-note{color:var(--muted);font-size:13px;margin-top:12px}
+.in-foot{display:flex;gap:10px;position:sticky;bottom:0;padding-top:10px;background:linear-gradient(transparent,var(--bg) 30%)}.in-foot .btn{flex:1;min-height:54px}.in-foot .btn.line{flex:0 0 auto;padding:0 20px}
 
 </style>
 </head>
@@ -1795,7 +1817,8 @@ function openSettings(){
     <label class="lbl" for="gSat">Цель SAT (400–1600)</label>
     <select class="inp" id="gSat">${Array.from({length: 17}, (_, k) => 800 + k * 50).map(v => `<option ${GOALS.sat == v ? 'selected' : ''}>${v}</option>`).join('')}</select>
     <div class="setrow" style="margin-top:12px"><span>Кролик на экране</span><button class="btn sm ${bunnyOn ? 'line' : ''}" data-bon>${bunnyOn ? 'Спрятать' : 'Показать'}</button></div>
-    <div class="setrow"><span>Звуки кролика</span><button class="btn sm ${sfxOn ? 'line' : ''}" data-sfx>${sfxOn ? 'Выключить' : 'Включить'}</button></div>`);
+    <div class="setrow"><span>Звуки кролика</span><button class="btn sm ${sfxOn ? 'line' : ''}" data-sfx>${sfxOn ? 'Выключить' : 'Включить'}</button></div>
+    <div class="setrow"><span>Вступление о YomiScore</span><button class="btn sm line" data-intro>Показать</button></div>`);
   $('#vbox').ontoggle = e => { voicesOpen = e.target.open; };
   $('#gIelts').onchange = e => { GOALS.ielts = +e.target.value; saveGoals(); tab(curTab); };
   $('#gSat').onchange = e => { GOALS.sat = +e.target.value; saveGoals(); tab(curTab); };
@@ -1806,6 +1829,7 @@ function openSettings(){
     if(vp){ unlock(); sayText(`Hi, I'm Yomi! Привет, я Йоми. Let's get you ready for the exam!`, 'en', vp.dataset.vp, LOOK.char); return; }
     if(vs){ const j = await api('speaker', {speaker: vs.dataset.vs, char: LOOK.char}); if(j.ok){ if(j.game) G = j.game; S.speaker = j.speaker; voicesOpen = false; openSettings(); } return; }
     if(t.closest('[data-bon]')){ bunnyOn = !bunnyOn; store.set('yomi_bunny', bunnyOn); placeBunny(); homeBunny(); return openSettings(); }
+    if(t.closest('[data-intro]')){ closeSheet?.(); return openIntro(); }
     if(t.closest('[data-sfx]')){ sfxOn = !sfxOn; store.set('yomi_sfx', sfxOn); return openSettings(); }
   };
 }
@@ -2027,6 +2051,82 @@ for(const id of ['homeBox', 'ieltsBox', 'satBox']){
   const _pick = pickSat;
   pickSat = function(k){ _pick(k); const ok = document.querySelector('#satBox .choice.ok'); if(SAT && SAT.results.slice(-1)[0]?.ok) burst(ok); };
 }
+
+
+/* ---------- вступление при первом входе: на чём построен YomiScore ----------
+   Только проверяемые цифры, с источниками: Cepeda и др. 2006 (интервальное повторение, 317 экспериментов),
+   Dunlosky и др. 2013 (обзор 10 техник учёбы), Roediger и Karpicke 2006 (самопроверка: 61% против 40% через неделю),
+   College Board 2017 (20 ч Official SAT Practice — в среднем +115 баллов). */
+const INTRO_FACTS = [
+  {n: '317', t: 'экспериментов', d: 'Повторение с перерывами держится в памяти надёжнее, чем зубрёжка за один вечер.', s: 'Cepeda и др., 2006'},
+  {n: '10', t: 'техник учёбы сравнили', d: 'Лучше всех — самопроверка и повторение с интервалами. Перечитывание и маркер почти не помогают.', s: 'Dunlosky и др., 2013'},
+  {n: '1.5', t: 'раза больше помнят', d: 'Кто вспоминал материал по памяти, через неделю помнил 61%, а кто перечитывал — 40%.', s: 'Roediger, Karpicke, 2006'},
+  {n: '115', t: 'баллов в среднем', d: 'прибавили к SAT ученики, позанимавшиеся 20 часов на официальной практике.', s: 'College Board, 2017'},
+];
+const INTRO_HOW = [
+  ['violet', I.mic, 'Пробные экзамены с таймером', 'Как на настоящем IELTS Speaking — это и есть самопроверка'],
+  ['sky', I.calc, 'SAT-задачи с разбором', 'Каждая ошибка объяснена, слабые темы попадают в повтор'],
+  ['indigo', I.target, 'План по часам до экзамена', 'Сколько нужно часов на твою цель и успеваешь ли'],
+  ['green', I.talk, 'Разговор голосом каждый день', 'Короткие сессии чаще — лучше, чем редкие длинные'],
+];
+let introI = 0;
+function introSlides(){
+  return [
+    `<div class="in-hero">${miniBunny(LOOK.char, LOOK.color, 'gradcap')}</div>
+     <p class="eyebrow">YomiScore</p>
+     <h1>Готовься к IELTS и SAT так, как это реально работает</h1>
+     <p class="in-lead">Мы разобрали исследования о памяти и обучении, официальные материалы IELTS и College Board и советы репетиторов — и построили на этом каждое занятие.</p>`,
+    `<p class="eyebrow">Что говорит наука</p>
+     <h1>Работает не «больше учить», а учить правильно</h1>
+     <div class="in-facts">${INTRO_FACTS.map(f => `<div class="in-fact"><b data-n="${f.n}">${f.n}</b><span class="t">${f.t}</span><p>${f.d}</p><small>${f.s}</small></div>`).join('')}</div>`,
+    `<p class="eyebrow">Как устроен YomiScore</p>
+     <h1>Всё, что доказано, — уже внутри</h1>
+     <div class="in-how">${INTRO_HOW.map(([c, ic, b, s]) => `<div class="hrow"><span class="ic ${c}">${ic}</span><span class="t"><b>${b}</b><small>${s}</small></span></div>`).join('')}</div>`,
+    `<div class="in-hero sm">${miniBunny(LOOK.char, LOOK.color, 'none', 'scarf', 'round')}</div>
+     <p class="eyebrow">Последний шаг</p>
+     <h1>Какая у тебя цель?</h1>
+     <label class="lbl" for="inIelts">IELTS (band)</label>
+     <select class="inp" id="inIelts">${[5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9].map(v => `<option ${GOALS.ielts == v ? 'selected' : ''}>${v}</option>`).join('')}</select>
+     <label class="lbl" for="inSat">SAT (400–1600)</label>
+     <select class="inp" id="inSat">${Array.from({length: 17}, (_, k) => 800 + k * 50).map(v => `<option ${GOALS.sat == v ? 'selected' : ''}>${v}</option>`).join('')}</select>
+     <p class="in-note">Цели можно поменять в настройках.</p>`,
+  ];
+}
+function introCount(root){
+  if(RM) return;
+  root.querySelectorAll('[data-n]').forEach((el, k) => {
+    const to = parseFloat(el.dataset.n), dec = el.dataset.n.includes('.') ? 1 : 0, t0 = performance.now() + k * 120;
+    const step = now => { const q = Math.max(0, Math.min(1, (now - t0) / 900)), e = 1 - Math.pow(1 - q, 3); el.textContent = (to * e).toFixed(dec); if(q < 1) requestAnimationFrame(step); };
+    el.textContent = dec ? '0.0' : '0'; requestAnimationFrame(step);
+  });
+}
+function drawIntro(){
+  const box = $('#intro'), sl = introSlides(), last = introI === sl.length - 1;
+  box.innerHTML = `<div class="in-top"><span class="in-dots">${sl.map((_, k) => `<i class="${k === introI ? 'on' : ''}"></i>`).join('')}</span>${last ? '' : '<button class="in-skip" data-iskip>Пропустить</button>'}</div>
+    <div class="in-body">${sl[introI]}</div>
+    <div class="in-foot">${introI ? '<button class="btn line" data-iback>Назад</button>' : ''}<button class="btn" data-inext>${last ? 'Начать' : 'Дальше'}</button></div>`;
+  popIn(box.querySelector('.in-body')); box.querySelectorAll('.in-body > *').forEach((el, k) => { if(RM) return; el.style.setProperty('--i', k); el.classList.add('pop'); });
+  introCount(box);
+  box.scrollTop = 0;
+}
+function closeIntro(){
+  const s1 = $('#inIelts'), s2 = $('#inSat');
+  if(s1 && s2){ GOALS = {ielts: +s1.value, sat: +s2.value}; saveGoals(); }
+  store.set('yomi_intro', 1);
+  const box = $('#intro'); box.classList.add('out'); setTimeout(() => { box.remove(); tab(curTab); }, RM ? 0 : 280);
+}
+function openIntro(){
+  if($('#intro')) return;
+  introI = 0;
+  const box = document.createElement('div'); box.id = 'intro'; box.className = 'intro'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'О YomiScore');
+  document.body.append(box); drawIntro();
+  box.onclick = e => {
+    if(e.target.closest('[data-iskip]')) return closeIntro();
+    if(e.target.closest('[data-iback]')){ introI--; return drawIntro(); }
+    if(e.target.closest('[data-inext]')){ if(introI === introSlides().length - 1) return closeIntro(); introI++; return drawIntro(); }
+  };
+}
+if(AUTH && !store.get('yomi_intro', 0)) openIntro();
 </script>
 </body>
 </html>
