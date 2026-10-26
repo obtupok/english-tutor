@@ -6,7 +6,7 @@
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#EEF2FF">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>Hopscore — IELTS и SAT с кроликом Yomi</title>
+<title>YomiScore — IELTS и SAT с кроликом Yomi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -51,6 +51,7 @@ h3{font-size:19px;font-weight:800;line-height:1.25}
 .brand{flex:1;display:flex;align-items:center;gap:8px;font-family:var(--head);font-weight:900;font-size:24px;color:var(--fg)}
 .brand .logo{width:34px;height:34px;border-radius:11px;background:var(--primary);color:#fff;display:grid;place-items:center;box-shadow:0 3px 0 var(--primary-d)}
 .brand .logo svg{width:22px;height:22px}
+.brand-s{color:var(--primary);margin-left:-8px}
 .brand small{font:700 12px var(--body);color:var(--primary);background:#E0E7FF;padding:3px 8px;border-radius:99px;letter-spacing:.04em}
 .chip{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:6px 12px;border-radius:99px;background:var(--card);border:2px solid var(--border);font-weight:700;font-size:14px;color:var(--fg)}
 .chip svg{width:18px;height:18px}
@@ -529,7 +530,7 @@ label.lbl{display:block;font-weight:700;margin:12px 0 6px}
 <body>
 <div class="app">
   <header class="top">
-    <div class="brand"><span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 9.5C7 6 7.2 2.5 8.6 2.4S10.8 5.8 10.6 9M15.5 9.5C17 6 16.8 2.5 15.4 2.4S13.2 5.8 13.4 9"/><path d="M4 20c3-6 6-8 8-8s5 2 8 8"/></svg></span>Hopscore</div>
+    <div class="brand"><span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 9.5C7 6 7.2 2.5 8.6 2.4S10.8 5.8 10.6 9M15.5 9.5C17 6 16.8 2.5 15.4 2.4S13.2 5.8 13.4 9"/><path d="M4 20c3-6 6-8 8-8s5 2 8 8"/></svg></span>Yomi<span class="brand-s">Score</span></div>
     <span class="chip fire" id="streak" hidden></span>
     <button class="iconbtn" id="setBtn" aria-label="Настройки"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
   </header>
@@ -1235,7 +1236,7 @@ function sheet(html){ $('#sheetIn').innerHTML = html; $('#sheet').classList.add(
 function closeSheet(){ $('#sheet').classList.remove('on'); }
 $('#sheet').onclick = e => { if(e.target.id === 'sheet') closeSheet(); };
 
-/* ================== Hopscore: Главная · IELTS · SAT · Разговор ================== */
+/* ================== YomiScore: Главная · IELTS · SAT · Разговор ================== */
 let G = null;
 function applyGame(g){ G = g; }   // монеты и магазин убраны: от игровых данных ничего не нужно
 function notify(text){ const t = $('#toastx'); t.textContent = text; t.classList.add('on'); clearTimeout(notify.t); notify.t = setTimeout(() => t.classList.remove('on'), 3200); }
@@ -1857,11 +1858,11 @@ $('#nav').onclick = e => { const b = e.target.closest('[data-v]'); if(b){ unlock
   tab(curTab);
 })();
 
-/* вход без Telegram: вставить ссылку из бота (/site → «Сайт Hopscore»); ключ запоминается в этом браузере */
+/* вход без Telegram: вставить ссылку из бота (/site → «Сайт YomiScore»); ключ запоминается в этом браузере */
 function gate(){
-  $('#main').innerHTML = `<div class="gate"><b>Это личный сайт</b><span>Напиши /site в @yomispeak_bot, скопируй ссылку «Сайт Hopscore» и вставь её сюда — один раз.</span>
+  $('#main').innerHTML = `<div class="gate"><b>Это личный сайт</b><span>Напиши /site в @yomispeak_bot, скопируй ссылку «Сайт YomiScore» и вставь её сюда — один раз.</span>
     <label class="lbl" for="keyIn" style="align-self:stretch;text-align:left">Ссылка из бота</label>
-    <input class="inp" id="keyIn" placeholder="https://yomiread.com/hopscore/#k=…" autocomplete="off" style="max-width:420px">
+    <input class="inp" id="keyIn" placeholder="https://yomiread.com/yomiscore/#k=…" autocomplete="off" style="max-width:420px">
     <button class="btn" id="keyGo" style="min-width:200px">Войти</button></div>`;
   $('#nav').hidden = true;
   $('#keyGo').onclick = () => {
