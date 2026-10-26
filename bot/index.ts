@@ -277,6 +277,35 @@ const EXAMS: Record<string, { build: string; grade: string; max: number }> = {
     build: 'Create a realistic job interview in English for this role: ROLE. Exactly 6 questions: tell me about yourself; why this role or company; a strength with an example; a challenge or failure (behavioral, invites a STAR answer); teamwork or a conflict; "Do you have any questions for us?". part "Question 1" … "Question 6", prep 0, speak 90, "bullets", "read", "listen" empty. "topic" = the role in 2–4 words.',
     grade: 'Grade like a friendly but honest interviewer on 4 criteria, named exactly: "Content and examples", "Structure (STAR)", "Language accuracy", "Confidence and fluency" — each 0–10 in steps of 0.5. "overall" = their average rounded to 0.5.' },
 };
+
+/* ---------- SAT: наборы заданий (Reading & Writing, Math) и IELTS Writing: проверка эссе ---------- */
+const SAT_SET_SCHEMA = {
+  type: 'object', additionalProperties: false, required: ['items'],
+  properties: { items: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['skill', 'difficulty', 'passage', 'question', 'choices', 'answer', 'explanation'],
+    properties: { skill: { type: 'string' }, difficulty: { type: 'string', enum: ['easy', 'medium', 'hard'] }, passage: { type: 'string' }, question: { type: 'string' },
+      choices: { type: 'array', items: { type: 'string' } }, answer: { type: 'integer' }, explanation: { type: 'string' } } } } },
+};
+const SAT_SECTIONS: Record<string, string> = {
+  rw: 'Digital SAT Reading and Writing. Each item: a short passage (25–150 words; for paired-text items put "Text 1: … Text 2: …"), one question, exactly 4 answer choices. Mix the four official domains and name the skill in "skill": "Information and Ideas", "Craft and Structure", "Expression of Ideas" (rhetorical synthesis, transitions), "Standard English Conventions" (boundaries, form, structure, sense). Use a blank "______" where a word or punctuation is missing.',
+  math: 'Digital SAT Math. Each item: one multiple-choice problem with exactly 4 choices, "passage" empty unless a short table or context is needed. Mix the four domains and name the skill in "skill": "Algebra", "Advanced Math", "Problem-Solving and Data Analysis", "Geometry and Trigonometry". Write math in plain text (x^2, sqrt(5), 3/4, pi). Solve each problem yourself step by step before choosing "answer", and make sure exactly one choice is correct.',
+};
+const WRITING_SCHEMA = {
+  type: 'object', additionalProperties: false, required: ['overall', 'criteria', 'summary', 'strengths', 'improve', 'fixes', 'better'],
+  properties: {
+    overall: { type: 'number' },
+    criteria: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['name', 'score', 'comment'], properties: { name: { type: 'string' }, score: { type: 'number' }, comment: { type: 'string' } } } },
+    summary: { type: 'string' }, strengths: { type: 'array', items: { type: 'string' } }, improve: { type: 'array', items: { type: 'string' } },
+    fixes: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['original', 'better', 'note'], properties: { original: { type: 'string' }, better: { type: 'string' }, note: { type: 'string' } } } },
+    better: { type: 'string' },
+  },
+};
+const PROMPT_SCHEMA = { type: 'object', additionalProperties: false, required: ['prompt'], properties: { prompt: { type: 'string' } } };
+// оценка SAT по секции 200–800: доля верных с поправкой на сложность (приблизительно, как на реальной шкале)
+function satScore(results: { ok: boolean; difficulty: string }[]) {
+  const w: Record<string, number> = { easy: 0.8, medium: 1, hard: 1.3 };
+  const got = results.reduce((a, r) => a + (r.ok ? w[r.difficulty] || 1 : 0), 0), max = results.reduce((a, r) => a + (w[r.difficulty] || 1), 0) || 1;
+  return Math.max(200, Math.min(800, Math.round((200 + 600 * Math.pow(got / max, 0.9)) / 10) * 10));
+}
 async function askJsonGroq(system: string, user: string, schema: any) {
   for (let attempt = 0; attempt < 2; attempt++) {
     const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -1073,9 +1102,50 @@ async function web(req: Request) {
       const out = await askJsonGroq(`You write speaking-exam materials. The learner's level is about ${owner.level || 'B1'}. Use fresh, varied topics${recent ? ` (not these recent ones: ${recent})` : ''}. Natural, exam-like English. Return JSON only.`, EXAMS[kind].build.replace('ROLE', role), EXAM_ITEMS_SCHEMA);
       if (!out?.items?.length) return json({ error: 'failed' }, 502);
       const items = out.items.slice(0, 10).map((it: any) => ({ ...it, prep: Math.max(0, Math.min(90, it.prep | 0)), speak: Math.max(20, Math.min(150, it.speak | 0)), bullets: (it.bullets || []).slice(0, 5) }));
+      const part = Number(b.part) || 0;   // тренировка одной части IELTS: остальные вопросы отбрасываем
+      const picked = part ? items.filter((it: any) => it.part.replace(/\D/g, '') === String(part)) : items;
+      if (part && picked.length) items.splice(0, items.length, ...picked);
       owner.stats = { ...(owner.stats || {}), examCur: { kind, role, topic: out.topic, items, answers: [], at: new Date().toISOString() } };
       await save(owner);
       return json({ kind, items });
+    }
+    case 'sat_set': {
+      const section = SAT_SECTIONS[b.section] ? b.section : 'rw', n = Math.max(3, Math.min(15, Number(b.n) || 10));
+      const level = String(b.level || 'mixed');   // easy / medium / hard / mixed
+      const weak = (owner.stats?.sat || []).filter((x: any) => x.section === section).slice(-3).flatMap((x: any) => x.weak || []);
+      const out = await askJsonGroq(`You write original Digital SAT practice questions that match the real test's style and difficulty. Return JSON only.`,
+        `${SAT_SECTIONS[section]}\nWrite exactly ${n} items. Difficulty: ${level === 'mixed' ? 'about one third easy, one third medium, one third hard' : 'all ' + level}.${weak.length ? ` Give extra practice on these weak skills: ${[...new Set(weak)].join(', ')}.` : ''} "answer" is the 0-based index of the correct choice. "explanation" — in Russian, short and clear: why the right answer is right and the main trap in the wrong ones.`, SAT_SET_SCHEMA);
+      const items = (out?.items || []).filter((it: any) => it.choices?.length === 4 && it.answer >= 0 && it.answer < 4).slice(0, n);
+      if (!items.length) return json({ error: 'failed' }, 502);
+      return json({ section, items });
+    }
+    case 'sat_done': {
+      const section = SAT_SECTIONS[b.section] ? b.section : 'rw';
+      const results = (Array.isArray(b.results) ? b.results : []).slice(0, 30).map((r: any) => ({ ok: !!r.ok, difficulty: String(r.difficulty || 'medium'), skill: String(r.skill || '').slice(0, 60) }));
+      if (!results.length) return json({ error: 'bad' }, 400);
+      const bySkill: Record<string, [number, number]> = {};
+      for (const r of results) { const v = bySkill[r.skill] ||= [0, 0]; v[1]++; if (r.ok) v[0]++; }
+      const weak = Object.entries(bySkill).filter(([, [ok, all]]) => ok / all < 0.6).map(([k]) => k);
+      const rec = { section, at: new Date().toISOString(), correct: results.filter((r) => r.ok).length, total: results.length, score: satScore(results), weak };
+      owner.stats = { ...(owner.stats || {}), sat: [...(owner.stats?.sat || []), rec].slice(-60) };
+      await save(owner);
+      return json({ result: rec, sat: owner.stats.sat });
+    }
+    case 'writing_prompt': {
+      const recent = (owner.stats?.writing || []).slice(-5).map((w: any) => w.prompt).join(' | ');
+      const out = await askJsonGroq('You write IELTS Academic Writing Task 2 questions. Return JSON only.', `Write one fresh, realistic IELTS Writing Task 2 question (opinion, discussion, problem-solution, advantages-disadvantages or two-part). End with the usual instructions ("Give reasons for your answer and include any relevant examples from your own knowledge or experience. Write at least 250 words."). Avoid these recent topics: ${recent || 'none'}.`, PROMPT_SCHEMA);
+      return out?.prompt ? json({ prompt: out.prompt }) : json({ error: 'failed' }, 502);
+    }
+    case 'writing_check': {
+      const essay = String(b.essay || '').slice(0, 6000).trim(), prompt = String(b.prompt || '').slice(0, 1200);
+      if (essay.split(/\s+/).length < 30) return json({ error: 'short' }, 400);
+      const res = await askJsonGroq(`You are a certified IELTS Writing examiner. Grade an IELTS Academic Writing Task 2 essay on the 4 official criteria, named exactly: "Task Response", "Coherence and Cohesion", "Lexical Resource", "Grammatical Range and Accuracy". Each is a band 0–9 in steps of 0.5; "overall" is their average rounded down to the nearest 0.5 as IELTS does (essays under 250 words lose Task Response points). Write "comment", "summary", "strengths", "improve" and "note" in Russian, short and concrete, quoting the essay. "fixes": the 5–8 most useful corrections (original fragment → better English). "better": a rewritten version of the essay's introduction and one body paragraph at about band 8, in English. Return JSON only.`,
+        `Question:\n${prompt || '(not given)'}\n\nEssay (${essay.split(/\s+/).length} words):\n${essay}`, WRITING_SCHEMA);
+      if (!res) return json({ error: 'failed' }, 502);
+      const rec = { at: new Date().toISOString(), prompt: prompt.slice(0, 300), overall: res.overall, words: essay.split(/\s+/).length };
+      owner.stats = { ...(owner.stats || {}), writing: [...(owner.stats?.writing || []), rec].slice(-40) };
+      await save(owner);
+      return json({ result: res, writing: owner.stats.writing });
     }
     case 'exam_answer': {
       const cur = owner.stats?.examCur, i = Number(b.i);
