@@ -67,7 +67,7 @@
 
 .face[data-s="speak"] .face-halo{animation:h-pulse 1.4s ease-in-out infinite}
 @keyframes h-pulse{50%{transform:scale(1.06)}}
-.face-flames{position:absolute;z-index:0;left:0;width:100%;top:-26%;display:none;transform-origin:50% 90%;filter:drop-shadow(0 0 18px rgba(240,85,58,.45))}
+.face-flames{position:absolute;z-index:0;left:14%;width:72%;top:-8%;display:none;transform-origin:50% 90%;filter:drop-shadow(0 0 18px rgba(240,85,58,.45))}
 .face[data-mood="angry"] .face-flames{display:block;animation:p-fire .35s ease-in-out infinite alternate}
 .face[data-s="think"] .face-dots{bottom:4%}
 .face{position:fixed;inset:0;z-index:40;background:var(--paper);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:24px 24px calc(28px + var(--safe-b));text-align:center;--fc:#B9BECD;--lvl:0}
@@ -618,6 +618,8 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
 .w-bowtie,.w-bell,.w-tie,.w-medal,.w-sweater,.w-overalls,.w-cape,.g-round,.g-sun,.g-heart,.g-star,.g-monocle,.h-beanie,.h-party,.h-beret,.h-santa,.h-chef,.h-halo{display:none}
 .buddy[data-wear="bowtie"] .w-bowtie,.buddy[data-wear="bell"] .w-bell,.buddy[data-wear="tie"] .w-tie,.buddy[data-wear="medal"] .w-medal,.buddy[data-wear="sweater"] .w-sweater,.buddy[data-wear="overalls"] .w-overalls,.buddy[data-wear="cape"] .w-cape,.buddy[data-glasses="round"] .g-round,.buddy[data-glasses="sun"] .g-sun,.buddy[data-glasses="heart"] .g-heart,.buddy[data-glasses="star"] .g-star,.buddy[data-glasses="monocle"] .g-monocle,.buddy[data-hat="beanie"] .h-beanie,.buddy[data-hat="party"] .h-party,.buddy[data-hat="beret"] .h-beret,.buddy[data-hat="santa"] .h-santa,.buddy[data-hat="chef"] .h-chef,.buddy[data-hat="halo"] .h-halo{display:inline}
 .buddy[data-wear]:not([data-wear="scarf"]) .b-scarf-wrap{display:none}
+/* одежда обрезается по силуэту кролика — ничего не торчит */
+.b-body [class^="w-"],.b-head [class^="w-"]{clip-path:url(#wearClip)}
 .w-dress,.w-tutu,.w-hoodie,.w-jersey,.w-suit,.w-raincoat,.h-twinbows,.h-tiara,.h-gradcap,.h-cowboy,.h-pirate,.h-carrotcap,.h-daisies,.w-fishcharm,.w-pinkbell,.h-rangerhat,.w-apron,.h-detective,.h-leaves,.h-hachimaki,.h-sakura{display:none}
 .buddy[data-wear="dress"] .w-dress,.buddy[data-wear="tutu"] .w-tutu,.buddy[data-wear="hoodie"] .w-hoodie,.buddy[data-wear="jersey"] .w-jersey,.buddy[data-wear="suit"] .w-suit,.buddy[data-wear="raincoat"] .w-raincoat,.buddy[data-hat="twinbows"] .h-twinbows,.buddy[data-hat="tiara"] .h-tiara,.buddy[data-hat="gradcap"] .h-gradcap,.buddy[data-hat="cowboy"] .h-cowboy,.buddy[data-hat="pirate"] .h-pirate,.buddy[data-char="bunny"][data-hat="carrotcap"] .h-carrotcap,.buddy[data-char="bunny"][data-hat="daisies"] .h-daisies,.buddy[data-char="cat"][data-wear="fishcharm"] .w-fishcharm,.buddy[data-char="cat"][data-wear="pinkbell"] .w-pinkbell,.buddy[data-char="bear"][data-hat="rangerhat"] .h-rangerhat,.buddy[data-char="bear"][data-wear="apron"] .w-apron,.buddy[data-char="fox"][data-hat="detective"] .h-detective,.buddy[data-char="fox"][data-hat="leaves"] .h-leaves,.buddy[data-char="panda"][data-hat="hachimaki"] .h-hachimaki,.buddy[data-char="panda"][data-hat="sakura"] .h-sakura{display:inline}
 /* превью в магазине: неподвижные маленькие копии */
@@ -657,6 +659,7 @@ h2{font-family:var(--serif);font-size:30px;font-weight:600;margin:14px 0 4px;let
     <button data-v="yomi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 9.5C7 6 7.2 2.5 8.6 2.4S10.8 5.8 10.6 9M15.5 9.5C17 6 16.8 2.5 15.4 2.4S13.2 5.8 13.4 9"/><ellipse cx="12" cy="15" rx="7.5" ry="6.5"/><path d="M9.6 14.6h.01M14.4 14.6h.01M11 17.2q1 .8 2 0"/></svg>Профиль<span class="badge dot" id="pathDot" hidden></span></button>
   </nav>
 </div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><clipPath id="wearClip"><ellipse cx="80" cy="92" rx="49" ry="40"/><ellipse cx="80" cy="132" rx="27" ry="16"/></clipPath></defs></svg>
 <div class="face" id="face" hidden data-s="idle">
   <p class="face-mode" id="faceMode"></p>
   <p class="face-timer" id="faceTimer" hidden></p>
