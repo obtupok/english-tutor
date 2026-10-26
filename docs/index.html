@@ -891,7 +891,8 @@ function gate(){
 let S = {mode:'free', scene:'smalltalk', history:[], stats:{}, plan:null, level:null, scenes:{}, due:0, words:0, stt:false, speaker:'hannah'};
 const VOICE_INFO = {hannah:['Hannah','женский'], diana:['Diana','женский'], autumn:['Autumn','женский'], troy:['Troy','мужской'], austin:['Austin','мужской'], daniel:['Daniel','мужской'],
   leda:['Leda','юный, милый'], puck:['Puck','бодрый'], zephyr:['Zephyr','звонкий'], laomedeia:['Laomedeia','весёлый'], achernar:['Achernar','мягкий'], sadachbia:['Sadachbia','живой'],
-  kore:['Kore','уверенный'], aoede:['Aoede','лёгкий'], despina:['Despina','бархатный'], sulafat:['Sulafat','тёплый'], achird:['Achird','дружелюбный'], fenrir:['Fenrir','азартный'], charon:['Charon','низкий, спокойный'], algenib:['Algenib','с хрипотцой']};
+  kore:['Kore','уверенный'], aoede:['Aoede','лёгкий'], despina:['Despina','бархатный'], sulafat:['Sulafat','тёплый'], achird:['Achird','дружелюбный'], fenrir:['Fenrir','азартный'], charon:['Charon','низкий, спокойный'], algenib:['Algenib','с хрипотцой'],
+  ava:['Ava','мягкий женский'], emma:['Emma','тёплый женский'], vivienne:['Vivienne','лёгкий женский'], seraphina:['Seraphina','звонкий женский'], andrew:['Andrew','спокойный мужской'], brian:['Brian','дружелюбный мужской'], william:['William','бодрый мужской'], remy:['Remy','мягкий мужской'], florian:['Florian','уверенный мужской']};
 // характер персонажей (сервер говорит за них так же) и как они себя называют
 const CHAR_INFO = {bunny:['bunny', 'весёлый и прыгучий, обожает морковку'], cat:['kitten', 'немного дерзкий и ленивый, любит поспать и рыбку, иногда мурчит'], bear:['bear cub', 'спокойный и тёплый, как обнимашки, любит мёд'], fox:['fox cub', 'хитрый и умный, любит загадки и игры со словами'], panda:['panda', 'расслабленный и сонный, любит бамбук и не спешить'], hamster:['hamster', 'крошечный и шустрый, прячет вкусняшки за щёки'], dog:['puppy', 'верный и весёлый, обожает прогулки и хвалить тебя']};
 let vChar = null;   // чей голос настраиваем в «Yomi → Настройки»
@@ -1412,7 +1413,7 @@ $('#progBox').onclick = async e => {
   unlock();
   const go = e.target.closest('[data-go]'), vp = e.target.closest('[data-vp]'), vs = e.target.closest('[data-vs]');
   if(go){ tab('talk'); switchMode(go.dataset.go); }
-  if(vp) sayText(S.engine === 'gemini' ? "Hi, I'm Yomi! Привет, я Йоми. Let's practise English together!" : "Hi, I'm Yomi. Let's practise English together. How was your day?", 'en', vp.dataset.vp);
+  if(vp) sayText(S.engine !== 'orpheus' ? "Hi, I'm Yomi! Привет, я Йоми. Let's practise English together!" : "Hi, I'm Yomi. Let's practise English together. How was your day?", 'en', vp.dataset.vp);
   if(e.target.closest('[data-sfx]')){ sfxOn = !sfxOn; store.set('yomi_sfx', sfxOn); showProgress(); if(sfxOn) sfx('happy'); }
   if(vs && vs.dataset.vs !== S.speaker){ const j = await api('speaker', {speaker: vs.dataset.vs}); if(j.ok){ S.speaker = j.speaker; showProgress(); } }
 };
@@ -1546,7 +1547,7 @@ $('#yomiBox').onclick = async e => {
   const vcb = e.target.closest('[data-vc]');
   if(vcb){ vChar = vcb.dataset.vc; showYomi(); return; }
   if(vp){ const c = voiceChar(), noun = CHAR_INFO[c][0];
-    sayText(S.engine === 'gemini' ? `Hi, I'm Yomi the ${noun}! Привет, я Йоми. Let's practise English together!` : `Hi, I'm Yomi the ${noun}. Let's practise English together. How was your day?`, 'en', vp.dataset.vp, c); }
+    sayText(S.engine !== 'orpheus' ? `Hi, I'm Yomi the ${noun}! Привет, я Йоми. Let's practise English together!` : `Hi, I'm Yomi the ${noun}. Let's practise English together. How was your day?`, 'en', vp.dataset.vp, c); }
   if(e.target.closest('[data-sfx]')){ sfxOn = !sfxOn; store.set('yomi_sfx', sfxOn); showYomi(); if(sfxOn) sfx('happy'); }
   if(vs && !vs.closest('.voice.on')){ const c = voiceChar(), j = await api('speaker', {speaker: vs.dataset.vs, char: c}); if(j.ok){ if(j.game) applyGame(j.game); S.speaker = j.speaker; vChar = c; showYomi(); } }
 };

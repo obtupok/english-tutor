@@ -362,27 +362,34 @@ function ttsChunks(text: string) {
 // с интонацией по настроению. Без него: чисто английская фраза — Orpheus в Groq (WAV), остальное — Google (MP3),
 // причём русские и английские куски фразы читаются каждый своим произношением.
 const ORPHEUS = ['hannah', 'diana', 'autumn', 'troy', 'austin', 'daniel'];
+// Голоса Microsoft Azure Speech (официально; бесплатный тариф F0 — 500 000 символов в месяц). Мультиязычные: один голос и по-русски, и по-английски.
+// Включаются сами, когда в секретах есть AZURE_SPEECH_KEY и AZURE_SPEECH_REGION.
+const AZURE_VOICES: Record<string, string> = {
+  ava: 'en-US-AvaMultilingualNeural', emma: 'en-US-EmmaMultilingualNeural', vivienne: 'fr-FR-VivienneMultilingualNeural', seraphina: 'de-DE-SeraphinaMultilingualNeural',
+  andrew: 'en-US-AndrewMultilingualNeural', brian: 'en-US-BrianMultilingualNeural', william: 'en-AU-WilliamMultilingualNeural', remy: 'fr-FR-RemyMultilingualNeural', florian: 'de-DE-FlorianMultilingualNeural',
+};
+const useAzure = () => !!(env('AZURE_SPEECH_KEY') && env('AZURE_SPEECH_REGION'));
 const GEMINI_VOICES = ['leda', 'puck', 'zephyr', 'laomedeia', 'achernar', 'sadachbia', 'kore', 'aoede', 'despina', 'sulafat', 'achird', 'fenrir', 'charon', 'algenib'];
 // персонажи из магазина: у каждого свой характер и свой голос (голос владелец может поменять, хранится в game.voices)
-const CHARS: Record<string, { noun: string; voice: string; orpheus: string; trait: string }> = {
-  bunny: { noun: 'bunny', voice: 'leda', orpheus: 'hannah', trait: 'cheerful and bouncy, loves carrots and hopping around' },
-  cat: { noun: 'kitten', voice: 'zephyr', orpheus: 'diana', trait: 'a little sassy and lazy, loves naps, fish and sunny windowsills; sometimes slips in a playful "purr-fect" or "meow"' },
-  bear: { noun: 'bear cub', voice: 'charon', orpheus: 'troy', trait: 'calm, warm and patient like a big hug, loves honey, forests and cosy evenings' },
-  fox: { noun: 'fox cub', voice: 'despina', orpheus: 'autumn', trait: 'clever and sly, loves riddles, little tricks and smart word games' },
-  panda: { noun: 'panda', voice: 'achernar', orpheus: 'daniel', trait: 'super chill and a bit sleepy, loves bamboo, snacks and doing things slowly but surely' },
-  hamster: { noun: 'hamster', voice: 'laomedeia', orpheus: 'autumn', trait: 'tiny, fast and fussy, stuffs snacks into its cheeks, gets excited about small things' },
-  dog: { noun: 'puppy', voice: 'puck', orpheus: 'austin', trait: 'loyal, super friendly and energetic, loves walks, balls and praising the learner like a best friend' },
+const CHARS: Record<string, { noun: string; voice: string; orpheus: string; az: string; pitch: number; rate: number; trait: string }> = {
+  bunny: { noun: 'bunny', voice: 'leda', orpheus: 'hannah', az: 'ava', pitch: 18, rate: 4, trait: 'cheerful and bouncy, loves carrots and hopping around' },
+  cat: { noun: 'kitten', voice: 'zephyr', orpheus: 'diana', az: 'emma', pitch: 10, rate: 0, trait: 'a little sassy and lazy, loves naps, fish and sunny windowsills; sometimes slips in a playful "purr-fect" or "meow"' },
+  bear: { noun: 'bear cub', voice: 'charon', orpheus: 'troy', az: 'andrew', pitch: -6, rate: -6, trait: 'calm, warm and patient like a big hug, loves honey, forests and cosy evenings' },
+  fox: { noun: 'fox cub', voice: 'despina', orpheus: 'autumn', az: 'vivienne', pitch: 6, rate: 2, trait: 'clever and sly, loves riddles, little tricks and smart word games' },
+  panda: { noun: 'panda', voice: 'achernar', orpheus: 'daniel', az: 'brian', pitch: 0, rate: -10, trait: 'super chill and a bit sleepy, loves bamboo, snacks and doing things slowly but surely' },
+  hamster: { noun: 'hamster', voice: 'laomedeia', orpheus: 'autumn', az: 'seraphina', pitch: 26, rate: 10, trait: 'tiny, fast and fussy, stuffs snacks into its cheeks, gets excited about small things' },
+  dog: { noun: 'puppy', voice: 'puck', orpheus: 'austin', az: 'william', pitch: 8, rate: 6, trait: 'loyal, super friendly and energetic, loves walks, balls and praising the learner like a best friend' },
 };
 const CHAR_OF = new WeakMap<object, string>();   // кто сейчас разговаривает (персонаж владельца) — для копии чата «Болтовни»
 const charOf = (st: any) => { const c = CHAR_OF.get(st) || st.game?.equip?.char; return CHARS[c] ? c : 'bunny'; };
 // голос персонажа: выбранный владельцем, иначе родной голос персонажа (у кролика — прежний общий выбор)
 function voiceFor(owner: any, c: string) {
   const v = owner.game?.voices?.[c] ?? (c === 'bunny' ? owner.speaker : undefined);
-  return speakersNow().includes(v) ? v : useGemini() ? CHARS[c].voice : CHARS[c].orpheus;
+  return speakersNow().includes(v) ? v : useAzure() ? CHARS[c].az : useGemini() ? CHARS[c].voice : CHARS[c].orpheus;
 }
 const useGemini = () => !!env('GEMINI_API_KEY');
-const speakersNow = () => (useGemini() ? GEMINI_VOICES : ORPHEUS);
-const SPEAKERS = [...ORPHEUS, ...GEMINI_VOICES];
+const speakersNow = () => (useAzure() ? Object.keys(AZURE_VOICES) : useGemini() ? GEMINI_VOICES : ORPHEUS);
+const SPEAKERS = [...ORPHEUS, ...GEMINI_VOICES, ...Object.keys(AZURE_VOICES)];
 const TTS_STYLE: Record<string, string> = {
   kind: 'a cute little cartoon bunny, warm, friendly and gentle',
   cute: 'a super cute little cartoon bunny, sweet, bubbly and high-pitched',
@@ -403,7 +410,33 @@ const TTS_STYLE: Record<string, string> = {
   bored: 'a cute little cartoon bunny, playfully bored and unimpressed',
   determined: 'a cute little cartoon bunny, determined and fired up',
 };
+const MOOD_PROSODY: Record<string, [number, number]> = {   // [высота Гц, темп %] поверх голоса персонажа — интонация по настроению
+  excited: [12, 10], cute: [10, 2], funny: [6, 6], angry: [-6, 6], sleepy: [-8, -14], sad: [-8, -10], surprised: [12, 6], scared: [8, 10],
+  shy: [4, -6], love: [8, -4], bored: [-6, -10], determined: [0, 6], cool: [-4, -4], proud: [2, 0], curious: [6, 2], confused: [2, -4], sly: [0, -2], kind: [0, 0],
+};
+const xmlEsc = (t: string) => t.replace(/[<>&'"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', "'": '&apos;', '"': '&quot;' }[c]!));
+async function azureTts(text: string, voice: string, pitch: number, rate: number): Promise<Uint8Array | null> {
+  const ssml = `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'><voice name='${voice}'><prosody pitch='${pitch >= 0 ? '+' : ''}${pitch}Hz' rate='${rate >= 0 ? '+' : ''}${rate}%'>${xmlEsc(text.slice(0, 1500))}</prosody></voice></speak>`;
+  const r = await fetch(`https://${env('AZURE_SPEECH_REGION')}.tts.speech.microsoft.com/cognitiveservices/v1`, {
+    method: 'POST',
+    headers: { 'Ocp-Apim-Subscription-Key': env('AZURE_SPEECH_KEY'), 'Content-Type': 'application/ssml+xml', 'X-Microsoft-OutputFormat': 'audio-24khz-48kbitrate-mono-mp3', 'User-Agent': 'yomi-english' },
+    body: ssml,
+  });
+  if (!r.ok) { console.error('azure-tts', r.status, (await r.text()).slice(0, 300)); return null; }
+  const buf = new Uint8Array(await r.arrayBuffer());
+  return buf.length ? buf : null;
+}
 async function tts(text: string, lang: string, speaker = 'hannah', emotion = 'kind', noun = 'bunny'): Promise<{ data: Uint8Array; mime: string } | null> {
+  if (useAzure()) {   // один и тот же голос; не вышло — ещё раз, чужой голос не подставляем
+    const ch = Object.values(CHARS).find((c) => c.noun === noun) || CHARS.bunny, [mp, mr] = MOOD_PROSODY[emotion] || [0, 0];
+    const voice = AZURE_VOICES[speaker] || AZURE_VOICES[ch.az];
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const mp3 = await azureTts(text, voice, ch.pitch + mp, ch.rate + mr).catch((e) => { console.error('azure-tts', String(e)); return null; });
+      if (mp3) return { data: mp3, mime: 'audio/mpeg' };
+      await new Promise((r) => setTimeout(r, 700 * (attempt + 1)));
+    }
+    return null;
+  }
   if (useGemini()) {
     const style = (TTS_STYLE[emotion] || TTS_STYLE.kind).replace('bunny', noun), voice = GEMINI_VOICES.includes(speaker) ? speaker : 'leda';
     // только голос Gemini: если он не ответил (лимит запросов) — ещё раз через секунду, потом Leda; чужой голос (Google) не подставляем
@@ -913,7 +946,7 @@ function gameView(st: any) {
 /* ---------- API сайта ---------- */
 const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'content-type', 'Access-Control-Allow-Methods': 'POST, OPTIONS' };
 const json = (b: unknown, status = 200) => new Response(JSON.stringify(b), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
-const view = (st: any) => ({ mode: st.mode, scene: st.scene, level: st.level, plan: st.plan, history: st.history, stats: st.stats || {}, voice: st.voice, speaker: voiceFor(st, charOf(st)), speakers: speakersNow(), engine: useGemini() ? 'gemini' : 'orpheus' });
+const view = (st: any) => ({ mode: st.mode, scene: st.scene, level: st.level, plan: st.plan, history: st.history, stats: st.stats || {}, voice: st.voice, speaker: voiceFor(st, charOf(st)), speakers: speakersNow(), engine: useAzure() ? 'azure' : useGemini() ? 'gemini' : 'orpheus' });
 const scenes = Object.fromEntries(Object.entries(SCENES).map(([k, [n]]) => [k, n]));
 
 async function reply(out: any, voice: boolean, speaker: string, noun = 'bunny') {
