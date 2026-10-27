@@ -1238,6 +1238,63 @@ Questions: ${JSON.stringify(out.check.map((q: any) => ({ question: q.question, c
       await save(owner);
       return json({ ok: true, lessons: owner.stats.lessons });
     }
+    // личный план: ответы человека + его результаты здесь (экзамены, SAT, эссе, пройденные уроки) → неделя по дням, порядок уроков, этапы до экзамена
+    case 'study_plan': {
+      const a = b.answers || {}, num = (v: any, lo: number, hi: number) => { const n = Number(v); return n >= lo && n <= hi ? n : null; };
+      const ans = {
+        exam: ['ielts', 'sat', 'both'].includes(a.exam) ? a.exam : 'ielts',
+        ielts: { now: num(a.ielts?.now, 1, 9), target: num(a.ielts?.target, 1, 9) },
+        sat: { now: num(a.sat?.now, 400, 1600), target: num(a.sat?.target, 400, 1600) },
+        date: /^\d{4}-\d{2}-\d{2}$/.test(String(a.date || '')) ? String(a.date) : '',
+        minutes: num(a.minutes, 10, 240) || 30, days: num(a.days, 1, 7) || 5,
+        hard: (Array.isArray(a.hard) ? a.hard : []).map((x: any) => String(x).slice(0, 40)).slice(0, 10),
+      };
+      const skills = (Array.isArray(b.skills) ? b.skills : []).filter((k: any) => /^[a-z0-9-]{2,20}$/.test(String(k?.id || ''))).slice(0, 80)
+        .map((k: any) => ({ id: String(k.id), name: String(k.name || '').slice(0, 90) }));
+      if (!skills.length) return json({ error: 'bad' }, 400);
+      const ACTS = ['ielts-full', 'ielts-p1', 'ielts-p2', 'ielts-p3', 'writing', 'sat-math', 'sat-rw', 'read', 'call'];
+      const DAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+      const PLAN_SCHEMA = {
+        type: 'object', additionalProperties: false, required: ['summary', 'verdict', 'weeks', 'priority', 'week', 'phases', 'milestones', 'tips'],
+        properties: {
+          summary: { type: 'string' }, verdict: { type: 'string', enum: ['ok', 'tight', 'short', 'done'] }, weeks: { type: 'integer' },
+          priority: { type: 'array', items: { type: 'string', enum: skills.map((k: any) => k.id) } },
+          week: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['day', 'tasks'], properties: {
+            day: { type: 'string', enum: DAYS },
+            tasks: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['type', 'act', 'minutes', 'note'], properties: {
+              type: { type: 'string', enum: ['lesson', 'practice', 'mock', 'words', 'rest'] }, act: { type: 'string', enum: ['', ...ACTS] },
+              minutes: { type: 'integer' }, note: { type: 'string' } } } } } } },
+          phases: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['title', 'weeks', 'focus'], properties: { title: { type: 'string' }, weeks: { type: 'string' }, focus: { type: 'string' } } } },
+          milestones: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['week', 'what'], properties: { week: { type: 'integer' }, what: { type: 'string' } } } },
+          tips: { type: 'array', items: { type: 'string' } },
+        },
+      };
+      const stt = owner.stats || {}, el = stt.examLast;
+      const facts = [
+        el ? `Last IELTS Speaking mock: overall ${el.overall}; ${(el.criteria || []).map((c: any) => `${c.name} ${c.score}`).join(', ')}.` : 'No IELTS Speaking mock yet.',
+        (stt.sat || []).length ? `Last SAT sets: ${(stt.sat || []).slice(-4).map((x: any) => `${x.section} ${x.correct}/${x.total} (≈${x.score})${x.weak?.length ? ', weak: ' + x.weak.join('/') : ''}`).join('; ')}.` : 'No SAT practice yet.',
+        (stt.writing || []).length ? `Last IELTS essays: ${(stt.writing || []).slice(-3).map((w: any) => w.overall).join(', ')}.` : 'No essays yet.',
+        `Lessons already done: ${Object.keys(stt.lessons || {}).join(', ') || 'none'}.`,
+      ].join(' ');
+      const weeksLeft = ans.date ? Math.max(1, Math.round((Date.parse(ans.date) - Date.now()) / (7 * 864e5))) : 0;
+      const out = await askJsonGroq(`You are an expert IELTS and Digital SAT study coach. You build realistic, personal study plans grounded in learning research: spaced repetition, retrieval practice and full practice tests, interleaving, weak areas first, a full mock every 2–3 weeks, lighter final week. Write every text field in Russian — short, concrete, friendly, addressing the learner as "ты". Return JSON only.`,
+        `Learner: exam ${ans.exam === 'both' ? 'IELTS and SAT' : ans.exam.toUpperCase()}; ${ans.exam !== 'sat' ? `IELTS now ${ans.ielts.now ?? 'unknown'}, target ${ans.ielts.target ?? 'not set'}; ` : ''}${ans.exam !== 'ielts' ? `SAT now ${ans.sat.now ?? 'unknown'}, target ${ans.sat.target ?? 'not set'}; ` : ''}exam date ${ans.date ? `${ans.date} (about ${weeksLeft} weeks left)` : 'not booked (plan for 12 weeks)'}; ${ans.minutes} minutes a day, ${ans.days} days a week; finds hardest: ${ans.hard.join(', ') || 'not said'}. English level about ${owner.level || 'B1'}.
+Results in the app: ${facts}
+Typical effort: about 3 months per +0.5 IELTS band; SAT: ~20 hours of official practice ≈ +115 points on average, higher scores cost more time.
+
+Rules:
+- "week": exactly 7 entries in order Пн..Вс. Exactly ${ans.days} study days spread through the week; every other day has one task {type:"rest", act:"", minutes:0, note:""}.
+- Each study day: 2–4 tasks whose minutes add up to about ${ans.minutes}. "lesson" = one lesson from the app (15–25 min), "practice" = timed practice in the app with "act" set, "mock" = a full practice test with "act" set (once a week at most, on a day with more time), "words" = spaced-repetition word cards (10–15 min, most study days). "act" is empty for lesson and words. "note" — what exactly to focus on today, in Russian, up to 10 words.
+- Use only these practice acts: ${ACTS.join(', ')} (ielts-full = whole Speaking mock; read = reading a book; call = free speaking with the tutor). Match acts to the learner's exam.
+- "priority": 8–15 lesson ids from this list, most important first (weakest areas and what the target needs): ${skills.map((k: any) => `${k.id} = ${k.name}`).join('; ')}.
+- "phases": 3–4 phases from now until the exam with week ranges like "1–3"; "milestones": 3–5 checkpoints (week number + what to do or reach, e.g. a full mock and the expected score); "tips": 3–5 personal tips for this learner.
+- "weeks": total weeks of the plan. "verdict": ok (enough time), tight, short (not enough time — say honestly in the summary what to change), done (already at target).
+- "summary": 2–3 honest sentences: where the learner is, what the plan focuses on and whether the goal is realistic.`, PLAN_SCHEMA, 'high');
+      if (!out?.week?.length) return json({ error: 'failed' }, 502);
+      owner.stats = { ...stt, studyPlan: { answers: ans, plan: out, at: new Date().toISOString() } };
+      await save(owner);
+      return json({ studyPlan: owner.stats.studyPlan });
+    }
     // подборка слов по теме экзамена — сразу в карточки (без повторов того, что уже есть)
     case 'wordset': {
       const topic = String(b.topic || '').slice(0, 80) || pickThemes(THEMES, 1)[0];
