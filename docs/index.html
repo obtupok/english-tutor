@@ -721,6 +721,7 @@ nav button{font-size:11px!important}
 .privacy .pv ul{margin:0;padding-left:18px;display:grid;gap:8px;line-height:1.5;color:var(--fg-2);font-size:15px}
 .privacy .arts{margin-top:14px}
 .in-note a,.pw-fine a{color:var(--fg);text-decoration:underline;text-underline-offset:2px}
+.relink{font:inherit;color:var(--ptext);text-decoration:underline;text-underline-offset:2px;letter-spacing:inherit;text-transform:inherit}
 
 </style>
 </head>
@@ -2465,8 +2466,10 @@ $('#learnBox').onclick = e => {
 /* ---- урок: генерация с проверкой идёт ~20 с, поэтому урок курса готовим заранее, в фоне ---- */
 let LS = null;
 const lessonLoads = new Map();
+// урок из памяти берём, только если он полный (иначе — готовим заново)
+const lessonOk = L => !!(L && L.intro?.length > 40 && L.steps?.length >= 2 && L.steps.every(x => x.text?.length > 20) && L.example?.answer?.length > 10 && L.check?.length);
 function loadLesson(k, fresh = false){
-  if(!fresh){ const c = store.get('yomi_lsn_' + k.id, null); if(c) return Promise.resolve(c); }
+  if(!fresh){ const c = store.get('yomi_lsn_' + k.id, null); if(lessonOk(c)) return Promise.resolve(c); }
   if(!lessonLoads.has(k.id)) lessonLoads.set(k.id, api('lesson', {exam: k.exam, name: k.name, focus: k.f || (k.id.startsWith('g-') ? GRAMMAR_FOCUS : '')}).catch(() => ({}))
     .then(j => { lessonLoads.delete(k.id); if(j.lesson) store.set('yomi_lsn_' + k.id, j.lesson); return j.lesson || null; }));
   return lessonLoads.get(k.id);
@@ -2475,6 +2478,7 @@ async function openLesson(id, fresh = false){
   const k = SKILLS.find(x => x.id === id); if(!k) return;
   const box = $('#learnBox'); parkBunny();
   let lesson = fresh ? null : store.get('yomi_lsn_' + id, null);
+  if(!lessonOk(lesson)) lesson = null;
   if(!lesson){
     box.innerHTML = `${BACK()}<div class="empty">Yomi готовит урок «${esc(k.name)}» и проверяет каждый ответ — это до 30 секунд…</div>`; homeBunny();
     lesson = await loadLesson(k, fresh);
@@ -2487,7 +2491,7 @@ async function openLesson(id, fresh = false){
 function drawLesson(){
   const {k, lesson: L, picks} = LS, answered = picks.filter(p => p != null).length, score = L.check.filter((q, i) => picks[i] === q.answer).length;
   $('#learnBox').innerHTML = `${BACK()}
-    <p class="eyebrow">${esc(k.g)}</p><h2>${esc(L.title)}</h2><p class="lead">${esc(L.intro)}</p>
+    <p class="eyebrow">${esc(k.g)} · <button class="relink" data-lfresh>Обновить урок</button></p><h2>${esc(L.title)}</h2><p class="lead">${esc(L.intro)}</p>
     <div class="sec-h"><h3>Как делать</h3></div>
     <div class="lsteps">${L.steps.map((s, i) => `<div class="card lstep"><span class="num">${i + 1}</span><div><b>${esc(s.title)}</b><p>${esc(s.text)}</p></div></div>`).join('')}</div>
     <div class="sec-h"><h3>Разбор примера</h3></div>
