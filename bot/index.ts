@@ -350,13 +350,13 @@ const SAT_MATH = ['linear equations', 'systems of equations', 'linear functions 
 const pickThemes = (list: string[], n: number) => [...list].sort(() => Math.random() - 0.5).slice(0, n);
 const shortQ = (q: string) => String(q || '').replace(/\s+/g, ' ').slice(0, 90);
 
-async function askJsonGroq(system: string, user: string, schema: any, effort = 'medium') {
+async function askJsonGroq(system: string, user: string, schema: any, effort = 'medium', maxTokens = 16000) {
   for (let attempt = 0; attempt < 2; attempt++) {
     const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: { Authorization: 'Bearer ' + env('GROQ_API_KEY'), 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: GROQ_MODEL, reasoning_effort: effort, max_completion_tokens: 8000,
+        model: GROQ_MODEL, reasoning_effort: effort, max_completion_tokens: maxTokens,
         messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
         response_format: { type: 'json_schema', json_schema: { name: 'exam', strict: true, schema } },
       }),
@@ -1289,7 +1289,7 @@ Rules:
 - "priority": 8–15 lesson ids from this list, most important first (weakest areas and what the target needs): ${skills.map((k: any) => `${k.id} = ${k.name}`).join('; ')}.
 - "phases": 3–4 phases from now until the exam with week ranges like "1–3"; "milestones": 3–5 checkpoints (week number + what to do or reach, e.g. a full mock and the expected score); "tips": 3–5 personal tips for this learner.
 - "weeks": total weeks of the plan. "verdict": ok (enough time), tight, short (not enough time — say honestly in the summary what to change), done (already at target).
-- "summary": 2–3 honest sentences: where the learner is, what the plan focuses on and whether the goal is realistic.`, PLAN_SCHEMA, 'high');
+- "summary": 2–3 honest sentences: where the learner is, what the plan focuses on and whether the goal is realistic.`, PLAN_SCHEMA, 'medium', 30000);
       if (!out?.week?.length) return json({ error: 'failed' }, 502);
       const studyPlan = { answers: ans, plan: out, at: new Date().toISOString() };
       if (b.dry) return json({ studyPlan });   // проверка без сохранения
