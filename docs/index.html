@@ -777,6 +777,11 @@ nav button{font-size:11px!important}
 .tutorcard .ic{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;flex:none}.tutorcard .t{flex:1;display:flex;flex-direction:column;gap:2px}.tutorcard small{color:var(--fg-2);font-size:13px}.tutorcard>svg{width:18px;height:18px;color:var(--muted)}
 .lqask{display:block;margin-top:8px;font-size:14px;font-weight:700}
 .typing{align-items:center}.typing span{margin-left:6px;color:var(--muted);font-size:13px}
+/* значок звука у английских слов в ответах репетитора */
+.ensay{white-space:normal}
+.sayi{display:inline-grid;place-items:center;width:24px;height:24px;margin:0 2px 0 3px;vertical-align:-6px;border-radius:8px;background:var(--accent-bg);color:var(--ptext);transition:transform var(--t-fast)}
+.sayi svg{width:14px;height:14px}.sayi:active{transform:scale(.9)}
+@media (hover:hover){.sayi:hover{background:#F8D9C6}}
 
 </style>
 </head>
@@ -2998,6 +3003,25 @@ function tactions(text){
 }
 const tclean = text => text.replace(/\[\[[^\]]*\]\]/g, '').trim();
 
+// английские слова и фразы в ответе — со значком звука: подряд идущие слова — одна фраза, один значок
+const SAY_I = svgI('<path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/>');
+function tspeak(root){
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {acceptNode: n => n.parentElement.closest('.ensay, button') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT});
+  const nodes = []; while(walker.nextNode()) nodes.push(walker.currentNode);
+  for(const n of nodes){
+    const text = n.nodeValue, re = /[A-Za-z][A-Za-z0-9'’]*(?:[ \-,;:]+[A-Za-z0-9'’]+)*[.!?]?/g;
+    let m, last = 0, frag = null;
+    while((m = re.exec(text))){
+      if(m[0].replace(/[^A-Za-z]/g, '').length < 2) continue;   // одиночные буквы (A, B) не озвучиваем
+      frag ||= document.createDocumentFragment();
+      frag.append(text.slice(last, m.index));
+      const span = document.createElement('span'); span.className = 'ensay'; span.textContent = m[0];
+      const b = document.createElement('button'); b.className = 'sayi'; b.dataset.tsay = m[0]; b.setAttribute('aria-label', 'Послушать: ' + m[0]); b.innerHTML = SAY_I;
+      span.append(b); frag.append(span); last = m.index + m[0].length;
+    }
+    if(frag){ frag.append(text.slice(last)); n.replaceWith(frag); }
+  }
+}
 function tutorBox(){
   let box = $('#tutor');
   if(!box){ box = document.createElement('div'); box.id = 'tutor'; box.className = 'intro tutor'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Репетитор Yomi'); document.body.append(box); }
@@ -3023,7 +3047,7 @@ function tutorChat(id){
     <div class="tmsgs" id="tmsgs">${c.msgs.length ? '' : `<div class="tempty"><p>Напиши, что хочешь выучить или что непонятно.</p><div class="tstarts">${TUTOR_STARTS.slice(0, 4).map(t => `<button class="chip" data-tstart="${esc(t)}">${esc(t)}</button>`).join('')}</div></div>`}
       ${c.msgs.map(m => tmsgHtml(m)).join('')}${tbusy ? '<div class="tmsg a"><div class="tbub typing"><i></i><i></i><i></i><span>Yomi думает и перепроверяет ответ…</span></div></div>' : ''}</div>
     <form class="tcomp" id="tcomp"><textarea id="tin" rows="1" placeholder="Спроси Yomi…" aria-label="Сообщение"></textarea><button class="tsend" aria-label="Отправить">${svgI('<path d="M5 12h14M13 6l6 6-6 6"/>')}</button></form>`;
-  const ms = $('#tmsgs'); ms.scrollTop = ms.scrollHeight;
+  const ms = $('#tmsgs'); ms.querySelectorAll('.tmsg.a .tbub').forEach(tspeak); ms.scrollTop = ms.scrollHeight;
   const tin = $('#tin'); tin.oninput = () => { tin.style.height = 'auto'; tin.style.height = Math.min(140, tin.scrollHeight) + 'px'; };
   tin.onkeydown = e => { if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); $('#tcomp').requestSubmit(); } };
   $('#tcomp').onsubmit = e => { e.preventDefault(); const t = tin.value.trim(); if(t && !tbusy){ tin.value = ''; tutorSend(t); } };
@@ -3058,6 +3082,7 @@ function startAsk(chatId, ctx, question){ tcur = chatId; tutorBox(); tutorSend(q
 document.addEventListener('click', e => {
   const t = e.target; if(!t.closest('#tutor')) return;
   const st = t.closest('[data-tstart]'), op = t.closest('[data-topen]'), del = t.closest('[data-tdel]'), les = t.closest('[data-tles]'), act = t.closest('[data-tact]');
+  const say = t.closest('[data-tsay]'); if(say){ e.stopPropagation(); return sayWord(say.dataset.tsay); }
   if(t.closest('[data-tclose]')) return closeTutor();
   if(t.closest('[data-tlist]')) return tutorList();
   if(t.closest('[data-tnew]')){ tcur = null; const id = Date.now().toString(36); TCH.unshift({id, title: '', at: new Date().toISOString(), msgs: []}); tsave(); return tutorChat(id); }
