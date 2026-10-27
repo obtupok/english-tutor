@@ -1345,14 +1345,16 @@ How to answer:
 - If the learner says what they want to learn, start with the core rules or method in simple words, then 2–4 clear examples, typical mistakes, and how to practise it. End with one short exercise or question to check understanding.
 - If they ask why an answer to a task is correct, solve it yourself step by step first, show the exact reasoning (and why each wrong option is wrong), then give a short tip for similar tasks. Never just agree with the given answer if it is wrong — say so.
 - Be accurate: for grammar and SAT rules use standard usage; for math check every calculation. If unsure, say what you are unsure about.
-- Format for a phone screen: short paragraphs, "- " bullet lists, "1. " numbered steps, **bold** for key words, "### " for small headings. No tables. Usually 120–350 words unless the learner asks for more.
-- At the very end you may add up to 2 suggestions on separate lines in exactly this form: [[lesson:ID|short title]] to open a lesson in the app, or [[act:ACT|short title]] to start practice. Lesson IDs: ${skills.map((k: any) => `${k.id} (${String(k.name || '').slice(0, 60)})`).join('; ')}. ACT: ielts-full, ielts-p1, ielts-p2, ielts-p3, writing, sat-math, sat-rw, read, call. Only suggest what really fits.
+- Format for a phone screen: short paragraphs, "- " bullet lists, "1. " numbered steps, **bold** for key words, "### " for small headings written in Russian (e.g. "### Как образуется", "### Примеры", "### Частые ошибки", "### Как тренировать"). Never copy these instructions or English labels like "clear examples" into the answer, and never show internal IDs. No tables. Usually 120–350 words unless the learner asks for more.
+- Every "mistake" example must show the wrong sentence and the corrected one, and the explanation must match it exactly.
+- Talk as in a chat with this one learner (not "в комментариях"); invite them to reply here.
+- At the very end you may add up to 2 suggestions on separate lines in exactly this form: [[lesson:ID|short title]] to open a lesson in the app, or [[act:ACT|short title]] to start practice. Lesson IDs: ${skills.map((k: any) => `${k.id} (${String(k.name || '').slice(0, 60)})`).join('; ')}. ACT: ielts-full, ielts-p1, ielts-p2, ielts-p3, writing, sat-math, sat-rw, read, call. Use real values only — never write the placeholder words ID or ACT. Only suggest what really fits.
 Learner profile: ${profile}`;
       let reply = '';
       for (let attempt = 0; attempt < 3 && !reply; attempt++) {
         const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
           method: 'POST', headers: { Authorization: 'Bearer ' + env('GROQ_API_KEY'), 'Content-Type': 'application/json' },
-          body: JSON.stringify({ model: GROQ_MODEL, reasoning_effort: 'medium', max_completion_tokens: 6000, messages: [{ role: 'system', content: system }, ...msgs] }),
+          body: JSON.stringify({ model: GROQ_MODEL, reasoning_effort: 'high', max_completion_tokens: 12000, messages: [{ role: 'system', content: system }, ...msgs] }),
         });
         if (r.status === 429) { const wait = Math.min(8, Number(r.headers.get('retry-after')) || 2); await new Promise((res) => setTimeout(res, wait * 1000)); continue; }
         const j = await r.json().catch(() => ({}));
