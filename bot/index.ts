@@ -1257,6 +1257,47 @@ Questions: ${JSON.stringify(out.check.map((q: any) => ({ question: q.question, c
       if (Array.isArray(ver?.answers)) check = check.filter((q: any, i: number) => ver.answers[i] === q.answer);
       return check.length ? json({ check: check.slice(0, n) }) : json({ error: 'failed' }, 502);
     }
+    // практика с учителем: ученик сам говорит или пишет; задания под навык урока
+    case 'lesson_tasks': {
+      const name = String(b.name || '').slice(0, 120), focus = String(b.focus || '').slice(0, 700), kind = ['speaking', 'writing', 'grammar'].includes(b.kind) ? b.kind : 'speaking';
+      const n = Math.max(2, Math.min(5, Number(b.n) || 3)), avoid = (Array.isArray(b.avoid) ? b.avoid : []).map((q: any) => String(q).slice(0, 160)).slice(-30);
+      if (!name) return json({ error: 'bad' }, 400);
+      const how = kind === 'speaking'
+        ? 'Each task is a real IELTS Speaking question for this part/skill that the learner answers out loud (or types) — the way an examiner asks it. For Part 2, give the full cue card in "prompt" (topic line + "You should say:" bullets).'
+        : kind === 'writing'
+          ? 'Each task asks the learner to write a short piece that trains exactly this skill (e.g. an introduction with a clear position for a given Task 2 question, one body paragraph "idea → explanation → example", or a short paragraph using linking words). Include the full essay question when needed.'
+          : 'Each task makes the learner PRODUCE the grammar themselves: transform sentences (give 2–3 numbered sentences to rewrite), complete sentences in their own words, or write 2–3 sentences about their life using the form. Never multiple choice.';
+      const T_SCHEMA = { type: 'object', additionalProperties: false, required: ['tasks'], properties: { tasks: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['prompt', 'hint', 'model'],
+        properties: { prompt: { type: 'string' }, hint: { type: 'string' }, model: { type: 'string' } } } } } };
+      const out = await askJsonGroq(`You are an experienced IELTS teacher. Write task text in English (instructions for grammar tasks may be in Russian), hints in Russian. The learner's level is about ${owner.level || 'B1'}. Return JSON only.`,
+        `Lesson skill: "${name}".${focus ? ` Key facts: ${focus}.` : ''}\nWrite ${n} practice tasks, from easier to harder. ${how}\n"hint" (Russian, 1–2 sentences): what exactly from the lesson to apply in this answer. "model": a strong model answer (band 7–8) the learner can compare with later.${avoid.length ? `\nDo not repeat these tasks:\n- ${avoid.join('\n- ')}` : ''}`, T_SCHEMA, 'medium');
+      const tasks = (out?.tasks || []).filter((t: any) => t.prompt?.trim()).slice(0, n);
+      return tasks.length ? json({ tasks }) : json({ error: 'failed' }, 502);
+    }
+    // разбор ответа как у живого учителя: что хорошо, ошибки «как у тебя → как правильно → почему», сильнее, совет; можно голосом
+    case 'lesson_feedback': {
+      const name = String(b.name || '').slice(0, 120), focus = String(b.focus || '').slice(0, 700), kind = String(b.kind || 'speaking');
+      const task = { prompt: String(b.task?.prompt || '').slice(0, 1500), hint: String(b.task?.hint || '').slice(0, 400) };
+      let answer = String(b.answer || '').slice(0, 4000);
+      if (b.audio) {
+        const mime = String(b.mime || 'audio/webm'), ext = /mp4|m4a|aac/.test(mime) ? 'm4a' : /ogg/.test(mime) ? 'ogg' : /wav/.test(mime) ? 'wav' : 'webm';
+        answer = await transcribe(new Blob([Uint8Array.from(atob(String(b.audio)), (c) => c.charCodeAt(0))], { type: mime }), 'answer.' + ext, 'en', task.prompt);
+      }
+      if (!answer.trim()) return json({ error: 'empty', heard: '' }, 400);
+      const F_SCHEMA = { type: 'object', additionalProperties: false, required: ['verdict', 'praise', 'issues', 'better', 'tip'], properties: {
+        verdict: { type: 'string', enum: ['great', 'good', 'retry'] }, praise: { type: 'string' },
+        issues: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['wrong', 'right', 'why'], properties: { wrong: { type: 'string' }, right: { type: 'string' }, why: { type: 'string' } } } },
+        better: { type: 'string' }, tip: { type: 'string' } } };
+      const fb = await askJsonGroq(`You are a warm but demanding IELTS teacher giving feedback to one learner on one answer. Feedback in Russian; quotes, corrections and the improved answer in English. Be accurate — check every correction twice; do not invent mistakes; if the answer is good, say so. Return JSON only.`,
+        `Lesson skill: "${name}" (${kind}).${focus ? ` Key facts: ${focus}.` : ''}\nTask: ${task.prompt}\nWhat to apply: ${task.hint}\nLearner's answer${b.audio ? ' (transcribed from speech — ignore punctuation and filler words)' : ''}: «${answer}»\n
+- "verdict": great (uses the lesson skill well, no real errors), good (works, small issues), retry (misses the skill or has errors that matter — ask to try again).
+- "praise": 1–2 sentences on what is good (specific).
+- "issues": up to 4 real problems: "wrong" = exact fragment from the answer, "right" = corrected version, "why" = short reason in Russian tied to the lesson. Empty if none.
+- "better": the learner's own answer rewritten at band 7–8 level, keeping their ideas.
+- "tip": one concrete thing to do in the next try (Russian).`, F_SCHEMA, 'high');
+      if (!fb) return json({ error: 'failed', heard: answer }, 502);
+      return json({ heard: answer, feedback: fb });
+    }
     case 'lesson_done': {
       const skill = String(b.skill || '').slice(0, 60); if (!skill) return json({ error: 'bad' }, 400);
       const score = Math.max(0, Number(b.score) | 0), total = Math.max(0, Number(b.total) | 0);
