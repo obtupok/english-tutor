@@ -664,6 +664,12 @@ nav button.on svg{color:var(--accent)}
 .pw-d{display:flex;flex-direction:column;align-items:flex-end;line-height:1.15}.pw-d b{font-family:var(--head);font-weight:800;font-size:18px;letter-spacing:-.02em}.pw-d small{color:var(--muted);font-size:12px}
 .pw-d i{font-style:normal;font-size:11px;font-weight:800;color:var(--green);background:var(--green-bg);padding:1px 6px;border-radius:99px;margin-bottom:3px}
 .pw-fine{color:var(--muted);font-size:12.5px;line-height:1.5;margin-top:14px}
+.pw-back{display:inline-flex;align-items:center;gap:4px;color:var(--fg-2)}.pw-back svg{width:20px;height:20px}
+.pw-sum{color:var(--fg-2);font-size:15px;margin:-4px 0 16px}.pw-sum b{color:var(--fg)}
+.pw-way .ic{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;flex:none}.pw-way .ic svg{width:22px;height:22px}
+.pw-way.busy{opacity:.6;pointer-events:none}.pw-way.busy .pw-d b{animation:blink .8s steps(1) infinite}
+@media (hover:hover){.pw-way:hover{border-color:var(--fg)}}
+.pw-err{min-height:20px;margin:12px 0 0;font-size:14px;color:var(--fg-2)}
 
 </style>
 </head>
@@ -2147,13 +2153,14 @@ function openIntro(){
 if(AUTH && !store.get('yomi_intro', 0)) openIntro();
 
 
-/* ---------- подписка «YomiRead + YomiScore»: оплата на YomiRead (/vip?plan=pro_N — сразу окно оплаты) ----------
-   Цены — те же, что в YomiRead (payments-config.js, create-payment, tg-bot): сервер YomiRead берёт цену только у себя. */
+/* ---------- подписка «YomiRead + YomiScore»: выбор срока и способа оплаты — здесь, в дизайне YomiScore ----------
+   Счёт создаёт наш сервер (действие pay) через функции оплаты YomiRead: оплата себе по Telegram ID, без входа на сайт.
+   Цены — те же, что в YomiRead (payments-config.js, create-payment, tg-bot): сервер берёт цену только у себя. */
 const SUB_PLANS = [
-  {id: 'pro_12', m: 12, usd: 62.4, name: '12 месяцев', best: true},
-  {id: 'pro_6', m: 6, usd: 38.4, name: '6 месяцев'},
-  {id: 'pro_3', m: 3, usd: 21.6, name: '3 месяца'},
-  {id: 'pro_1', m: 1, usd: 8, name: '1 месяц'},
+  {id: 'pro_12', m: 12, usd: 62.4, stars: 4992, name: '12 месяцев', best: true},
+  {id: 'pro_6', m: 6, usd: 38.4, stars: 3072, name: '6 месяцев'},
+  {id: 'pro_3', m: 3, usd: 21.6, stars: 1728, name: '3 месяца'},
+  {id: 'pro_1', m: 1, usd: 8, stars: 640, name: '1 месяц'},
 ];
 const SUB_FEATS = [
   'Пробные экзамены IELTS Speaking с оценкой band',
@@ -2162,12 +2169,37 @@ const SUB_FEATS = [
   'Разговор голосом с Yomi без лимитов',
   'Все книги YomiRead — подписка там тоже включена',
 ];
+const STAR_I = svgI('<path d="M12 3.4l2.65 5.37 5.93.86-4.29 4.18 1.01 5.9L12 16.92l-5.3 2.79 1.01-5.9L3.42 9.63l5.93-.86z"/>');
+const COIN_I = svgI('<circle cx="12" cy="12" r="9"/><path d="M9.5 8h4a2 2 0 0 1 0 4h-4m0 0h4.5a2 2 0 0 1 0 4H9.5m0-8v8m2-10v2m0 8v2"/>');
+const ROCKET_I = svgI('<path d="M5 15c-1.5 1.3-2 5-2 5s3.7-.5 5-2c.7-.8.7-2.1-.1-2.9a2.1 2.1 0 0 0-2.9-.1z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.9A12.9 12.9 0 0 1 22 2c0 2.7-.8 7.5-6 11a22.4 22.4 0 0 1-4 2z"/><path d="M9 12H4s.6-3 2-4c1.6-1.1 5 0 5 0M12 15v5s3-.6 4-2c1.1-1.6 0-5 0-5"/>');
+const PAY_WAYS = [
+  {id: 'stars', ic: STAR_I, c: 'orange', t: 'Telegram Stars', s: 'Оплата звёздами прямо в Telegram'},
+  {id: 'crypto', ic: COIN_I, c: 'green', t: 'Криптовалюта', s: 'USDT, BTC, ETH, TON и ещё 100+ монет'},
+  {id: 'xrocket', ic: ROCKET_I, c: 'sky', t: 'Крипта через xRocket', s: 'Оплата в @xRocket, в Telegram'},
+];
 const usd = n => '$' + (n % 1 ? n.toFixed(2) : n);
 const perDay = p => usd(Math.round(p.usd / (p.m * 30) * 100) / 100);
 const saveP = p => Math.round((1 - p.usd / (8 * p.m)) * 100);
-let subPick = 'pro_12';
+let subPick = 'pro_12', subStep = 'plans';
 function drawPaywall(){
   const box = $('#paywall'), p = SUB_PLANS.find(x => x.id === subPick);
+  if(subStep === 'pay'){
+    box.innerHTML = `<div class="in-top"><button class="in-skip pw-back" data-pback>${svgI('<path d="M15 6l-6 6 6 6"/>')} Назад</button><span></span></div>
+      <div class="in-body">
+        <p class="eyebrow">Оплата</p>
+        <h1>Способ оплаты</h1>
+        <p class="pw-sum">YomiRead + YomiScore · ${p.name} — <b>${usd(p.usd)}</b></p>
+        <div class="pw-plans">${PAY_WAYS.map(w => `
+          <button class="pw-plan pw-way" data-pw="${w.id}">
+            <span class="ic ${w.c}">${w.ic}</span>
+            <span class="pw-t"><b>${w.t}</b><small>${w.s}</small></span>
+            <span class="pw-d"><b>${w.id === 'stars' ? `${p.stars} ⭐` : usd(p.usd)}</b><small>разово</small></span>
+          </button>`).join('')}</div>
+        <p class="pw-err" id="pwErr" role="status"></p>
+        <p class="pw-fine">Разовый платёж за ${p.name}, без автопродления. Подписка включится в течение минуты после оплаты — и в YomiScore, и в YomiRead. Данные кошелька не попадают к нам.</p>
+      </div>`;
+    return;
+  }
   box.innerHTML = `<div class="in-top"><span></span><button class="in-skip" data-pskip>Позже · доступ владельца</button></div>
     <div class="in-body">
       <div class="pw-hero">${miniBunny(LOOK.char, LOOK.color, 'gradcap', 'scarf', 'none')}</div>
@@ -2181,31 +2213,47 @@ function drawPaywall(){
           <span class="pw-t"><b>${x.name}</b><small>${usd(x.usd)}${x.m > 1 ? ` · <s>${usd(8 * x.m)}</s>` : ''}</small></span>
           <span class="pw-d">${x.m > 1 ? `<i>−${saveP(x)}%</i>` : ''}<b>${perDay(x)}</b><small>в день</small></span>
         </button>`).join('')}</div>
-      <p class="pw-fine">Оплата на YomiRead: звёзды Telegram или криптовалюта. Разовый платёж за весь срок, без автопродления. Подписка действует и в YomiRead, и в YomiScore.</p>
+      <p class="pw-fine">Звёзды Telegram или криптовалюта. Разовый платёж за весь срок, без автопродления.</p>
     </div>
-    <div class="in-foot"><button class="btn" data-pbuy>Оформить за ${usd(p.usd)}</button></div>`;
+    <div class="in-foot"><button class="btn" data-pbuy>Продолжить · ${usd(p.usd)}</button></div>`;
 }
+function popPaywall(){ const box = $('#paywall'); box.scrollTop = 0; if(RM) return; box.querySelectorAll('.in-body > *').forEach((el, k) => { el.style.setProperty('--i', k); el.classList.add('pop'); }); }
+const paidThanks = () => notify('Спасибо! Подписка включится в течение минуты.');
+async function payWith(method, btn){
+  const err = $('#pwErr'); err.textContent = ''; btn.classList.add('busy'); btn.disabled = true;
+  const j = await api('pay', {plan: subPick, method}).catch(() => ({}));
+  btn.classList.remove('busy'); btn.disabled = false;
+  if(!j.url){ err.textContent = 'Не удалось создать счёт. Попробуй другой способ или чуть позже.'; return; }
+  const tgLink = /^https:\/\/t\.me\//.test(j.url);
+  if(method === 'stars' && TG?.openInvoice){
+    try{ TG.openInvoice(j.url, st => { if(st === 'paid'){ paidThanks(); closePaywall(); } }); return; }catch{}
+  }
+  if(tgLink && TG?.openTelegramLink) TG.openTelegramLink(j.url);
+  else if(TG?.initData && TG.openLink) TG.openLink(j.url);
+  else window.open(j.url, '_blank', 'noopener');
+  err.textContent = method === 'stars' ? 'Счёт открылся в Telegram — оплати его там.' : 'Страница оплаты открылась. После оплаты вернись сюда.';
+}
+function closePaywall(){ const box = $('#paywall'); if(!box) return; store.set('yomi_paywall', 1); box.classList.add('out'); setTimeout(() => box.remove(), RM ? 0 : 280); }
 function openPaywall(){
   if($('#paywall')) return;
+  subStep = 'plans';
   const box = document.createElement('div'); box.id = 'paywall'; box.className = 'intro paywall'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Подписка');
-  document.body.append(box); drawPaywall();
-  box.querySelectorAll('.in-body > *').forEach((el, k) => { if(RM) return; el.style.setProperty('--i', k); el.classList.add('pop'); });
+  document.body.append(box); drawPaywall(); popPaywall();
   box.onclick = e => {
     const sp = e.target.closest('[data-sp]');
     if(sp){ subPick = sp.dataset.sp; const y = box.scrollTop; drawPaywall(); box.scrollTop = y; return; }
-    if(e.target.closest('[data-pbuy]')){
-      const url = `https://yomiread.com/vip?plan=${subPick}`;
-      if(TG?.initData && TG.openLink) TG.openLink(url); else window.open(url, '_blank', 'noopener');
-      return;
-    }
-    if(e.target.closest('[data-pskip]')){ store.set('yomi_paywall', 1); box.classList.add('out'); setTimeout(() => box.remove(), RM ? 0 : 280); }
+    if(e.target.closest('[data-pbuy]')){ subStep = 'pay'; drawPaywall(); popPaywall(); return; }
+    if(e.target.closest('[data-pback]')){ subStep = 'plans'; drawPaywall(); popPaywall(); return; }
+    const pw = e.target.closest('[data-pw]'); if(pw) return payWith(pw.dataset.pw, pw);
+    if(e.target.closest('[data-pskip]')) closePaywall();
   };
 }
 // сразу после вступления — экран подписки (пока YomiScore только для владельца, его можно отложить)
 {
   const _close = closeIntro;
   closeIntro = function(){ _close(); if(!store.get('yomi_paywall', 0)) setTimeout(openPaywall, RM ? 0 : 300); };
-  if(AUTH && store.get('yomi_intro', 0) && !store.get('yomi_paywall', 0)) openPaywall();
+  if(/[?&]paid=1/.test(location.search)){ history.replaceState(null, '', location.pathname + location.hash); store.set('yomi_paywall', 1); setTimeout(paidThanks, 800); }
+  else if(AUTH && store.get('yomi_intro', 0) && !store.get('yomi_paywall', 0)) openPaywall();
 }
 </script>
 </body>
