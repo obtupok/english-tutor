@@ -1291,9 +1291,11 @@ Rules:
 - "weeks": total weeks of the plan. "verdict": ok (enough time), tight, short (not enough time — say honestly in the summary what to change), done (already at target).
 - "summary": 2–3 honest sentences: where the learner is, what the plan focuses on and whether the goal is realistic.`, PLAN_SCHEMA, 'high');
       if (!out?.week?.length) return json({ error: 'failed' }, 502);
-      owner.stats = { ...stt, studyPlan: { answers: ans, plan: out, at: new Date().toISOString() } };
+      const studyPlan = { answers: ans, plan: out, at: new Date().toISOString() };
+      if (b.dry) return json({ studyPlan });   // проверка без сохранения
+      owner.stats = { ...stt, studyPlan };
       await save(owner);
-      return json({ studyPlan: owner.stats.studyPlan });
+      return json({ studyPlan });
     }
     // подборка слов по теме экзамена — сразу в карточки (без повторов того, что уже есть)
     case 'wordset': {
