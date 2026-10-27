@@ -1326,6 +1326,45 @@ Rules:
       await patchStats(owner, (x) => ({ ...x, studyPlan }));
       return json({ studyPlan });
     }
+    // ИИ-репетитор: чаты хранит сайт, сюда приходят последние сообщения (+ задание, о котором спрашивают)
+    case 'tutor': {
+      const msgs = (Array.isArray(b.messages) ? b.messages : []).slice(-16)
+        .map((m: any) => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: String(m.text || '').slice(0, 6000) })).filter((m: any) => m.content.trim());
+      if (!msgs.length || msgs[msgs.length - 1].role !== 'user') return json({ error: 'bad' }, 400);
+      const skills = (Array.isArray(b.skills) ? b.skills : []).filter((k: any) => /^[a-z0-9-]{2,20}$/.test(String(k?.id || ''))).slice(0, 80);
+      const stt = owner.stats || {}, sp = stt.studyPlan, el = stt.examLast;
+      const profile = [
+        `English level about ${owner.level || 'B1'}.`,
+        sp ? `Exam: ${sp.answers.exam}; ${sp.answers.ielts?.target ? `IELTS now ${sp.answers.ielts.now ?? '?'}, target ${sp.answers.ielts.target}; ` : ''}${sp.answers.sat?.target ? `SAT now ${sp.answers.sat.now ?? '?'}, target ${sp.answers.sat.target}; ` : ''}exam date ${sp.answers.date || 'not set'}.` : '',
+        el ? `Last IELTS Speaking mock ${el.overall}: ${(el.criteria || []).map((c: any) => `${c.name} ${c.score}`).join(', ')}.` : '',
+        (stt.sat || []).length ? `SAT weak areas: ${[...new Set((stt.sat || []).slice(-6).flatMap((x: any) => x.weak || []))].join(', ') || 'none'}.` : '',
+        `Lessons done: ${Object.keys(stt.lessons || {}).join(', ') || 'none'}.`,
+      ].filter(Boolean).join(' ');
+      const system = `You are Yomi, a friendly expert tutor for IELTS Academic, the Digital SAT and English in general, inside the YomiScore app. Reply in Russian (keep every English example, rule name and exam phrase in English), addressing the learner as "ты".
+How to answer:
+- If the learner says what they want to learn, start with the core rules or method in simple words, then 2–4 clear examples, typical mistakes, and how to practise it. End with one short exercise or question to check understanding.
+- If they ask why an answer to a task is correct, solve it yourself step by step first, show the exact reasoning (and why each wrong option is wrong), then give a short tip for similar tasks. Never just agree with the given answer if it is wrong — say so.
+- Be accurate: for grammar and SAT rules use standard usage; for math check every calculation. If unsure, say what you are unsure about.
+- Format for a phone screen: short paragraphs, "- " bullet lists, "1. " numbered steps, **bold** for key words, "### " for small headings. No tables. Usually 120–350 words unless the learner asks for more.
+- At the very end you may add up to 2 suggestions on separate lines in exactly this form: [[lesson:ID|short title]] to open a lesson in the app, or [[act:ACT|short title]] to start practice. Lesson IDs: ${skills.map((k: any) => `${k.id} (${String(k.name || '').slice(0, 60)})`).join('; ')}. ACT: ielts-full, ielts-p1, ielts-p2, ielts-p3, writing, sat-math, sat-rw, read, call. Only suggest what really fits.
+Learner profile: ${profile}`;
+      let reply = '';
+      for (let attempt = 0; attempt < 3 && !reply; attempt++) {
+        const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST', headers: { Authorization: 'Bearer ' + env('GROQ_API_KEY'), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model: GROQ_MODEL, reasoning_effort: 'medium', max_completion_tokens: 6000, messages: [{ role: 'system', content: system }, ...msgs] }),
+        });
+        if (r.status === 429) { const wait = Math.min(8, Number(r.headers.get('retry-after')) || 2); await new Promise((res) => setTimeout(res, wait * 1000)); continue; }
+        const j = await r.json().catch(() => ({}));
+        reply = String(j?.choices?.[0]?.message?.content || '').trim();
+        if (!reply) console.error('tutor', r.status, JSON.stringify(j).slice(0, 300));
+      }
+      if (!reply) return json({ error: 'failed' }, 502);
+      // короткое название чата по первому вопросу
+      let title = '';
+      if (b.wantTitle) title = msgs[0].content.replace(/\s+/g, ' ').slice(0, 60);
+      return json({ reply, title });
+    }
     // подборка слов по теме экзамена — сразу в карточки (без повторов того, что уже есть)
     case 'wordset': {
       const topic = String(b.topic || '').slice(0, 80) || pickThemes(THEMES, 1)[0];
