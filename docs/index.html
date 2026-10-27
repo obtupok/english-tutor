@@ -679,6 +679,43 @@ nav button.on svg{color:var(--accent)}
 .art{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:12px;background:#FAF9F7;border:1px solid var(--border);text-decoration:none;color:var(--fg);transition:border-color var(--t-fast)}
 .art b{font-size:14px}.art small{font-size:12.5px;color:var(--muted)}
 @media (hover:hover){.art:hover{border-color:var(--border-2)}}
+/* ---------- «Учёба» ---------- */
+nav{grid-template-columns:repeat(5,1fr)!important;gap:2px!important;padding-inline:6px!important}
+nav button{font-size:11px!important}
+.course .ch{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.course .cn{font-weight:800;font-size:13px;color:var(--muted)}
+.csteps{display:grid;gap:8px;margin-top:12px}
+.cstep{display:flex;align-items:center;gap:12px;width:100%;text-align:left;min-height:56px;padding:10px 12px;border-radius:14px;background:#FAF9F7;border:1px solid var(--border);transition:border-color var(--t-fast),transform var(--t-fast) var(--ease)}
+.cstep:active{transform:scale(.985)}.cstep>svg{width:18px;height:18px;color:var(--muted);flex:none}
+.cstep .t{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}.cstep .t small{color:var(--muted);font-size:13px;line-height:1.35}
+.cdot{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;flex:none;background:var(--accent-bg);color:var(--ptext)}.cdot svg{width:19px;height:19px}
+.cstep.ok .cdot{background:var(--green);color:#fff}.cstep.ok .t b{text-decoration:line-through;text-decoration-color:var(--border-2)}
+.cfin{margin:12px 0 0;font-weight:700;color:var(--green)}
+.wordsc{display:grid;grid-template-columns:1fr 1fr;gap:12px}.wordsc>div:not(.wbtns){display:flex;flex-direction:column}.wordsc .big{font-family:var(--head);font-weight:800;font-size:30px;letter-spacing:-.03em;line-height:1}.wordsc span{color:var(--muted);font-size:13px}
+.wbtns{grid-column:1/-1;display:flex;gap:10px;flex-wrap:wrap}.wbtns .btn{flex:1;min-width:140px}
+.lessons{display:grid;gap:8px}
+.lrow{width:100%;text-align:left}.lrow .t{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}.lrow .t b{font-size:15px;line-height:1.35}.lrow .t small{font-size:12.5px;color:var(--muted)}.lrow .t small.weak{color:var(--ptext);font-weight:700}
+.lrow>svg{width:18px;height:18px;color:var(--muted);flex:none}
+.ldot{width:22px;height:22px;border-radius:50%;flex:none;border:2px solid var(--border-2);display:grid;place-items:center}.ldot.ok{background:var(--green);border-color:var(--green);color:#fff}.ldot svg{width:13px;height:13px}
+.backl{display:inline-flex;align-items:center;gap:4px;min-height:44px;margin:-6px 0 6px;font-weight:700;color:var(--fg-2)}.backl svg{width:20px;height:20px}
+.lsteps{display:grid;gap:10px}.lstep{display:flex;gap:12px;align-items:flex-start}.lstep .num{width:30px;height:30px;border-radius:10px;flex:none;display:grid;place-items:center;background:var(--fg);color:#fff;font-weight:800}
+.lstep p{margin:4px 0 0;color:var(--fg-2);line-height:1.5}
+.lex .eyebrow{display:block;margin-top:12px}.lex .eyebrow:first-child{margin-top:0}.lex p{margin:6px 0 0;line-height:1.55}
+.lex .task{font-weight:700}.lex .model{padding:12px 14px;border-radius:12px;background:var(--green-bg);color:var(--fg);white-space:pre-wrap}
+.phr{display:grid;gap:10px}.phr>div{display:flex;flex-direction:column;gap:2px;padding-bottom:10px;border-bottom:1px solid var(--border)}.phr>div:last-child{border:0;padding:0}
+.phr span{color:var(--muted);font-size:14px}.phr small{color:var(--fg-2);font-size:13px;font-style:italic}
+.mist{margin:0;padding-left:20px;display:grid;gap:8px;line-height:1.5;color:var(--fg-2)}
+.lq{margin-bottom:10px}.lq .q{margin:0 0 10px;line-height:1.5}
+.lres{text-align:center;margin-top:6px}.lres .big{font-family:var(--head);font-weight:800;font-size:34px;letter-spacing:-.03em}.lres p{color:var(--fg-2);margin:8px 0 14px}
+.wcard{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:260px;text-align:center;cursor:pointer;margin-top:14px}
+.wcard .ww{font-family:var(--head);font-weight:800;font-size:clamp(28px,8vw,38px);letter-spacing:-.02em}
+.wcard .ib{position:absolute;top:12px;right:12px}
+.wcard .wh{color:var(--muted);font-size:14px;margin:0}.wcard .wt{font-size:22px;font-weight:700;color:var(--ptext);margin:0}.wcard .we{color:var(--fg-2);font-style:italic;margin:0;max-width:420px;line-height:1.5}
+.wcard.open{animation:pop-in .3s var(--ease)}
+.wgrade{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}.wgrade .btn{min-height:52px}
+.topics{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}.topics .chip{min-height:44px;padding:8px 14px;font-weight:700;background:var(--card)}
+.lhead{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:64px}.lhead.top{align-items:flex-start}.lhead.top .lead{margin-bottom:6px}
+#learnSlot{width:72px;height:66px;flex:none}#learnSlot .buddy.staged{--bsize:72px!important}
+.lhead.top>div:first-child{flex:1;min-width:0}
 
 </style>
 </head>
@@ -693,6 +730,7 @@ nav button.on svg{color:var(--accent)}
     <section class="view on" id="v-home"><div class="scroll" id="homeBox"></div></section>
     <section class="view" id="v-ielts"><div class="scroll" id="ieltsBox"></div></section>
     <section class="view" id="v-sat"><div class="scroll" id="satBox"></div></section>
+    <section class="view" id="v-learn"><div class="scroll" id="learnBox"></div></section>
     <section class="view" id="v-talk">
       <div class="chats" id="chats" role="tablist"><button data-ch="learn" role="tab">С исправлениями</button><button data-ch="talk" role="tab">Просто поболтать</button></div>
       <div class="modes" id="modes" role="tablist"></div>
@@ -712,6 +750,7 @@ nav button.on svg{color:var(--accent)}
     <button data-v="home" class="on" aria-label="Главная"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Главная</button>
     <button data-v="ielts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 9L12 4 2 9l10 5 10-5z"/><path d="M6 11v5c3 2.5 9 2.5 12 0v-5M22 9v6"/></svg>IELTS</button>
     <button data-v="sat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>SAT</button>
+    <button data-v="learn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></svg>Учёба</button>
     <button data-v="talk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Разговор</button>
   </nav>
 </div>
@@ -1456,7 +1495,7 @@ function parkBunny(){ const b = $('#buddy'); if(b && b.parentElement !== documen
 function freeBunny(){ const b = $('#buddy'); if(!b.classList.contains('staged') && b.parentElement === document.body) return; b.classList.remove('staged'); $('#face').after(b); placeBunny(); }
 function homeBunny(){
   if(!$('#face').hidden) return;
-  const slot = curTab === 'home' ? $('#heroSlot') : curTab === 'sat' ? $('#satSlot') : curTab === 'ielts' ? $('#wrSlot') : null;
+  const slot = curTab === 'home' ? $('#heroSlot') : curTab === 'sat' ? $('#satSlot') : curTab === 'ielts' ? $('#wrSlot') : curTab === 'learn' ? $('#learnSlot') : null;
   if(slot) stageBunny(slot); else freeBunny();
 }
 
@@ -1506,6 +1545,7 @@ function showHome(){
     </div>
     <div class="sec-h"><h3>Начать сейчас</h3></div>
     <div class="tiles">
+      ${tileHtml('data-act="learn"', 'violet', I.book, 'Курс на сегодня', 'Урок по навыку, практика и карточки слов')}
       ${planTile()}
       ${readingTile()}
       ${tileHtml('data-act="call"', 'indigo', I.mic, 'Поговорить с Yomi', 'Голосом, как по телефону: исправит ошибки и подскажет слова')}
@@ -1525,6 +1565,7 @@ $('#homeBox').onclick = e => {
 };
 function startAct(act){
   if(act === 'read') return openReading();
+  if(act === 'learn') return tab('learn');
   if(act === 'call'){ tab('talk'); faceOn = true; store.set('yomi_face', true); return startCall(); }
   if(act === 'ielts-full') return runExam('ielts', 0);
   if(act.startsWith('ielts-p')) return runExam('ielts', +act.slice(7));
@@ -2013,6 +2054,7 @@ function tab(v){
   if(v === 'ielts') showIelts();
   if(v === 'sat'){ if(document.querySelector('#satBox .qtop')) homeBunny(); else showSat(); }
   if(v === 'talk') homeBunny();
+  if(v === 'learn') showLearn();
 }
 $('#chats').onclick = e => {
   const b = e.target.closest('[data-ch]'); if(!b || b.dataset.ch === CH || busy) return;
@@ -2089,10 +2131,11 @@ function burst(el){
   }
 }
 // после перерисовки раздела — волна; в задании SAT после ответа анимируем только разбор
-for(const id of ['homeBox', 'ieltsBox', 'satBox']){
+for(const id of ['homeBox', 'ieltsBox', 'satBox', 'learnBox']){
   const box = document.getElementById(id);
   new MutationObserver(ms => {
     if(!ms.some(m => m.target === box && m.addedNodes.length > 1)) return;
+    if(box.dataset.still){ delete box.dataset.still; return; }   // перерисовка после ответа — без повторной волны
     if(id === 'satBox' && box.querySelector('.explain')){ const ex = box.querySelector('.explain'); ex.style.setProperty('--i', 0); ex.classList.add('pop'); return; }
     popIn(box);
     if(id === 'homeBox') typeBubble();
@@ -2282,6 +2325,229 @@ function openPaywall(){
   closeIntro = function(){ _close(); if(!store.get('yomi_paywall', 0)) setTimeout(openPaywall, RM ? 0 : 300); };
   if(/[?&]paid=1/.test(location.search)){ history.replaceState(null, '', location.pathname + location.hash); store.set('yomi_paywall', 1); setTimeout(paidThanks, 800); }
   else if(AUTH && store.get('yomi_intro', 0) && !store.get('yomi_paywall', 0)) openPaywall();
+}
+
+
+/* ---------- «Учёба»: уроки по навыкам, карточки слов, курс по дням ----------
+   Урок генерирует сервер (действие lesson) и хранится в браузере; отметка о прохождении — на сервере (lesson_done).
+   Слабые темы идут первыми: для SAT — по разделам из последних наборов, для IELTS — по самым низким критериям экзамена. */
+const SKILLS = [
+  {id: 'ie-p1', exam: 'ielts', g: 'IELTS Speaking', name: 'Part 1: короткие ответы с причиной и примером', crit: 'Fluency'},
+  {id: 'ie-p2', exam: 'ielts', g: 'IELTS Speaking', name: 'Part 2: рассказ по карточке на 2 минуты', crit: 'Fluency'},
+  {id: 'ie-p3', exam: 'ielts', g: 'IELTS Speaking', name: 'Part 3: рассуждение, сравнение и аргументы', crit: 'Fluency'},
+  {id: 'ie-flu', exam: 'ielts', g: 'IELTS Speaking', name: 'Беглость: связки и паузы без «эээ»', crit: 'Fluency'},
+  {id: 'ie-lex', exam: 'ielts', g: 'IELTS Speaking', name: 'Лексика на band 7: синонимы, коллокации, идиомы', crit: 'Lexical'},
+  {id: 'ie-gram', exam: 'ielts', g: 'IELTS Speaking', name: 'Грамматика: сложные предложения и времена', crit: 'Grammatical'},
+  {id: 'ie-pron', exam: 'ielts', g: 'IELTS Speaking', name: 'Произношение: ударение, ритм и интонация', crit: 'Pronunciation'},
+  {id: 'wt-struct', exam: 'ielts', g: 'IELTS Writing', name: 'Task 2: структура эссе из 4 абзацев', crit: 'Task'},
+  {id: 'wt-intro', exam: 'ielts', g: 'IELTS Writing', name: 'Task 2: вступление и чёткая позиция', crit: 'Task'},
+  {id: 'wt-body', exam: 'ielts', g: 'IELTS Writing', name: 'Task 2: абзац «идея — объяснение — пример»', crit: 'Coherence'},
+  {id: 'wt-link', exam: 'ielts', g: 'IELTS Writing', name: 'Связность: linking words без перебора', crit: 'Coherence'},
+  {id: 'rd-tfng', exam: 'ielts', g: 'IELTS Reading и Listening', name: 'Reading: True / False / Not Given'},
+  {id: 'rd-head', exam: 'ielts', g: 'IELTS Reading и Listening', name: 'Reading: Matching Headings'},
+  {id: 'ls-gap', exam: 'ielts', g: 'IELTS Reading и Listening', name: 'Listening: как ловить ответы в заполнении пропусков'},
+  {id: 'rw-words', exam: 'sat', g: 'SAT Reading & Writing', name: 'Words in Context: слово по смыслу текста', dom: 'Craft and Structure'},
+  {id: 'rw-purpose', exam: 'sat', g: 'SAT Reading & Writing', name: 'Text Structure and Purpose: зачем написан текст', dom: 'Craft and Structure'},
+  {id: 'rw-cross', exam: 'sat', g: 'SAT Reading & Writing', name: 'Cross-Text Connections: два текста', dom: 'Craft and Structure'},
+  {id: 'rw-central', exam: 'sat', g: 'SAT Reading & Writing', name: 'Central Ideas and Details: главная мысль', dom: 'Information and Ideas'},
+  {id: 'rw-evidence', exam: 'sat', g: 'SAT Reading & Writing', name: 'Command of Evidence: цитаты, таблицы и графики', dom: 'Information and Ideas'},
+  {id: 'rw-infer', exam: 'sat', g: 'SAT Reading & Writing', name: 'Inferences: логичное продолжение', dom: 'Information and Ideas'},
+  {id: 'rw-bound', exam: 'sat', g: 'SAT Reading & Writing', name: 'Boundaries: запятая, точка с запятой, двоеточие', dom: 'Standard English Conventions', f: 'a semicolon joins two independent clauses (or separates list items that already contain commas); a colon must come after a complete independent clause and introduces a list, explanation or example — never put a colon right after a verb or preposition; a comma alone cannot join two independent clauses (comma splice); no punctuation between a subject and its verb or between a verb and its object; dashes and commas around a nonessential element must match as a pair'},
+  {id: 'rw-form', exam: 'sat', g: 'SAT Reading & Writing', name: 'Form, Structure, Sense: согласование и времена', dom: 'Standard English Conventions', f: 'subject–verb agreement (find the real subject, ignore prepositional phrases between them), pronoun–antecedent agreement in number, consistent verb tense with the context, plural vs possessive (its vs it is, their vs there), a modifier must sit next to the noun it describes'},
+  {id: 'rw-trans', exam: 'sat', g: 'SAT Reading & Writing', name: 'Transitions: however, therefore, moreover…', dom: 'Expression of Ideas', f: 'choose the transition by the logical relation between the two sentences: contrast (however, nevertheless), cause–result (therefore, as a result), addition (moreover, furthermore), example (for instance), sequence (subsequently, finally), similarity (similarly, likewise)'},
+  {id: 'rw-synth', exam: 'sat', g: 'SAT Reading & Writing', name: 'Rhetorical Synthesis: заметки студента', dom: 'Expression of Ideas', f: 'the right answer is the one that achieves the stated goal in the question (e.g. emphasize a difference, introduce a study to a new audience) using only facts from the notes; ignore choices that are true but do not meet the goal'},
+  {id: 'm-linear', exam: 'sat', g: 'SAT Math', name: 'Линейные уравнения и неравенства', dom: 'Algebra'},
+  {id: 'm-systems', exam: 'sat', g: 'SAT Math', name: 'Системы линейных уравнений', dom: 'Algebra'},
+  {id: 'm-func', exam: 'sat', g: 'SAT Math', name: 'Линейные функции и графики', dom: 'Algebra'},
+  {id: 'm-ratio', exam: 'sat', g: 'SAT Math', name: 'Пропорции, проценты и единицы', dom: 'Problem-Solving and Data Analysis'},
+  {id: 'm-stats', exam: 'sat', g: 'SAT Math', name: 'Статистика, таблицы и вероятность', dom: 'Problem-Solving and Data Analysis'},
+  {id: 'm-quad', exam: 'sat', g: 'SAT Math', name: 'Квадратные уравнения и параболы', dom: 'Advanced Math'},
+  {id: 'm-exp', exam: 'sat', g: 'SAT Math', name: 'Экспоненты: рост, убывание, степени', dom: 'Advanced Math'},
+  {id: 'm-geo', exam: 'sat', g: 'SAT Math', name: 'Площади, объёмы и треугольники', dom: 'Geometry and Trigonometry'},
+  {id: 'm-circle', exam: 'sat', g: 'SAT Math', name: 'Окружности и тригонометрия', dom: 'Geometry and Trigonometry'},
+];
+const LEARN_THEMES = ['education', 'technology', 'environment', 'health', 'work', 'cities', 'travel', 'media', 'science', 'culture', 'crime and law', 'economy', 'family', 'sport', 'art'];
+const lessonsDone = () => S.stats?.lessons || {};
+function weakSkills(){
+  const sat = new Set((S.stats?.sat || []).slice(-6).flatMap(x => x.weak || []));
+  const crit = (S.stats?.examLast?.criteria || []).filter(c => c.score <= (S.stats.examLast.overall || 9) - .5).map(c => c.name.split(' ')[0]);
+  return new Set(SKILLS.filter(k => (k.dom && sat.has(k.dom)) || (k.crit && crit.includes(k.crit))).map(k => k.id));
+}
+// очередь уроков: сначала слабые темы, потом по порядку; пройденные — в конец
+function nextLesson(){
+  const done = lessonsDone(), weak = weakSkills(), pref = GOALS.focus || '';
+  const order = SKILLS.filter(k => !done[k.id]).sort((a, b) => (weak.has(b.id) - weak.has(a.id)) || ((b.exam === pref) - (a.exam === pref)));
+  return order[0] || SKILLS[0];
+}
+// практика к уроку — тот же навык на реальном формате
+const practiceFor = k => k.id.startsWith('ie-p1') ? 'ielts-p1' : k.id.startsWith('ie-p2') ? 'ielts-p2' : k.id.startsWith('ie-') ? 'ielts-p3' : k.id.startsWith('wt-') ? 'writing'
+  : k.id.startsWith('rd-') || k.id.startsWith('ls-') ? 'read' : k.id.startsWith('m-') ? 'sat-math' : 'sat-rw';
+const PRACTICE_NAME = {'ielts-p1': 'IELTS Speaking Part 1', 'ielts-p2': 'IELTS Speaking Part 2', 'ielts-p3': 'IELTS Speaking Part 3', 'writing': 'эссе IELTS Writing', 'read': 'чтение книги на YomiRead', 'sat-math': '10 задач SAT Math', 'sat-rw': '10 вопросов SAT Reading & Writing'};
+
+/* ---- курс по дням: каждый день урок + практика + карточки; новый день открывается, когда закончен предыдущий ---- */
+const todayKey = () => new Date().toLocaleDateString('sv');
+function course(){
+  let c = store.get('yomi_course', null);
+  if(!c) c = {day: 1, date: todayKey(), done: {}, lesson: nextLesson().id};
+  const all = c.done.lesson && c.done.practice && c.done.words;
+  if(c.date !== todayKey() && all) c = {day: c.day + 1, date: todayKey(), done: {}, lesson: nextLesson().id};
+  if(lessonsDone()[c.lesson] && !c.done.lesson) c.done.lesson = true;
+  store.set('yomi_course', c); return c;
+}
+function courseMark(k){ const c = course(); c.done[k] = true; store.set('yomi_course', c); }
+const CHECK_I = svgI('<path d="M5 12l5 5 9-10"/>');
+const LSLOT = '<div class="lslot" id="learnSlot" aria-hidden="true"></div>';
+const BACK = () => `<div class="lhead"><button class="backl" data-lback>${svgI('<path d="M15 6l-6 6 6 6"/>')} Учёба</button>${LSLOT}</div>`;
+
+function showLearn(){
+  WC = null; LS = null; parkBunny();
+  { const c0 = course(), k0 = SKILLS.find(x => x.id === c0.lesson); if(k0 && !c0.done.lesson && AUTH) loadLesson(k0); }   // урок дня — заранее
+  const c = course(), k = SKILLS.find(x => x.id === c.lesson) || nextLesson(), pr = practiceFor(k);
+  const n = ['lesson', 'practice', 'words'].filter(x => c.done[x]).length, done = lessonsDone(), weak = weakSkills();
+  const step = (key, ic, t, s) => `<button class="cstep${c.done[key] ? ' ok' : ''}" data-cs="${key}"><span class="cdot">${c.done[key] ? CHECK_I : ic}</span><span class="t"><b>${t}</b><small>${s}</small></span>${I.chev}</button>`;
+  const groups = [...new Set(SKILLS.map(x => x.g))];
+  $('#learnBox').innerHTML = `<div class="lhead top"><div><h2>Учёба</h2><p class="lead">Уроки по каждому навыку, карточки слов и курс на каждый день.</p></div>${LSLOT}</div>
+    <div class="card course"><div class="ch"><span class="eyebrow">Курс · день ${c.day}</span><span class="cn">${n} из 3</span></div>
+      <span class="bar"><i style="width:${n / 3 * 100}%"></i></span>
+      <div class="csteps">
+        ${step('lesson', I.book, 'Урок', esc(k.name))}
+        ${step('practice', I.target, 'Практика', PRACTICE_NAME[pr])}
+        ${step('words', I.card, 'Карточки слов', S.due ? `${S.due} ${plural(S.due, 'слово', 'слова', 'слов')} на повторение` : 'Добавить 10 новых слов')}
+      </div>
+      ${n === 3 ? '<p class="cfin">День закрыт. Завтра откроется следующий.</p>' : ''}</div>
+    <div class="sec-h"><h3>Карточки слов</h3></div>
+    <div class="card wordsc"><div><b class="big">${S.due || 0}</b><span>на повторение</span></div><div><b class="big">${S.words || 0}</b><span>всего слов</span></div>
+      <div class="wbtns"><button class="btn" data-wrev${S.due ? '' : ' disabled'}>Повторять</button><button class="btn line" data-wadd>+10 слов по теме</button></div></div>
+    ${groups.map(g => `<div class="sec-h"><h3>${g}</h3></div><div class="lessons">${SKILLS.filter(x => x.g === g).map(x => {
+      const d = done[x.id];
+      return `<button class="hrow lrow" data-ls="${x.id}"><span class="ldot${d ? ' ok' : ''}">${d ? CHECK_I : ''}</span><span class="t"><b>${esc(x.name)}</b>${weak.has(x.id) ? '<small class="weak">Слабая тема — начни с неё</small>' : d ? `<small>Пройден · ${d.score} из ${d.total}</small>` : ''}</span>${I.chev}</button>`; }).join('')}</div>`).join('')}`;
+  homeBunny();
+}
+$('#learnBox').onclick = e => {
+  const t = e.target, cs = t.closest('[data-cs]'), ls = t.closest('[data-ls]');
+  if(cs){ const c = course(), k = SKILLS.find(x => x.id === c.lesson);
+    if(cs.dataset.cs === 'lesson') return openLesson(k.id);
+    if(cs.dataset.cs === 'practice'){ courseMark('practice'); return startAct(practiceFor(k)); }
+    if(cs.dataset.cs === 'words') return S.due ? reviewWords() : addWords(); }
+  if(ls) return openLesson(ls.dataset.ls);
+  if(t.closest('[data-wrev]')) return reviewWords();
+  if(t.closest('[data-wadd]')) return addWords();
+  if(t.closest('[data-lback]')) return showLearn();
+};
+
+/* ---- урок: генерация с проверкой идёт ~20 с, поэтому урок курса готовим заранее, в фоне ---- */
+let LS = null;
+const lessonLoads = new Map();
+function loadLesson(k, fresh = false){
+  if(!fresh){ const c = store.get('yomi_lsn_' + k.id, null); if(c) return Promise.resolve(c); }
+  if(!lessonLoads.has(k.id)) lessonLoads.set(k.id, api('lesson', {exam: k.exam, name: k.name, focus: k.f || ''}).catch(() => ({}))
+    .then(j => { lessonLoads.delete(k.id); if(j.lesson) store.set('yomi_lsn_' + k.id, j.lesson); return j.lesson || null; }));
+  return lessonLoads.get(k.id);
+}
+async function openLesson(id, fresh = false){
+  const k = SKILLS.find(x => x.id === id); if(!k) return;
+  const box = $('#learnBox'); parkBunny();
+  let lesson = fresh ? null : store.get('yomi_lsn_' + id, null);
+  if(!lesson){
+    box.innerHTML = `${BACK()}<div class="empty">Yomi готовит урок «${esc(k.name)}» и проверяет каждый ответ — это до 30 секунд…</div>`; homeBunny();
+    lesson = await loadLesson(k, fresh);
+    if(!lesson){ box.innerHTML = `${BACK()}<div class="empty">Не получилось подготовить урок. Попробуй ещё раз.</div>`; homeBunny(); return; }
+    if(LS?.id && LS.id !== id) return;
+  }
+  LS = {id, k, lesson, picks: []}; drawLesson();
+  box.scrollTop = 0; $('#v-learn .scroll').scrollTop = 0;
+}
+function drawLesson(){
+  const {k, lesson: L, picks} = LS, answered = picks.filter(p => p != null).length, score = L.check.filter((q, i) => picks[i] === q.answer).length;
+  $('#learnBox').innerHTML = `${BACK()}
+    <p class="eyebrow">${esc(k.g)}</p><h2>${esc(L.title)}</h2><p class="lead">${esc(L.intro)}</p>
+    <div class="sec-h"><h3>Как делать</h3></div>
+    <div class="lsteps">${L.steps.map((s, i) => `<div class="card lstep"><span class="num">${i + 1}</span><div><b>${esc(s.title)}</b><p>${esc(s.text)}</p></div></div>`).join('')}</div>
+    <div class="sec-h"><h3>Разбор примера</h3></div>
+    <div class="card lex"><span class="eyebrow">Задание</span><p class="task">${esc(L.example.task)}</p><span class="eyebrow">Сильный ответ</span><p class="model">${esc(L.example.answer)}</p><span class="eyebrow">Почему это работает</span><p>${esc(L.example.why)}</p></div>
+    ${L.phrases?.length ? `<div class="sec-h"><h3>${k.id.startsWith('m-') ? 'Формулы и приёмы' : 'Полезные фразы'}</h3></div><div class="card phr">${L.phrases.map(p => `<div><b>${esc(p.en)}</b><span>${esc(p.ru)}</span></div>`).join('')}</div>` : ''}
+    ${L.mistakes?.length ? `<div class="sec-h"><h3>Частые ошибки</h3></div><div class="card"><ul class="mist">${L.mistakes.map(m => `<li>${esc(m)}</li>`).join('')}</ul></div>` : ''}
+    <div class="sec-h"><h3>Проверь себя</h3></div>
+    ${L.check.map((q, i) => { const p = picks[i], done = p != null;
+      return `<div class="card lq"><p class="q"><b>${i + 1}.</b> ${esc(q.question)}</p><div class="choices">${q.choices.map((c, j) => `<button class="choice${done ? (j === q.answer ? ' ok' : j === p ? ' bad' : '') : ''}" data-lq="${i}:${j}" ${done ? 'disabled' : ''}><span class="l">${'ABCD'[j]}</span><span>${esc(c)}</span></button>`).join('')}</div>
+        ${done ? `<div class="explain ${p === q.answer ? 'ok' : 'bad'}"><b>${p === q.answer ? I.check + ' Верно' : I.x + ` Правильно — ${'ABCD'[q.answer]}`}</b>${esc(q.explanation)}</div>` : ''}</div>`; }).join('')}
+    ${answered === L.check.length ? `<div class="card lres"><b class="big">${score} из ${L.check.length}</b><p>${score === L.check.length ? 'Отлично, навык понят. Закрепи его практикой.' : 'Перечитай шаги выше и закрепи практикой — так навык встанет на место.'}</p>
+      <div class="wbtns"><button class="btn" data-ldone>Готово · дальше практика</button><button class="btn line" data-lfresh>Новый урок по теме</button></div></div>` : ''}`;
+  homeBunny();
+}
+$('#learnBox').addEventListener('click', async e => {
+  if(!LS) return;
+  const q = e.target.closest('[data-lq]');
+  if(q){ const [i, j] = q.dataset.lq.split(':').map(Number); if(LS.picks[i] != null) return; LS.picks[i] = j;
+    const ok = j === LS.lesson.check[i].answer; sfx(ok ? 'happy' : 'oops'); if(ok && typeof burst === 'function') burst(q);
+    const y = $('#v-learn .scroll').scrollTop; $('#learnBox').dataset.still = 1; drawLesson(); $('#v-learn .scroll').scrollTop = y; return; }
+  if(e.target.closest('[data-lfresh]')) return openLesson(LS.id, true);
+  if(e.target.closest('[data-ldone]')){
+    const L = LS.lesson, score = L.check.filter((x, i) => LS.picks[i] === x.answer).length, k = LS.k;
+    const j = await api('lesson_done', {skill: k.id, score, total: L.check.length, words: L.words, name: L.title}).catch(() => ({}));
+    if(j.lessons) S.stats = {...(S.stats || {}), lessons: j.lessons};
+    if(course().lesson === k.id){ courseMark('lesson'); courseMark('practice'); }   // практика запускается сразу после урока
+    notify(L.words?.length ? `Урок пройден, ${L.words.length} слов добавлены в карточки` : 'Урок пройден');
+    LS = null; S.words = (S.words || 0) + (L.words?.length || 0); S.due = (S.due || 0) + (L.words?.length || 0);
+    return startAct(practiceFor(k));
+  }
+});
+
+/* ---- карточки слов: показал слово → вспомнил → «Забыл / Трудно / Знаю» (интервалы считает сервер) ---- */
+let WC = null;
+async function reviewWords(){
+  const box = $('#learnBox'); parkBunny();
+  box.innerHTML = `${BACK()}<div class="empty">Достаю карточки…</div>`; homeBunny();
+  const j = await api('words').catch(() => ({}));
+  const now = Date.now(), due = (j.words || []).filter(w => !w.due || Date.parse(w.due) <= now).sort(() => Math.random() - .5).slice(0, 20);
+  if(!due.length){ S.due = 0; return addWords(); }
+  WC = {list: due, i: 0, open: false, ok: 0}; drawCard();
+}
+function drawCard(){
+  const w = WC.list[WC.i];
+  $('#learnBox').innerHTML = `${BACK()}
+    <div class="qtop"><span class="bar"><i style="width:${WC.i / WC.list.length * 100}%"></i></span><b>${WC.i + 1}/${WC.list.length}</b></div>
+    <div class="card wcard${WC.open ? ' open' : ''}" data-wflip>
+      <b class="ww">${esc(w.word)}</b><button class="ib" data-wsay aria-label="Послушать">${I.play}</button>
+      ${WC.open ? `<p class="wt">${esc(w.translation)}</p>${w.example ? `<p class="we">${esc(w.example)}</p>` : ''}` : '<p class="wh">Вспомни перевод и нажми на карточку</p>'}
+    </div>
+    ${WC.open ? `<div class="wgrade"><button class="btn line" data-wg="0">Забыл</button><button class="btn line" data-wg="1">Трудно</button><button class="btn green" data-wg="2">Знаю</button></div>` : ''}`;
+  homeBunny();
+}
+$('#learnBox').addEventListener('click', async e => {
+  if(!WC) return;
+  if(e.target.closest('[data-wsay]')){ unlock(); sayText(WC.list[WC.i].word, 'en'); return; }
+  if(e.target.closest('[data-wflip]') && !WC.open){ WC.open = true; $('#learnBox').dataset.still = 1; return drawCard(); }
+  const g = e.target.closest('[data-wg]'); if(!g) return;
+  const w = WC.list[WC.i], grade = +g.dataset.wg; if(grade === 2) WC.ok++;
+  api('review', {id: w.id, grade}).catch(() => {});
+  if(++WC.i < WC.list.length){ WC.open = false; $('#learnBox').dataset.still = 1; return drawCard(); }
+  const n = WC.list.length, ok = WC.ok; WC = null; S.due = Math.max(0, (S.due || 0) - n); courseMark('words');
+  $('#learnBox').innerHTML = `${BACK()}
+    <div class="card lres"><b class="big">${ok} из ${n}</b><p>Слова, которые ты знаешь, вернутся через несколько дней, а трудные — уже сегодня. Так они запоминаются надолго.</p>
+    <div class="wbtns"><button class="btn" data-lback>К учёбе</button><button class="btn line" data-wadd>+10 слов по теме</button></div></div>`;
+  homeBunny();
+});
+$('#learnBox').addEventListener('click', e => { if(!WC && !LS && e.target.closest('[data-wtopic]')) loadWordset(e.target.closest('[data-wtopic]').dataset.wtopic); });
+function addWords(){
+  WC = null; LS = null; parkBunny();
+  const topics = [...LEARN_THEMES].sort(() => Math.random() - .5).slice(0, 8);
+  $('#learnBox').innerHTML = `${BACK()}
+    <h2>Новые слова</h2><p class="lead">Выбери тему — Yomi подберёт 10 слов чуть выше твоего уровня, которые поднимают балл за лексику.</p>
+    <div class="topics">${topics.map(t => `<button class="chip" data-wtopic="${t}">${t}</button>`).join('')}<button class="chip" data-wtopic="">Любая тема</button></div>`;
+  homeBunny();
+}
+async function loadWordset(topic){
+  $('#learnBox').innerHTML = `${BACK()}<div class="empty">Подбираю слова…</div>`; homeBunny();
+  homeBunny();
+  const j = await api('wordset', {topic}).catch(() => ({}));
+  if(!j.words?.length){ notify('Не получилось подобрать слова'); return addWords(); }
+  S.words = (S.words || 0) + j.words.length; S.due = (S.due || 0) + j.words.length;
+  $('#learnBox').innerHTML = `${BACK()}
+    <p class="eyebrow">${esc(j.topic)}</p><h2>10 новых слов</h2>
+    <div class="card phr">${j.words.map(w => `<div><b>${esc(w.word)}</b><span>${esc(w.translation)}</span><small>${esc(w.example)}</small></div>`).join('')}</div>
+    <div class="wbtns" style="margin-top:14px"><button class="btn" data-wrev>Учить карточками</button></div>`;
+  homeBunny();
 }
 </script>
 </body>
