@@ -723,6 +723,31 @@ nav button{font-size:11px!important}
 .in-note a,.pw-fine a{color:var(--fg);text-decoration:underline;text-underline-offset:2px}
 .relink{font:inherit;color:var(--ptext);text-decoration:underline;text-underline-offset:2px;letter-spacing:inherit;text-transform:inherit}
 .lrow .ldot{flex:0 0 22px;width:22px;height:22px}.lrow .ldot svg{flex:none}
+/* личный план */
+.qz .lbl{margin-top:16px}.qz .lbl:first-child{margin-top:0}
+.qz-chips{display:flex;flex-wrap:wrap;gap:8px}
+.qz-chips button{min-height:44px;padding:8px 14px;border-radius:12px;border:1px solid var(--border-2);background:var(--card);font-weight:700;font-size:14px;color:var(--fg-2);transition:background var(--t-fast),color var(--t-fast),border-color var(--t-fast)}
+.qz-chips button.on{background:var(--fg);border-color:var(--fg);color:#fff}
+.qz-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.qz-grid small{display:block;color:var(--muted);font-size:12.5px;margin-bottom:4px}
+.qz-hint{color:var(--muted);font-size:13px;margin:6px 0 0}
+.qz-err{min-height:20px;color:var(--red,#C2412D);font-weight:700;margin:10px 0 0}
+.qz-foot{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.qz-foot .btn{flex:1;min-width:150px;min-height:52px}
+.spv p{margin:10px 0 14px;line-height:1.55;color:var(--fg-2)}.spv .btn{width:100%;min-height:52px}
+.vchip{display:inline-flex;align-items:center;min-height:28px;padding:2px 12px;border-radius:99px;font-weight:800;font-size:13px}
+.vchip.green{background:var(--green-bg);color:var(--green)}.vchip.orange{background:#FDF3DC;color:#9A6A08}.vchip.red{background:#FBECEA;color:#C2412D}
+.vh{margin-left:10px;font-size:13px;color:var(--muted);font-weight:700}
+.spweek{display:grid;gap:8px}
+.spday{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:10px 12px;box-shadow:var(--clay-sm)}
+.spday.now{border-color:var(--fg);box-shadow:0 0 0 1px var(--fg)}.spday.rest{background:transparent;box-shadow:none}
+.spday .dh{display:flex;align-items:baseline;gap:10px}.spday .dh b{font-family:var(--head);font-weight:800;font-size:16px;width:28px}.spday .dh small{color:var(--muted);font-size:13px}
+.spday ul{margin:6px 0 0 38px;padding:0;list-style:none;display:grid;gap:6px}.spday li{display:flex;flex-direction:column;font-size:14px}.spday li small{color:var(--muted);font-size:12.5px}
+.sppri{margin:0;padding-left:20px;display:grid;gap:6px;line-height:1.45}
+.spphases{display:grid;gap:8px}.spphases .card b{display:block;margin-top:2px}.spphases .card p{margin:4px 0 0;color:var(--fg-2);line-height:1.5}
+.spmile{margin:0;padding:0;list-style:none;display:grid;gap:10px}.spmile li{display:flex;flex-direction:column}.spmile span{color:var(--fg-2);font-size:14px}
+.mkplan{display:flex;align-items:center;gap:12px;width:100%;text-align:left;margin-top:12px;padding:12px;border-radius:14px;background:var(--accent-bg);border:1px dashed #F4C9AE}
+.mkplan>svg{width:20px;height:20px;flex:none;color:var(--ptext)}.mkplan span{flex:1;display:flex;flex-direction:column;gap:2px}.mkplan small{color:var(--fg-2);font-size:13px}
+.cstep .cnote{color:var(--ptext)!important;font-size:12.5px!important}
+.lslot{width:72px;height:66px;flex:none}.lslot .buddy.staged{--bsize:72px!important}
 
 </style>
 </head>
@@ -2402,62 +2427,81 @@ function weakSkills(){
   const crit = (S.stats?.examLast?.criteria || []).filter(c => c.score <= (S.stats.examLast.overall || 9) - .5).map(c => c.name.split(' ')[0]);
   return new Set(SKILLS.filter(k => (k.dom && sat.has(k.dom)) || (k.crit && crit.includes(k.crit))).map(k => k.id));
 }
-// очередь уроков: сначала слабые темы, потом по порядку; пройденные — в конец
+// личный план (если составлен): порядок уроков и задания на каждый день недели
+const SP = () => S.stats?.studyPlan?.plan || null;
+const DOW = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+const todayDow = () => DOW[(new Date().getDay() + 6) % 7];
+// очередь уроков: сначала порядок из личного плана, потом слабые темы; пройденные — в конец
 function nextLesson(){
-  const done = lessonsDone(), weak = weakSkills(), pref = GOALS.focus || '';
-  const order = SKILLS.filter(k => !done[k.id]).sort((a, b) => (weak.has(b.id) - weak.has(a.id)) || ((b.exam === pref) - (a.exam === pref)));
+  const done = lessonsDone(), weak = weakSkills(), pri = SP()?.priority || [], rank = k => { const i = pri.indexOf(k.id); return i < 0 ? 999 : i; };
+  const order = SKILLS.filter(k => !done[k.id]).sort((a, b) => (rank(a) - rank(b)) || (weak.has(b.id) - weak.has(a.id)));
   return order[0] || SKILLS[0];
 }
 // практика к уроку — тот же навык на реальном формате
 const practiceFor = k => k.id.startsWith('g-') ? 'ielts-p1' : k.id.startsWith('ie-p1') ? 'ielts-p1' : k.id.startsWith('ie-p2') ? 'ielts-p2' : k.id.startsWith('ie-') ? 'ielts-p3' : k.id.startsWith('wt-') ? 'writing'
   : k.id.startsWith('rd-') || k.id.startsWith('ls-') ? 'read' : k.id.startsWith('m-') ? 'sat-math' : 'sat-rw';
-const PRACTICE_NAME = {'ielts-p1': 'IELTS Speaking Part 1', 'ielts-p2': 'IELTS Speaking Part 2', 'ielts-p3': 'IELTS Speaking Part 3', 'writing': 'эссе IELTS Writing', 'read': 'чтение книги на YomiRead', 'sat-math': '10 задач SAT Math', 'sat-rw': '10 вопросов SAT Reading & Writing'};
+const PRACTICE_NAME = {'ielts-full': 'Пробный IELTS Speaking целиком', 'ielts-p1': 'IELTS Speaking Part 1', 'ielts-p2': 'IELTS Speaking Part 2', 'ielts-p3': 'IELTS Speaking Part 3', 'writing': 'эссе IELTS Writing',
+  'read': 'чтение книги на YomiRead', 'sat-math': '10 задач SAT Math', 'sat-rw': '10 вопросов SAT Reading & Writing', 'call': 'разговор с Yomi голосом'};
 
-/* ---- курс по дням: каждый день урок + практика + карточки; новый день открывается, когда закончен предыдущий ---- */
+/* ---- курс по дням: задания дня берутся из личного плана (по дню недели), без плана — урок + практика + карточки;
+   новый день открывается, когда закончен предыдущий ---- */
 const todayKey = () => new Date().toLocaleDateString('sv');
+function dayTasks(c){
+  const k = SKILLS.find(x => x.id === c.lesson) || nextLesson(), p = SP();
+  if(!p) return [{type: 'lesson'}, {type: 'practice', act: practiceFor(k)}, {type: 'words'}];
+  const day = (p.week || []).find(x => x.day === c.dow) || {tasks: []};
+  return day.tasks.filter(t => t.type !== 'rest').map(t => ({type: t.type, min: t.minutes, note: t.note,
+    act: t.type === 'practice' || t.type === 'mock' ? (PRACTICE_NAME[t.act] ? t.act : t.type === 'mock' ? 'ielts-full' : practiceFor(k)) : ''}));
+}
 function course(){
   let c = store.get('yomi_course', null);
-  if(!c) c = {day: 1, date: todayKey(), done: {}, lesson: nextLesson().id};
-  const all = c.done.lesson && c.done.practice && c.done.words;
-  if(c.date !== todayKey() && all) c = {day: c.day + 1, date: todayKey(), done: {}, lesson: nextLesson().id};
-  if(lessonsDone()[c.lesson] && !c.done.lesson) c.done.lesson = true;
+  if(!c || Object.keys(c.done || {}).some(x => isNaN(x))) c = {day: c?.day || 1, date: todayKey(), done: {}, lesson: nextLesson().id};   // старый формат — начинаем день заново
+  c.dow ||= todayDow();
+  const all = dayTasks(c).every((t, i) => c.done[i]);
+  if(c.date !== todayKey() && all) c = {day: c.day + 1, date: todayKey(), dow: todayDow(), done: {}, lesson: nextLesson().id};
+  if(lessonsDone()[c.lesson]) dayTasks(c).forEach((t, i) => { if(t.type === 'lesson') c.done[i] = true; });
   store.set('yomi_course', c); return c;
 }
-function courseMark(k){ const c = course(); c.done[k] = true; store.set('yomi_course', c); }
+function courseMark(type, idx){
+  const c = course(), ts = dayTasks(c), i = idx ?? ts.findIndex((t, j) => t.type === type && !c.done[j]);
+  if(i >= 0){ c.done[i] = true; store.set('yomi_course', c); }
+}
 const CHECK_I = svgI('<path d="M5 12l5 5 9-10"/>');
 const LSLOT = '<div class="lslot" id="learnSlot" aria-hidden="true"></div>';
 const BACK = () => `<div class="lhead"><button class="backl" data-lback>${svgI('<path d="M15 6l-6 6 6 6"/>')} Учёба</button>${LSLOT}</div>`;
 
 function showLearn(){
   WC = null; LS = null; parkBunny();
-  { const c0 = course(), k0 = SKILLS.find(x => x.id === c0.lesson); if(k0 && !c0.done.lesson && AUTH) loadLesson(k0); }   // урок дня — заранее
-  const c = course(), k = SKILLS.find(x => x.id === c.lesson) || nextLesson(), pr = practiceFor(k);
-  const n = ['lesson', 'practice', 'words'].filter(x => c.done[x]).length, done = lessonsDone(), weak = weakSkills();
-  const step = (key, ic, t, s) => `<button class="cstep${c.done[key] ? ' ok' : ''}" data-cs="${key}"><span class="cdot">${c.done[key] ? CHECK_I : ic}</span><span class="t"><b>${t}</b><small>${s}</small></span>${I.chev}</button>`;
+  const c = course(), k = SKILLS.find(x => x.id === c.lesson) || nextLesson(), ts = dayTasks(c), p = SP();
+  if(ts.some((t, i) => t.type === 'lesson' && !c.done[i]) && AUTH) loadLesson(k);   // урок дня — заранее
+  const n = ts.filter((t, i) => c.done[i]).length, done = lessonsDone(), weak = weakSkills();
+  const ICON = {lesson: I.book, practice: I.target, mock: I.cap, words: I.card};
+  const title = t => ({lesson: 'Урок', practice: 'Практика', mock: 'Пробный экзамен', words: 'Карточки слов'})[t.type] || 'Задание';
+  const sub = t => t.type === 'lesson' ? esc(k.name) : t.type === 'words' ? (S.due ? `${S.due} ${plural(S.due, 'слово', 'слова', 'слов')} на повторение` : 'Добавить 10 новых слов') : PRACTICE_NAME[t.act] || '';
+  const step = (t, i) => `<button class="cstep${c.done[i] ? ' ok' : ''}" data-cs="${i}"><span class="cdot">${c.done[i] ? CHECK_I : ICON[t.type] || I.target}</span><span class="t"><b>${title(t)}${t.min ? ` · ${t.min} мин` : ''}</b><small>${sub(t)}</small>${t.note ? `<small class="cnote">${esc(t.note)}</small>` : ''}</span>${I.chev}</button>`;
   const groups = [...new Set(SKILLS.map(x => x.g))];
   $('#learnBox').innerHTML = `<div class="lhead top"><div><h2>Учёба</h2><p class="lead">Уроки по каждому навыку, карточки слов и курс на каждый день.</p></div>${LSLOT}</div>
-    <div class="card course"><div class="ch"><span class="eyebrow">Курс · день ${c.day}</span><span class="cn">${n} из 3</span></div>
-      <span class="bar"><i style="width:${n / 3 * 100}%"></i></span>
-      <div class="csteps">
-        ${step('lesson', I.book, 'Урок', esc(k.name))}
-        ${step('practice', I.target, 'Практика', PRACTICE_NAME[pr])}
-        ${step('words', I.card, 'Карточки слов', S.due ? `${S.due} ${plural(S.due, 'слово', 'слова', 'слов')} на повторение` : 'Добавить 10 новых слов')}
-      </div>
-      ${n === 3 ? '<p class="cfin">День закрыт. Завтра откроется следующий.</p>' : ''}</div>
+    <div class="card course"><div class="ch"><span class="eyebrow">Курс · день ${c.day}${p ? ' · по твоему плану' : ''}</span><span class="cn">${ts.length ? `${n} из ${ts.length}` : 'отдых'}</span></div>
+      <span class="bar"><i style="width:${ts.length ? n / ts.length * 100 : 100}%"></i></span>
+      ${ts.length ? `<div class="csteps">${ts.map(step).join('')}</div>` : '<p class="cfin">Сегодня по плану отдых — мозгу нужно время, чтобы всё улеглось. Хочешь — повтори карточки.</p>'}
+      ${ts.length && n === ts.length ? '<p class="cfin">День закрыт. Завтра откроется следующий.</p>' : ''}
+      ${p ? '' : `<button class="mkplan" data-mkplan>${I.target}<span><b>Составить личный план</b><small>Курс подстроится под твою цель, дату экзамена и время</small></span>${I.chev}</button>`}</div>
     <div class="sec-h"><h3>Карточки слов</h3></div>
     <div class="card wordsc"><div><b class="big">${S.due || 0}</b><span>на повторение</span></div><div><b class="big">${S.words || 0}</b><span>всего слов</span></div>
       <div class="wbtns"><button class="btn" data-wrev${S.due ? '' : ' disabled'}>Повторять</button><button class="btn line" data-wadd>+10 слов по теме</button></div></div>
     ${groups.map(g => `<div class="sec-h"><h3>${g}</h3></div><div class="lessons">${SKILLS.filter(x => x.g === g).map(x => {
-      const d = done[x.id];
-      return `<button class="hrow lrow" data-ls="${x.id}"><span class="ldot${d ? ' ok' : ''}">${d ? CHECK_I : ''}</span><span class="t"><b>${esc(x.name)}</b>${weak.has(x.id) ? '<small class="weak">Слабая тема — начни с неё</small>' : d ? `<small>Пройден · ${d.score} из ${d.total}</small>` : ''}</span>${I.chev}</button>`; }).join('')}</div>`).join('')}`;
+      const dn = done[x.id];
+      return `<button class="hrow lrow" data-ls="${x.id}"><span class="ldot${dn ? ' ok' : ''}">${dn ? CHECK_I : ''}</span><span class="t"><b>${esc(x.name)}</b>${weak.has(x.id) ? '<small class="weak">Слабая тема — начни с неё</small>' : dn ? `<small>Пройден · ${dn.score} из ${dn.total}</small>` : ''}</span>${I.chev}</button>`; }).join('')}</div>`).join('')}`;
   homeBunny();
 }
 $('#learnBox').onclick = e => {
   const t = e.target, cs = t.closest('[data-cs]'), ls = t.closest('[data-ls]');
-  if(cs){ const c = course(), k = SKILLS.find(x => x.id === c.lesson);
-    if(cs.dataset.cs === 'lesson') return openLesson(k.id);
-    if(cs.dataset.cs === 'practice'){ courseMark('practice'); return startAct(practiceFor(k)); }
-    if(cs.dataset.cs === 'words') return S.due ? reviewWords() : addWords(); }
+  if(cs){ const c = course(), i = +cs.dataset.cs, task = dayTasks(c)[i], k = SKILLS.find(x => x.id === c.lesson) || nextLesson();
+    if(!task) return;
+    if(task.type === 'lesson') return openLesson(k.id);
+    if(task.type === 'words') return S.due ? reviewWords() : addWords();
+    courseMark(task.type, i); return startAct(task.act); }
+  if(t.closest('[data-mkplan]')){ tab('home'); return showPlan(); }
   if(ls) return openLesson(ls.dataset.ls);
   if(t.closest('[data-wrev]')) return reviewWords();
   if(t.closest('[data-wadd]')) return addWords();
@@ -2582,6 +2626,112 @@ async function loadWordset(topic){
     <div class="wbtns" style="margin-top:14px"><button class="btn" data-wrev>Учить карточками</button></div>`;
   homeBunny();
 }
+
+
+/* ---------- личный план учёбы: несколько вопросов → план под человека (сервер: study_plan) ----------
+   План учитывает ответы и результаты в приложении; часы и вердикт сервер считает сам (данные IELTS и College Board).
+   Курс в «Учёбе» идёт по этому плану: задания дня — из недели плана, порядок уроков — из priority. */
+const SPA = () => S.stats?.studyPlan || null;
+const HARD = ['Speaking', 'Writing', 'Reading', 'Listening', 'Грамматика', 'Словарный запас', 'SAT Math', 'SAT Reading & Writing'];
+const IELTS_STEPS = [4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9], SAT_STEPS = Array.from({length: 25}, (_, k) => 400 + k * 50);
+const VERDICT = {ok: ['green', 'Успеваешь'], tight: ['orange', 'Впритык'], short: ['red', 'Не успеваешь'], done: ['green', 'Цель уже достигнута']};
+let QZ = null, planCalcMode = false;
+const showPlanCalc = showPlan;   // прежний расчёт часов и этапов остаётся доступным из плана
+showPlan = function(){ if(planCalcMode) return showPlanCalc(); return SPA() ? showStudyPlan() : showPlanQuiz(); };
+document.addEventListener('click', e => { if(e.target.closest('[data-home]')) planCalcMode = false; }, true);
+
+function quizDefaults(){
+  const a = SPA()?.answers, ie = lastIelts(), sat = lastSat();
+  return a ? JSON.parse(JSON.stringify(a)) : {exam: PLAN?.exam || 'ielts', ielts: {now: ie.speaking ?? null, target: GOALS.ielts}, sat: {now: sat.total || null, target: GOALS.sat},
+    date: PLAN?.date || '', minutes: 30, days: 5, hard: []};
+}
+const chips = (name, list, cur, multi = false) => `<div class="qz-chips" data-qname="${name}"${multi ? ' data-multi' : ''}>${list.map(([v, t]) =>
+  `<button type="button" data-qv="${v}" class="${multi ? (cur.includes(v) ? 'on' : '') : String(cur) === String(v) ? 'on' : ''}" aria-pressed="${multi ? cur.includes(v) : String(cur) === String(v)}">${t}</button>`).join('')}</div>`;
+const scoreSel = (id, steps, v, unknown) => `<select class="inp" id="${id}">${unknown ? `<option value="">Не знаю</option>` : ''}${steps.map(x => `<option ${Number(v) === x ? 'selected' : ''}>${x}</option>`).join('')}</select>`;
+function showPlanQuiz(){
+  QZ ||= quizDefaults();
+  const q = QZ, ie = q.exam !== 'sat', sa = q.exam !== 'ielts';
+  parkBunny();
+  $('#homeBox').innerHTML = `<div class="lhead"><button class="btn line sm" data-home>${I.back} Главная</button><div class="lslot" id="heroSlot" aria-hidden="true"></div></div>
+    <h2>Личный план</h2><p class="lead">Ответь на 6 вопросов — Yomi составит план под тебя: что делать каждый день, в каком порядке учить и успеваешь ли к экзамену.</p>
+    <div class="card qz">
+      <label class="lbl">1. Что сдаёшь</label>${chips('exam', [['ielts', 'IELTS'], ['sat', 'SAT'], ['both', 'Оба']], q.exam)}
+      <label class="lbl">2. Сейчас и цель</label>
+      <div class="qz-grid">
+        ${ie ? `<div><small>IELTS сейчас</small>${scoreSel('qIeNow', IELTS_STEPS, q.ielts.now, true)}</div><div><small>IELTS цель</small>${scoreSel('qIeT', IELTS_STEPS, q.ielts.target || 7)}</div>` : ''}
+        ${sa ? `<div><small>SAT сейчас</small>${scoreSel('qSaNow', SAT_STEPS, q.sat.now, true)}</div><div><small>SAT цель</small>${scoreSel('qSaT', SAT_STEPS, q.sat.target || 1400)}</div>` : ''}
+      </div>
+      <p class="qz-hint">Не знаешь свой балл — выбери «Не знаю», а потом пройди пробный тест: план станет точнее.</p>
+      <label class="lbl" for="qDate">3. Дата экзамена</label><input class="inp" id="qDate" type="date" value="${q.date || ''}" min="${new Date().toLocaleDateString('sv')}">
+      <p class="qz-hint">Ещё не записан — оставь пустым, план будет на 12 недель.</p>
+      <label class="lbl">4. Сколько времени в день</label>${chips('minutes', [[15, '15 мин'], [30, '30 мин'], [45, '45 мин'], [60, '1 час'], [90, '1,5 часа'], [120, '2 часа']], q.minutes)}
+      <label class="lbl">5. Сколько дней в неделю</label>${chips('days', [[3, '3'], [4, '4'], [5, '5'], [6, '6'], [7, '7']], q.days)}
+      <label class="lbl">6. Что даётся труднее</label>${chips('hard', HARD.filter(h => q.exam === 'both' || (q.exam === 'sat' ? h.startsWith('SAT') || h === 'Грамматика' || h === 'Словарный запас' : !h.startsWith('SAT'))).map(h => [h, h]), q.hard, true)}
+    </div>
+    <p class="qz-err" id="qzErr" role="status"></p>
+    <div class="qz-foot"><button class="btn" data-qgo>Составить мой план</button>${SPA() ? '<button class="btn line" data-qback>Отмена</button>' : ''}</div>`;
+  homeBunny();
+}
+function readQuiz(){
+  const q = QZ, v = id => $('#' + id)?.value;
+  if(q.exam !== 'sat'){ q.ielts.now = v('qIeNow') ? +v('qIeNow') : null; q.ielts.target = +v('qIeT'); }
+  if(q.exam !== 'ielts'){ q.sat.now = v('qSaNow') ? +v('qSaNow') : null; q.sat.target = +v('qSaT'); }
+  q.date = v('qDate') || '';
+  return q;
+}
+async function makePlan(answers){
+  parkBunny();
+  $('#homeBox').innerHTML = `<div class="hero" style="margin-top:20px"><div class="hero-slot" id="heroSlot"></div><div class="bubble"><b>Составляю твой план…</b>Считаю часы до экзамена, смотрю твои результаты и раскладываю неделю. Это до 30 секунд.</div></div>`;
+  homeBunny();
+  // уроки только по выбранному экзамену (грамматика нужна и там, и там)
+  const skills = SKILLS.filter(k => k.id.startsWith('g-') || answers.exam === 'both' || k.exam === answers.exam).map(k => ({id: k.id, name: k.name}));
+  const j = await api('study_plan', {answers, skills}).catch(() => ({}));
+  if(!j.studyPlan){ showPlanQuiz(); $('#qzErr').textContent = 'Не получилось составить план. Попробуй ещё раз.'; return; }
+  S.stats = {...(S.stats || {}), studyPlan: j.studyPlan};
+  // цели и дату берём из ответов — их видно на главной и в «Моём плане»
+  const a = j.studyPlan.answers;
+  if(a.ielts?.target) GOALS.ielts = a.ielts.target; if(a.sat?.target) GOALS.sat = a.sat.target; saveGoals();
+  PLAN = {...(PLAN || planDefaults()), exam: a.exam === 'sat' ? 'sat' : 'ielts', date: a.date}; store.set('yomi_plan', PLAN);
+  const c = store.get('yomi_course', null); if(c){ c.dow = todayDow(); store.set('yomi_course', c); }
+  QZ = null; showStudyPlan();
+}
+const TASK_TXT = t => t.type === 'lesson' ? 'Урок' : t.type === 'words' ? 'Карточки слов' : t.type === 'mock' ? `Пробный экзамен · ${PRACTICE_NAME[t.act] || ''}` : `Практика · ${PRACTICE_NAME[t.act] || ''}`;
+function showStudyPlan(){
+  const sp = SPA(), p = sp.plan, v = VERDICT[p.verdict] || VERDICT.ok, today = todayDow(), h = p.hours;
+  const pri = (p.priority || []).map(id => SKILLS.find(k => k.id === id)).filter(Boolean).slice(0, 6);
+  parkBunny();
+  $('#homeBox').innerHTML = `<div class="lhead"><button class="btn line sm" data-home>${I.back} Главная</button><div class="lslot" id="heroSlot" aria-hidden="true"></div></div>
+    <p class="eyebrow">Личный план · составлен ${dateRu(sp.at)}</p>
+    <h2>Твой план на ${p.weeks} ${plural(p.weeks, 'неделю', 'недели', 'недель')}</h2>
+    <div class="card spv"><span class="vchip ${v[0]}">${v[1]}</span>${h ? `<span class="vh">${h.have} ч есть · нужно ${h.need}–${h.needHi} ч</span>` : ''}<p>${esc(p.summary)}</p>
+      <button class="btn" data-sptoday>Начать сегодняшний день</button></div>
+    <div class="sec-h"><h3>Неделя</h3></div>
+    <div class="spweek">${(p.week || []).map(d => { const rest = d.tasks.every(t => t.type === 'rest'), mins = d.tasks.reduce((x, t) => x + (t.minutes || 0), 0);
+      return `<div class="spday${d.day === today ? ' now' : ''}${rest ? ' rest' : ''}"><div class="dh"><b>${d.day}</b><small>${rest ? 'отдых' : `${mins} мин`}${d.day === today ? ' · сегодня' : ''}</small></div>
+        ${rest ? '' : `<ul>${d.tasks.filter(t => t.type !== 'rest').map(t => `<li><span>${TASK_TXT(t)}${t.minutes ? ` · ${t.minutes} мин` : ''}</span>${t.note ? `<small>${esc(t.note)}</small>` : ''}</li>`).join('')}</ul>`}</div>`; }).join('')}</div>
+    ${pri.length ? `<div class="sec-h"><h3>Уроки по порядку</h3></div><div class="card"><ol class="sppri">${pri.map(k => `<li>${esc(k.name)}</li>`).join('')}</ol></div>` : ''}
+    <div class="sec-h"><h3>Этапы</h3></div>
+    <div class="spphases">${(p.phases || []).map(x => `<div class="card"><span class="eyebrow">Недели ${esc(x.weeks)}</span><b>${esc(x.title)}</b><p>${esc(x.focus)}</p></div>`).join('')}</div>
+    ${p.milestones?.length ? `<div class="sec-h"><h3>Контрольные точки</h3></div><div class="card"><ul class="spmile">${p.milestones.map(m => `<li><b>Неделя ${m.week}</b><span>${esc(m.what)}</span></li>`).join('')}</ul></div>` : ''}
+    ${p.tips?.length ? `<div class="sec-h"><h3>Советы тебе</h3></div><div class="card"><ul class="mist">${p.tips.map(t => `<li>${esc(t)}</li>`).join('')}</ul></div>` : ''}
+    <div class="qz-foot"><button class="btn line" data-sprenew>Обновить по моим результатам</button><button class="btn line" data-spedit>Изменить ответы</button></div>
+    <button class="relink" data-spcalc style="margin-top:12px">Расчёт часов и общие этапы →</button>`;
+  homeBunny();
+}
+$('#homeBox').addEventListener('click', e => {
+  const t = e.target, chip = t.closest('.qz-chips [data-qv]');
+  if(chip){ const box = chip.parentElement, name = box.dataset.qname, val = isNaN(chip.dataset.qv) ? chip.dataset.qv : +chip.dataset.qv;
+    readQuiz();
+    if(box.hasAttribute('data-multi')){ const l = QZ[name]; QZ[name] = l.includes(val) ? l.filter(x => x !== val) : [...l, val]; } else QZ[name] = val;
+    if(name === 'exam') QZ.hard = [];
+    return showPlanQuiz(); }
+  if(t.closest('[data-qgo]')) return makePlan(readQuiz());
+  if(t.closest('[data-qback]')){ QZ = null; return showStudyPlan(); }
+  if(t.closest('[data-spedit]')){ QZ = quizDefaults(); return showPlanQuiz(); }
+  if(t.closest('[data-sprenew]')) return makePlan(SPA().answers);
+  if(t.closest('[data-sptoday]')) return tab('learn');
+  if(t.closest('[data-spcalc]')){ planCalcMode = true; return showPlanCalc(); }
+});
 
 
 /* ---------- политика конфиденциальности: только то, что приложение делает на самом деле ----------
