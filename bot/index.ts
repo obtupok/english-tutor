@@ -307,6 +307,22 @@ function satScore(results: { ok: boolean; difficulty: string }[]) {
   const got = results.reduce((a, r) => a + (r.ok ? w[r.difficulty] || 1 : 0), 0), max = results.reduce((a, r) => a + (w[r.difficulty] || 1), 0) || 1;
   return Math.max(200, Math.min(800, Math.round((200 + 600 * Math.pow(got / max, 0.9)) / 10) * 10));
 }
+// разнообразие вопросов: каждый раз — случайные темы из большого списка и список недавно заданных вопросов, которые нельзя повторять
+const THEMES = ['hometown and neighbourhoods', 'work and careers', 'school and university life', 'friendship', 'family traditions', 'food and cooking', 'health and fitness',
+  'sport', 'music', 'films and TV', 'books and reading', 'art and museums', 'photography', 'fashion and clothes', 'shopping and money', 'advertising', 'technology and gadgets',
+  'social media', 'artificial intelligence', 'the internet and privacy', 'science and discoveries', 'space exploration', 'the environment', 'climate and weather', 'animals and pets',
+  'nature and parks', 'cities and architecture', 'transport and commuting', 'travel and tourism', 'languages', 'history and the past', 'festivals and celebrations', 'gifts',
+  'childhood memories', 'hobbies', 'free time and relaxation', 'sleep and daily routine', 'volunteering and helping others', 'rules and laws', 'news and media', 'celebrities and fame',
+  'teamwork and leadership', 'decisions and plans', 'mistakes and lessons', 'success and goals', 'housing and home', 'water and energy', 'crafts and handmade things',
+  'games and puzzles', 'public speaking', 'patience and time', 'local businesses', 'inventions', 'colours and design', 'noise and quiet places', 'the sea and rivers'];
+const SAT_TOPICS = ['biology', 'astronomy', 'geology', 'chemistry', 'psychology', 'economics', 'archaeology', 'linguistics', 'urban planning', 'art history', 'literary fiction (19th century)',
+  'modern poetry', 'a historical speech or letter', 'anthropology', 'ecology', 'medicine', 'computer science', 'music history', 'sociology', 'political science', 'marine science', 'physics'];
+const SAT_MATH = ['linear equations', 'systems of equations', 'linear functions and graphs', 'ratios, rates and percentages', 'units and proportions', 'statistics and data tables',
+  'probability', 'quadratics', 'exponential growth and decay', 'polynomials and factoring', 'radicals and exponents', 'absolute value and inequalities', 'circles', 'triangles and trigonometry',
+  'area and volume', 'scatterplots and lines of best fit', 'nonlinear functions', 'word problems with money and time'];
+const pickThemes = (list: string[], n: number) => [...list].sort(() => Math.random() - 0.5).slice(0, n);
+const shortQ = (q: string) => String(q || '').replace(/\s+/g, ' ').slice(0, 90);
+
 async function askJsonGroq(system: string, user: string, schema: any) {
   for (let attempt = 0; attempt < 2; attempt++) {
     const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -1100,13 +1116,17 @@ async function web(req: Request) {
     case 'exam_start': {
       const kind = EXAMS[b.kind] ? b.kind : 'ielts', role = String(b.role || '').slice(0, 80).trim() || 'a junior specialist in their field';
       const recent = (owner.stats?.exams || []).slice(-6).map((e: any) => e.topic).filter(Boolean).join('; ');
-      const out = await askJsonGroq(`You write speaking-exam materials. The learner's level is about ${owner.level || 'B1'}. Use fresh, varied topics${recent ? ` (not these recent ones: ${recent})` : ''}. Natural, exam-like English. Return JSON only.`, EXAMS[kind].build.replace('ROLE', role), EXAM_ITEMS_SCHEMA);
+      const asked = (owner.stats?.askedQ || []).slice(-50);
+      const themes = pickThemes(THEMES, 4).join(', ');
+      const out = await askJsonGroq(`You write speaking-exam materials. The learner's level is about ${owner.level || 'B1'}. Use fresh, varied topics${recent ? ` (not these recent ones: ${recent})` : ''}. Natural, exam-like English. Return JSON only.`,
+        `${EXAMS[kind].build.replace('ROLE', role)}\n\nBuild this set around these themes (pick and mix them, one per part): ${themes}.${asked.length ? `\nNever reuse or closely paraphrase any of these questions the learner has already answered:\n- ${asked.join('\n- ')}` : ''}`, EXAM_ITEMS_SCHEMA);
       if (!out?.items?.length) return json({ error: 'failed' }, 502);
       const items = out.items.slice(0, 10).map((it: any) => ({ ...it, prep: Math.max(0, Math.min(90, it.prep | 0)), speak: Math.max(20, Math.min(150, it.speak | 0)), bullets: (it.bullets || []).slice(0, 5) }));
       const part = Number(b.part) || 0;   // тренировка одной части IELTS: остальные вопросы отбрасываем
       const picked = part ? items.filter((it: any) => it.part.replace(/\D/g, '') === String(part)) : items;
       if (part && picked.length) items.splice(0, items.length, ...picked);
-      owner.stats = { ...(owner.stats || {}), examCur: { kind, role, topic: out.topic, items, answers: [], at: new Date().toISOString() } };
+      owner.stats = { ...(owner.stats || {}), examCur: { kind, role, topic: out.topic, items, answers: [], at: new Date().toISOString() },
+        askedQ: [...(owner.stats?.askedQ || []), ...items.map((it: any) => shortQ(it.q))].slice(-80) };
       await save(owner);
       return json({ kind, items });
     }
@@ -1114,10 +1134,16 @@ async function web(req: Request) {
       const section = SAT_SECTIONS[b.section] ? b.section : 'rw', n = Math.max(3, Math.min(15, Number(b.n) || 10));
       const level = String(b.level || 'mixed');   // easy / medium / hard / mixed
       const weak = (owner.stats?.sat || []).filter((x: any) => x.section === section).slice(-3).flatMap((x: any) => x.weak || []);
+      const seen = (owner.stats?.satSeen?.[section] || []).slice(-40);
+      const mix = section === 'math' ? `Spread the items over these topics: ${pickThemes(SAT_MATH, Math.min(n, 8)).join(', ')}. Use varied numbers, names and real-life contexts.`
+        : `Base the passages on these subjects (one passage per item, all different): ${pickThemes(SAT_TOPICS, Math.min(n, 10)).join(', ')}.`;
       const out = await askJsonGroq(`You write original Digital SAT practice questions that match the real test's style and difficulty. Return JSON only.`,
-        `${SAT_SECTIONS[section]}\nWrite exactly ${n} items. Difficulty: ${level === 'mixed' ? 'about one third easy, one third medium, one third hard' : 'all ' + level}.${weak.length ? ` Give extra practice on these weak skills: ${[...new Set(weak)].join(', ')}.` : ''} "answer" is the 0-based index of the correct choice. "explanation" — in Russian, short and clear: why the right answer is right and the main trap in the wrong ones.`, SAT_SET_SCHEMA);
+        `${SAT_SECTIONS[section]}\nWrite exactly ${n} items. ${mix}${seen.length ? ` Do not repeat or closely paraphrase any of these questions already given: ${seen.join(' | ')}.` : ''} Difficulty: ${level === 'mixed' ? 'about one third easy, one third medium, one third hard' : 'all ' + level}.${weak.length ? ` Give extra practice on these weak skills: ${[...new Set(weak)].join(', ')}.` : ''} "answer" is the 0-based index of the correct choice. "explanation" — in Russian, short and clear: why the right answer is right and the main trap in the wrong ones.`, SAT_SET_SCHEMA);
       const items = (out?.items || []).filter((it: any) => it.choices?.length === 4 && it.answer >= 0 && it.answer < 4).slice(0, n);
       if (!items.length) return json({ error: 'failed' }, 502);
+      const sk = (it: any) => shortQ(`${it.passage ? it.passage.slice(0, 50) + ' — ' : ''}${it.question}`);
+      owner.stats = { ...(owner.stats || {}), satSeen: { ...(owner.stats?.satSeen || {}), [section]: [...(owner.stats?.satSeen?.[section] || []), ...items.map(sk)].slice(-60) } };
+      await save(owner);
       return json({ section, items });
     }
     case 'sat_done': {
@@ -1147,7 +1173,7 @@ async function web(req: Request) {
     }
     case 'writing_prompt': {
       const recent = (owner.stats?.writing || []).slice(-5).map((w: any) => w.prompt).join(' | ');
-      const out = await askJsonGroq('You write IELTS Academic Writing Task 2 questions. Return JSON only.', `Write one fresh, realistic IELTS Writing Task 2 question (opinion, discussion, problem-solution, advantages-disadvantages or two-part). End with the usual instructions ("Give reasons for your answer and include any relevant examples from your own knowledge or experience. Write at least 250 words."). Avoid these recent topics: ${recent || 'none'}.`, PROMPT_SCHEMA);
+      const out = await askJsonGroq('You write IELTS Academic Writing Task 2 questions. Return JSON only.', `Theme: ${pickThemes(THEMES, 1)[0]}. Write one fresh, realistic IELTS Writing Task 2 question (opinion, discussion, problem-solution, advantages-disadvantages or two-part). End with the usual instructions ("Give reasons for your answer and include any relevant examples from your own knowledge or experience. Write at least 250 words."). Avoid these recent topics: ${recent || 'none'}.`, PROMPT_SCHEMA);
       return out?.prompt ? json({ prompt: out.prompt }) : json({ error: 'failed' }, 502);
     }
     case 'writing_check': {
