@@ -1471,6 +1471,49 @@ ${reply}` }] }),
       await admin.from('english_words').upsert({ key: word.toLowerCase(), word, translation, example: String(b.example || '').slice(0, 300) }, { onConflict: 'key', ignoreDuplicates: true });
       return json({ ok: true });
     }
+    // урок с учителем: ход учителя (сайт хранит историю урока и присылает её целиком; ответ ученика — текстом или голосом)
+    case 'class_turn': {
+      const topic = String(b.topic || '').slice(0, 160), focus = String(b.focus || '').slice(0, 700);
+      if (!topic) return json({ error: 'bad' }, 400);
+      let answer = String(b.answer || '').slice(0, 3000), heard = '';
+      if (b.audio) {
+        const mime = String(b.mime || 'audio/webm'), ext = /mp4|m4a|aac/.test(mime) ? 'm4a' : /ogg/.test(mime) ? 'ogg' : /wav/.test(mime) ? 'wav' : 'webm';
+        answer = heard = await transcribe(new Blob([Uint8Array.from(atob(String(b.audio)), (c) => c.charCodeAt(0))], { type: mime }), 'answer.' + ext, 'en', String(b.lastTask || ''));
+        if (!answer.trim()) return json({ error: 'empty', heard: '' }, 400);
+      }
+      const hist = (Array.isArray(b.history) ? b.history : []).slice(-24).map((m: any) => ({ role: m.role === 'teacher' ? 'assistant' : 'user', content: String(m.text || '').slice(0, 1500) }));
+      if (answer) hist.push({ role: 'user', content: answer });
+      if (!hist.length) hist.push({ role: 'user', content: '(начало урока)' });
+      const C_SCHEMA = { type: 'object', additionalProperties: false, required: ['say', 'board_title', 'board_points', 'board_examples', 'task', 'answer_mode', 'stage', 'verdict', 'fix', 'progress'], properties: {
+        say: { type: 'string' }, board_title: { type: 'string' }, board_points: { type: 'array', items: { type: 'string' } },
+        board_examples: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['en', 'ru'], properties: { en: { type: 'string' }, ru: { type: 'string' } } } },
+        task: { type: 'string' }, answer_mode: { type: 'string', enum: ['speak', 'write', 'none'] },
+        stage: { type: 'string', enum: ['warmup', 'explain', 'practice', 'free', 'summary', 'done'] },
+        verdict: { type: 'string', enum: ['correct', 'partly', 'wrong', 'none'] }, fix: { type: 'string' }, progress: { type: 'integer' } } };
+      const stt = owner.stats || {}, el = stt.examLast;
+      const system = `You are Yomi, a warm, patient and demanding private English teacher giving a live one-on-one lesson by voice, like a good school lesson. The learner prepares for IELTS / the Digital SAT; English level about ${owner.level || 'B1'}.${el ? ` Last IELTS Speaking mock: ${el.overall}.` : ''}
+Lesson topic: "${topic}".${focus ? ` Key facts — follow them exactly: ${focus}.` : ''}
+Lesson plan (follow it in order, one small step per turn):
+1. warmup — greet briefly, say what we will learn today and why it matters for the exam, ask one easy question.
+2. explain — teach the topic in small chunks (one idea per turn): rule → 1–2 examples → a quick check question. If the learner is wrong or says they don't understand, explain differently with a simpler example.
+3. practice — 4–6 tasks from easy to harder; the learner must PRODUCE the answer (say or write a sentence, transform, answer a question). Never multiple choice.
+4. free — 1–2 personal questions where the learner uses the topic in their own words.
+5. summary — recap the 2–3 key points, praise specifically, give one homework task; then stage "done".
+Each turn (JSON):
+- "say": what you say aloud now — natural spoken teacher talk, 1–4 short sentences. Explanations in Russian; English examples, tasks and phrases in English. Address the learner as "ты". If the learner answered, first react to it (praise or kind correction), then continue.
+- "verdict": about the learner's LAST answer (correct / partly / wrong), or "none" if there was nothing to judge. "fix": the corrected sentence when partly/wrong, else "".
+- If wrong or partly: ask the learner to repeat or try the corrected version (that is the next task) before moving on.
+- "board_title", "board_points" (1–4 short lines: rule, formula, key words), "board_examples" (0–3 pairs en/ru): what is written on the board right now — keep it until the topic changes.
+- "task": the exact question or task the learner must answer now (in English if it is an English task), or "" when no answer is needed. Only one question per turn.
+- "answer_mode": "speak" for speaking/short answers, "write" for writing/transform tasks, "none" if no answer is needed.
+- "stage": current step; "progress": 0–100 through the lesson.
+Exam facts: the Digital SAT has Reading and Writing (54 questions, 64 min) and Math (44 questions, 70 min, calculator allowed), 400–1600; IELTS bands 0–9 in steps of 0.5.
+Be accurate: double-check every rule, example and correction.`;
+      const out = await askJsonGroq(system, `Lesson so far (teacher turns are JSON summaries):\n${hist.map((m: any) => `${m.role === 'assistant' ? 'TEACHER' : 'LEARNER'}: ${m.content}`).join('\n')}\n\nWrite the teacher's next turn.`, C_SCHEMA, 'medium', 8000);
+      if (!out?.say) return json({ error: 'failed', heard }, 502);
+      out.progress = Math.max(0, Math.min(100, out.progress | 0));
+      return json({ turn: out, heard });
+    }
     // подборка слов по теме экзамена — сразу в карточки (без повторов того, что уже есть)
     case 'wordset': {
       const topic = String(b.topic || '').slice(0, 80) || pickThemes(THEMES, 1)[0];
