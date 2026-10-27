@@ -353,11 +353,16 @@ const pickThemes = (list: string[], n: number) => [...list].sort(() => Math.rand
 const shortQ = (q: string) => String(q || '').replace(/\s+/g, ' ').slice(0, 90);
 
 async function askJsonGroq(system: string, user: string, schema: any, effort = 'medium', maxTokens = 16000, model = GROQ_MODEL) {
-  for (let attempt = 0; attempt < 3; attempt++) {
+  for (let attempt = 0; attempt < 4; attempt++) {
     const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: { Authorization: 'Bearer ' + env('GROQ_API_KEY'), 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+      // llama (третья ступень) не умеет строгую схему — даём схему текстом и режим json_object
+      body: JSON.stringify(model === GROQ_BACKUP ? {
+        model, max_tokens: Math.min(maxTokens, 8000), temperature: 0.4,
+        messages: [{ role: 'system', content: `${system}\nReply with one JSON object that matches this JSON schema exactly: ${JSON.stringify(schema)}` }, { role: 'user', content: user }],
+        response_format: { type: 'json_object' },
+      } : {
         model, reasoning_effort: effort, max_completion_tokens: maxTokens,
         messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
         response_format: { type: 'json_schema', json_schema: { name: 'exam', strict: true, schema } },
@@ -367,8 +372,9 @@ async function askJsonGroq(system: string, user: string, schema: any, effort = '
     if (r.status === 429) {
       const ra = Number(r.headers.get('retry-after')) || 2;
       console.error('exam 429', model, 'retry-after', ra, (await r.text().catch(() => '')).slice(0, 200));
-      if (model !== GROQ_LIGHT) { model = GROQ_LIGHT; continue; }   // основная модель в лимите — сразу запасная
-      if (ra > 10) break;                                          // и запасная в лимите надолго — не держим человека
+      if (model === GROQ_MODEL) { model = GROQ_LIGHT; continue; }   // основная модель в лимите — сразу запасная
+      if (model === GROQ_LIGHT) { model = GROQ_BACKUP; continue; }  // и она в лимите — третья, со своим лимитом
+      if (ra > 10) break;                                          // все в лимите надолго — не держим человека
       await new Promise((res) => setTimeout(res, ra * 1000)); continue;
     }
     const j = await r.json().catch(() => ({}));
@@ -1511,7 +1517,7 @@ Each turn (JSON):
 - "stage": current step; "progress": 0–100 through the lesson.
 Exam facts: the Digital SAT has Reading and Writing (54 questions, 64 min) and Math (44 questions, 70 min, calculator allowed), 400–1600; IELTS bands 0–9 in steps of 0.5.
 Be accurate: double-check every rule, example and correction.`;
-      const out = await askJsonGroq(system, `Lesson so far (teacher turns are JSON summaries):\n${hist.map((m: any) => `${m.role === 'assistant' ? 'TEACHER' : 'LEARNER'}: ${m.content}`).join('\n')}\n\nWrite the teacher's next turn.`, C_SCHEMA, 'high', 10000);
+      const out = await askJsonGroq(system, `Lesson so far (teacher turns are JSON summaries):\n${hist.map((m: any) => `${m.role === 'assistant' ? 'TEACHER' : 'LEARNER'}: ${m.content}`).join('\n')}\n\nWrite the teacher's next turn.`, C_SCHEMA, 'medium', 4000);
       if (!out?.say) return json({ error: 'failed', heard }, 502);
       out.progress = Math.max(0, Math.min(100, out.progress | 0));
       return json({ turn: out, heard });
