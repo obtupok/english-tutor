@@ -1132,6 +1132,19 @@ async function web(req: Request) {
       await save(owner);
       return json({ result: rec, sat: owner.stats.sat });
     }
+    // подписка «YomiRead + YomiScore»: счёт создают функции YomiRead (оплата себе по Telegram ID, без входа на сайт)
+    case 'pay': {
+      const plan = String(b.plan || ''), method = String(b.method || '');
+      if (!/^pro_(1|3|6|12)$/.test(plan) || !['stars', 'crypto', 'xrocket'].includes(method)) return json({ error: 'bad plan' }, 400);
+      const key = env('SUPABASE_ANON_KEY'), base = `${env('SUPABASE_URL')}/functions/v1/`;
+      const headers = { 'Content-Type': 'application/json', apikey: key, Authorization: `Bearer ${key}` };
+      const r = method === 'stars'
+        ? await fetch(`${base}tg-bot?invoice=1`, { method: 'POST', headers, body: JSON.stringify({ plan, tg: OWNER, lang: 'ru' }) })
+        : await fetch(`${base}create-payment`, { method: 'POST', headers, body: JSON.stringify({ plan, method, tg: OWNER, return_url: 'https://yomiread.com/yomiscore/?paid=1' }) });
+      const j = await r.json().catch(() => ({}));
+      const url = j.link || j.url;
+      return url ? json({ url, stars: j.stars }) : json({ error: j.error || 'pay' }, 502);
+    }
     case 'writing_prompt': {
       const recent = (owner.stats?.writing || []).slice(-5).map((w: any) => w.prompt).join(' | ');
       const out = await askJsonGroq('You write IELTS Academic Writing Task 2 questions. Return JSON only.', `Write one fresh, realistic IELTS Writing Task 2 question (opinion, discussion, problem-solution, advantages-disadvantages or two-part). End with the usual instructions ("Give reasons for your answer and include any relevant examples from your own knowledge or experience. Write at least 250 words."). Avoid these recent topics: ${recent || 'none'}.`, PROMPT_SCHEMA);
