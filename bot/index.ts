@@ -654,7 +654,20 @@ async function load(chat: number) {
   const { data } = await admin.from('english_tutor').select('*').eq('chat_id', chat).maybeSingle();
   return data || { chat_id: chat, mode: 'free', scene: 'smalltalk', level: null, voice: true, history: [], plan: null, stats: {}, speaker: 'hannah', game: {} };
 }
-const save = (st: any) => admin.from('english_tutor').upsert({ ...st, history: st.history.slice(-HISTORY), updated_at: new Date().toISOString() });
+// сохранение не стирает статистику, которую за это время записал другой запрос (план, уроки, экзамены): ключи из базы, которых нет у нас, остаются
+async function save(st: any) {
+  const { data: cur } = await admin.from('english_tutor').select('stats').eq('chat_id', st.chat_id).maybeSingle();
+  st.stats = { ...(cur?.stats || {}), ...(st.stats || {}) };
+  return admin.from('english_tutor').upsert({ ...st, history: st.history.slice(-HISTORY), updated_at: new Date().toISOString() });
+}
+// поменять только часть статистики в свежей строке (пока ИИ думал, другой запрос мог сохранить своё — не затираем это)
+async function patchStats(st: any, fn: (stats: any) => any) {
+  const fresh = await load(st.chat_id ?? OWNER);
+  fresh.stats = fn({ ...(fresh.stats || {}) });
+  await save(fresh);
+  st.stats = fresh.stats;
+  return fresh.stats;
+}
 
 // один ход: ответ Claude + история, статистика, слова, ошибки, уровень и план
 function bumpStats(st: any) {
@@ -1154,9 +1167,8 @@ async function web(req: Request) {
       const part = Number(b.part) || 0;   // тренировка одной части IELTS: остальные вопросы отбрасываем
       const picked = part ? items.filter((it: any) => it.part.replace(/\D/g, '') === String(part)) : items;
       if (part && picked.length) items.splice(0, items.length, ...picked);
-      owner.stats = { ...(owner.stats || {}), examCur: { kind, role, topic: out.topic, items, answers: [], at: new Date().toISOString() },
-        askedQ: [...(owner.stats?.askedQ || []), ...items.map((it: any) => shortQ(it.q))].slice(-80) };
-      await save(owner);
+      await patchStats(owner, (x) => ({ ...x, examCur: { kind, role, topic: out.topic, items, answers: [], at: new Date().toISOString() },
+        askedQ: [...(x.askedQ || []), ...items.map((it: any) => shortQ(it.q))].slice(-80) }));
       return json({ kind, items });
     }
     case 'sat_set': {
@@ -1171,8 +1183,7 @@ async function web(req: Request) {
       const items = (out?.items || []).filter((it: any) => it.choices?.length === 4 && it.answer >= 0 && it.answer < 4).slice(0, n);
       if (!items.length) return json({ error: 'failed' }, 502);
       const sk = (it: any) => shortQ(`${it.passage ? it.passage.slice(0, 50) + ' — ' : ''}${it.question}`);
-      owner.stats = { ...(owner.stats || {}), satSeen: { ...(owner.stats?.satSeen || {}), [section]: [...(owner.stats?.satSeen?.[section] || []), ...items.map(sk)].slice(-60) } };
-      await save(owner);
+      await patchStats(owner, (x) => ({ ...x, satSeen: { ...(x.satSeen || {}), [section]: [...(x.satSeen?.[section] || []), ...items.map(sk)].slice(-60) } }));
       return json({ section, items });
     }
     case 'sat_done': {
@@ -1312,8 +1323,7 @@ Rules:
       for (const d of out.week) for (const t of d.tasks || []) if (t.act === 'writing' && t.minutes < 40) t.minutes = 40;   // эссе короче 40 минут не написать
       const studyPlan = { answers: ans, plan: out, at: new Date().toISOString() };
       if (b.dry) return json({ studyPlan });   // проверка без сохранения
-      owner.stats = { ...stt, studyPlan };
-      await save(owner);
+      await patchStats(owner, (x) => ({ ...x, studyPlan }));
       return json({ studyPlan });
     }
     // подборка слов по теме экзамена — сразу в карточки (без повторов того, что уже есть)
