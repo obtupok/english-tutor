@@ -805,6 +805,23 @@ nav button{font-size:11px!important}
 .tqs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}.tqs .chip{min-height:36px;padding:6px 11px;font-size:13px;font-weight:700;background:var(--card)}
 .tfake{display:flex;align-items:center;gap:8px;width:100%;min-height:48px;padding:6px 6px 6px 14px;border-radius:14px;border:1px solid var(--border-2);background:#FAF9F7;text-align:left}
 .tfake span{flex:1;color:var(--muted);font-size:15px}.tfake i{width:36px;height:36px;border-radius:10px;background:var(--fg);color:#fff;display:grid;place-items:center}.tfake svg{width:18px;height:18px}
+/* нажимаемые слова в чате репетитора и карточка слова */
+.enw{cursor:pointer;border-bottom:1.5px dotted rgba(22,23,27,.28);transition:background var(--t-fast)}
+.tmsg.u .enw{border-color:rgba(255,255,255,.35)}
+@media (hover:hover){.enw:hover{background:var(--accent-bg);border-radius:4px}}
+.enw:active{background:var(--accent-bg);border-radius:4px}
+.wpop{position:fixed;inset:0;z-index:95;display:flex;align-items:flex-end;justify-content:center;background:rgba(22,23,27,.25);opacity:0;pointer-events:none;transition:opacity .2s var(--ease)}
+.wpop.on{opacity:1;pointer-events:auto}
+.wpin{width:100%;max-width:520px;background:var(--card);border-radius:22px 22px 0 0;padding:16px 18px calc(18px + var(--safe-b));box-shadow:0 -8px 30px rgba(22,23,27,.15);transform:translateY(16px);transition:transform .22s var(--ease)}
+.wpop.on .wpin{transform:none}
+.wph{display:flex;align-items:center;gap:10px}.wph>div{flex:1;display:flex;flex-direction:column;gap:2px}
+.wpw{font-family:var(--head);font-weight:800;font-size:26px;letter-spacing:-.02em}.wpipa{color:var(--muted);font-size:15px}
+.wpsay{width:44px;height:44px;flex:none;border-radius:14px;background:var(--accent-bg);color:var(--ptext);display:grid;place-items:center}.wpsay svg{width:20px;height:20px}
+.wpsay.sm{width:30px;height:30px;border-radius:9px;display:inline-grid;vertical-align:-8px;margin-left:6px}.wpsay.sm svg{width:15px;height:15px}
+.wpx{width:40px;height:40px;flex:none;border-radius:12px;display:grid;place-items:center;color:var(--muted)}.wpx svg{width:20px;height:20px}
+.wptr{font-size:18px;font-weight:700;margin:12px 0 10px;line-height:1.4}.wptr small{font-size:13px;color:var(--muted);font-weight:600}.wptr.muted{color:var(--muted);font-weight:500;font-size:15px}
+.wpex{background:#FAF9F7;border-radius:14px;padding:10px 12px;margin-bottom:12px}.wpex p{margin:0;font-style:italic;line-height:1.5}.wpex small{display:block;color:var(--muted);margin-top:4px;font-size:13.5px}
+.wpadd{width:100%;min-height:46px}.wpok{color:var(--green);font-weight:700;display:flex;gap:6px;align-items:center;margin:4px 0 0}.wpok svg{width:18px;height:18px}
 
 </style>
 </head>
@@ -3106,22 +3123,57 @@ const tclean = text => text.replace(/\[\[[^\]]*\]\]/g, '').trim();
 // английские слова и фразы в ответе — со значком звука: подряд идущие слова — одна фраза, один значок
 const SAY_I = svgI('<path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/>');
 function tspeak(root){
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {acceptNode: n => n.parentElement.closest('.ensay, button') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT});
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {acceptNode: n => n.parentElement.closest('.enw, button') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT});
   const nodes = []; while(walker.nextNode()) nodes.push(walker.currentNode);
   for(const n of nodes){
-    const text = n.nodeValue, re = /[A-Za-z][A-Za-z0-9'’]*(?:[ \-,;:]+[A-Za-z0-9'’]+)*[.!?]?/g;
+    const text = n.nodeValue, re = /[A-Za-z][A-Za-z'’-]*[A-Za-z]/g;   // английские слова от двух букв
     let m, last = 0, frag = null;
+    const ctx = (n.parentElement.closest('li, p, h4') || n.parentElement).textContent.slice(0, 300);
     while((m = re.exec(text))){
-      if(m[0].replace(/[^A-Za-z]/g, '').length < 2) continue;   // одиночные буквы (A, B) не озвучиваем
       frag ||= document.createDocumentFragment();
       frag.append(text.slice(last, m.index));
-      const span = document.createElement('span'); span.className = 'ensay'; span.textContent = m[0];
-      const b = document.createElement('button'); b.className = 'sayi'; b.dataset.tsay = m[0]; b.setAttribute('aria-label', 'Послушать: ' + m[0]); b.innerHTML = SAY_I;
-      span.append(b); frag.append(span); last = m.index + m[0].length;
+      const w = document.createElement('span'); w.className = 'enw'; w.textContent = m[0]; w.dataset.w = m[0]; w.dataset.ctx = ctx;
+      frag.append(w); last = m.index + m[0].length;
     }
     if(frag){ frag.append(text.slice(last)); n.replaceWith(frag); }
   }
 }
+// карточка слова: транскрипция, звук, перевод по смыслу, пример; «В карточки»
+const WINFO = new Map(Object.entries(store.get('yomi_winfo', {})));
+const winfoSave = () => store.set('yomi_winfo', Object.fromEntries([...WINFO].slice(-300)));
+async function wordPop(word, ctx){
+  let pop = $('#wpop');
+  if(!pop){ pop = document.createElement('div'); pop.id = 'wpop'; pop.className = 'wpop'; document.body.append(pop); }
+  if(typeof preSay === 'function') preSay(word);
+  const key = word.toLowerCase();
+  const draw = (info, err) => {
+    pop.innerHTML = `<div class="wpin" role="dialog" aria-label="Слово ${esc(word)}">
+      <div class="wph"><div><b class="wpw">${esc(info?.lemma || word)}</b>${info?.ipa ? `<span class="wpipa">${esc(info.ipa)}</span>` : ''}</div>
+        <button class="wpsay" data-wsay="${esc(info?.lemma || word)}" aria-label="Послушать">${SAY_I}</button><button class="wpx" data-wclose aria-label="Закрыть">${I.x}</button></div>
+      ${info ? `<p class="wptr">${info.pos ? `<small>${esc(info.pos)}</small> ` : ''}${esc(info.translation)}</p>
+        ${info.example ? `<div class="wpex"><p><span>${esc(info.example)}</span><button class="wpsay sm" data-wsay="${esc(info.example)}" aria-label="Послушать пример">${SAY_I}</button></p><small>${esc(info.example_ru || '')}</small></div>` : ''}
+        <button class="btn line sm wpadd" data-wadd2>${I.card} В карточки</button>`
+      : `<p class="wptr muted">${err ? 'Не получилось загрузить перевод — нажми на слово ещё раз.' : 'Смотрю перевод…'}</p>`}
+    </div>`;
+    pop.classList.add('on');
+  };
+  pop.dataset.word = key; draw(WINFO.get(key));
+  if(!WINFO.has(key)){
+    const j = await api('word_info', {word, context: ctx}).catch(() => ({}));
+    if(pop.dataset.word !== key) return;
+    if(j.translation){ WINFO.set(key, j); winfoSave(); draw(j); if(typeof preSay === 'function' && j.example) preSay(j.example); } else draw(null, true);
+  } else if(typeof preSay === 'function' && WINFO.get(key).example) preSay(WINFO.get(key).example);
+}
+document.addEventListener('click', e => {
+  const t = e.target, pop = $('#wpop');
+  const w = t.closest('.enw'); if(w && t.closest('#tutor')){ e.stopPropagation(); unlock(); return wordPop(w.dataset.w, w.dataset.ctx); }
+  if(!pop?.classList.contains('on')) return;
+  const say = t.closest('[data-wsay]'); if(say){ e.stopPropagation(); return sayWord(say.dataset.wsay); }
+  if(t.closest('[data-wadd2]')){ e.stopPropagation(); const info = WINFO.get(pop.dataset.word); if(!info) return;
+    api('word_add', {word: info.lemma, translation: info.translation, example: info.example}).catch(() => {}); S.words = (S.words || 0) + 1; S.due = (S.due || 0) + 1;
+    t.closest('[data-wadd2]').outerHTML = `<p class="wpok">${I.check} Добавлено в карточки</p>`; return; }
+  if(t.closest('[data-wclose]') || !t.closest('.wpin')) pop.classList.remove('on');
+}, true);
 function tutorBox(){
   let box = $('#tutor');
   if(!box){ box = document.createElement('div'); box.id = 'tutor'; box.className = 'intro tutor'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Репетитор Yomi'); document.body.append(box); }
@@ -3148,7 +3200,6 @@ function tutorChat(id){
       ${c.msgs.map(m => tmsgHtml(m)).join('')}${tbusy ? '<div class="tmsg a"><div class="tbub typing"><i></i><i></i><i></i><span>Yomi думает и перепроверяет ответ…</span></div></div>' : ''}</div>
     <form class="tcomp" id="tcomp"><textarea id="tin" rows="1" placeholder="Спроси Yomi…" aria-label="Сообщение"></textarea><button class="tsend" aria-label="Отправить">${svgI('<path d="M5 12h14M13 6l6 6-6 6"/>')}</button></form>`;
   const ms = $('#tmsgs'); ms.querySelectorAll('.tmsg.a .tbub').forEach(tspeak); ms.scrollTop = ms.scrollHeight;
-  if(typeof preSay === 'function') [...ms.querySelectorAll('[data-tsay]')].reverse().forEach(b => preSay(b.dataset.tsay));   // заранее, чтобы звук был сразу
   const tin = $('#tin'); tin.oninput = () => { tin.style.height = 'auto'; tin.style.height = Math.min(140, tin.scrollHeight) + 'px'; };
   tin.onkeydown = e => { if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); $('#tcomp').requestSubmit(); } };
   $('#tcomp').onsubmit = e => { e.preventDefault(); const t = tin.value.trim(); if(t && !tbusy){ tin.value = ''; tutorSend(t); } };
@@ -3183,7 +3234,6 @@ function startAsk(chatId, ctx, question){ tcur = chatId; tutorBox(); tutorSend(q
 document.addEventListener('click', e => {
   const t = e.target; if(!t.closest('#tutor')) return;
   const st = t.closest('[data-tstart]'), op = t.closest('[data-topen]'), del = t.closest('[data-tdel]'), les = t.closest('[data-tles]'), act = t.closest('[data-tact]');
-  const say = t.closest('[data-tsay]'); if(say){ e.stopPropagation(); return sayWord(say.dataset.tsay); }
   if(t.closest('[data-tclose]')) return closeTutor();
   if(t.closest('[data-tlist]')) return tutorList();
   if(t.closest('[data-tnew]')){ tcur = null; const id = Date.now().toString(36); TCH.unshift({id, title: '', at: new Date().toISOString(), msgs: []}); tsave(); return tutorChat(id); }
