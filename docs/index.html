@@ -748,6 +748,7 @@ nav button{font-size:11px!important}
 .mkplan>svg{width:20px;height:20px;flex:none;color:var(--ptext)}.mkplan span{flex:1;display:flex;flex-direction:column;gap:2px}.mkplan small{color:var(--fg-2);font-size:13px}
 .cstep .cnote{color:var(--ptext)!important;font-size:12.5px!important}
 .lslot{width:72px;height:66px;flex:none}.lslot .buddy.staged{--bsize:72px!important}
+.qz-hint.bad{color:#C2412D;font-weight:700}.spdate{margin:2px 0 10px;color:var(--fg-2);font-weight:700}
 
 </style>
 </head>
@@ -2636,6 +2637,11 @@ const HARD = ['Speaking', 'Writing', 'Reading', 'Listening', 'Грамматик
 const IELTS_STEPS = [4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9], SAT_STEPS = Array.from({length: 25}, (_, k) => 400 + k * 50);
 const VERDICT = {ok: ['green', 'Успеваешь'], tight: ['orange', 'Впритык'], short: ['red', 'Не успеваешь'], done: ['green', 'Цель уже достигнута']};
 let QZ = null, planCalcMode = false;
+// сколько недель до даты — показываем сразу, чтобы было видно, какую дату понял план
+const weeksTo = d => d ? Math.max(1, Math.round((Date.parse(d) - Date.now()) / (7 * 864e5))) : 0;
+const dateLong = d => new Date(d).toLocaleDateString('ru', {day: 'numeric', month: 'long', year: 'numeric'});
+const dateHint = d => d ? `Экзамен ${dateLong(d)} — через ${weeksTo(d)} ${plural(weeksTo(d), 'неделю', 'недели', 'недель')}.` : 'Ещё не записан — оставь пустым, план будет на 12 недель.';
+const dateBad = d => { if(!d) return ''; const y = +d.slice(0, 4), now = new Date().getFullYear(); return Date.parse(d) < Date.now() - 864e5 ? 'Эта дата уже прошла.' : y > now + 4 ? 'Проверь год — экзамен больше чем через 4 года?' : ''; };
 const showPlanCalc = showPlan;   // прежний расчёт часов и этапов остаётся доступным из плана
 showPlan = function(){ if(planCalcMode) return showPlanCalc(); return SPA() ? showStudyPlan() : showPlanQuiz(); };
 document.addEventListener('click', e => { if(e.target.closest('[data-home]')) planCalcMode = false; }, true);
@@ -2663,7 +2669,7 @@ function showPlanQuiz(){
       </div>
       <p class="qz-hint">Не знаешь свой балл — выбери «Не знаю», а потом пройди пробный тест: план станет точнее.</p>
       <label class="lbl" for="qDate">3. Дата экзамена</label><input class="inp" id="qDate" type="date" value="${q.date || ''}" min="${new Date().toLocaleDateString('sv')}">
-      <p class="qz-hint">Ещё не записан — оставь пустым, план будет на 12 недель.</p>
+      <p class="qz-hint" id="qDateHint">${dateHint(q.date)}</p>
       <label class="lbl">4. Сколько времени в день</label>${chips('minutes', [[15, '15 мин'], [30, '30 мин'], [45, '45 мин'], [60, '1 час'], [90, '1,5 часа'], [120, '2 часа']], q.minutes)}
       <label class="lbl">5. Сколько дней в неделю</label>${chips('days', [[3, '3'], [4, '4'], [5, '5'], [6, '6'], [7, '7']], q.days)}
       <label class="lbl">6. Что даётся труднее</label>${chips('hard', HARD.filter(h => q.exam === 'both' || (q.exam === 'sat' ? h.startsWith('SAT') || h === 'Грамматика' || h === 'Словарный запас' : !h.startsWith('SAT'))).map(h => [h, h]), q.hard, true)}
@@ -2672,6 +2678,7 @@ function showPlanQuiz(){
     <div class="qz-foot"><button class="btn" data-qgo>Составить мой план</button>${SPA() ? '<button class="btn line" data-qback>Отмена</button>' : ''}</div>`;
   homeBunny();
 }
+$('#homeBox').addEventListener('input', e => { if(e.target.id === 'qDate'){ const d = e.target.value, bad = dateBad(d); $('#qDateHint').textContent = bad || dateHint(d); $('#qDateHint').classList.toggle('bad', !!bad); } });
 function readQuiz(){
   const q = QZ, v = id => $('#' + id)?.value;
   if(q.exam !== 'sat'){ q.ielts.now = v('qIeNow') ? +v('qIeNow') : null; q.ielts.target = +v('qIeT'); }
@@ -2703,6 +2710,7 @@ function showStudyPlan(){
   $('#homeBox').innerHTML = `<div class="lhead"><button class="btn line sm" data-home>${I.back} Главная</button><div class="lslot" id="heroSlot" aria-hidden="true"></div></div>
     <p class="eyebrow">Личный план · составлен ${dateRu(sp.at)}</p>
     <h2>Твой план на ${p.weeks} ${plural(p.weeks, 'неделю', 'недели', 'недель')}</h2>
+    <p class="spdate">${sp.answers?.date ? dateHint(sp.answers.date) : 'Дата экзамена не указана — план на 12 недель.'}</p>
     <div class="card spv"><span class="vchip ${v[0]}">${v[1]}</span>${h ? `<span class="vh">${h.have} ч есть · нужно ${h.need}–${h.needHi} ч</span>` : ''}<p>${esc(p.summary)}</p>
       <button class="btn" data-sptoday>Начать сегодняшний день</button></div>
     <div class="sec-h"><h3>Неделя</h3></div>
@@ -2725,7 +2733,7 @@ $('#homeBox').addEventListener('click', e => {
     if(box.hasAttribute('data-multi')){ const l = QZ[name]; QZ[name] = l.includes(val) ? l.filter(x => x !== val) : [...l, val]; } else QZ[name] = val;
     if(name === 'exam') QZ.hard = [];
     return showPlanQuiz(); }
-  if(t.closest('[data-qgo]')) return makePlan(readQuiz());
+  if(t.closest('[data-qgo]')){ const q = readQuiz(), bad = dateBad(q.date); if(bad){ $('#qzErr').textContent = bad; return; } return makePlan(q); }
   if(t.closest('[data-qback]')){ QZ = null; return showStudyPlan(); }
   if(t.closest('[data-spedit]')){ QZ = quizDefaults(); return showPlanQuiz(); }
   if(t.closest('[data-sprenew]')) return makePlan(SPA().answers);
