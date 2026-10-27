@@ -1294,7 +1294,7 @@ Time check (already computed — do not recompute): the plan covers ${weeksPlan}
 The current score is what the learner told you; do not invent a different level.
 
 Rules:
-- "week": exactly 7 entries in order Пн..Вс. Exactly ${ans.days} study days spread through the week; every other day has one task {type:"rest", act:"", minutes:0, note:""}.
+- "week": ONE typical week only — exactly 7 entries in order Пн..Вс (it repeats every week; do not list later weeks). Interleave: alternate practice types across the week (e.g. sat-math and sat-rw, speaking parts and writing) so no single type fills most days unless the learner chose only that area. Exactly ${ans.days} study days spread through the week; every other day has one task {type:"rest", act:"", minutes:0, note:""}.
 - Each study day: 2–4 tasks whose minutes add up to about ${ans.minutes}. "lesson" = one lesson from the app (15–25 min), "practice" = timed practice in the app with "act" set, "mock" = a full practice test with "act" set (once a week at most, on a day with more time), "words" = spaced-repetition word cards (10–15 min, most study days). "act" is empty for lesson and words. "note" — what exactly to focus on today, in Russian, up to 10 words.
 - Use only these practice acts: ${ACTS.join(', ')} (ielts-full = whole Speaking mock; read = reading a book; call = free speaking with the tutor). Plan only for ${ans.exam === 'both' ? 'IELTS and SAT' : ans.exam.toUpperCase()} — nothing for the other exam.
 - "priority": 8–15 lesson ids from this list, most important first (weakest areas and what the target needs): ${skills.map((k: any) => `${k.id} = ${k.name}`).join('; ')}.
@@ -1305,6 +1305,8 @@ Rules:
 - "summary": 2–3 honest sentences: where the learner is, what the plan focuses on and whether the goal is realistic.`, PLAN_SCHEMA, 'medium', 30000);
       if (!out?.week?.length) return json({ error: 'failed' }, 502);
       out.verdict = verdict; out.weeks = weeksPlan; out.hours = { have, need, needHi };
+      // ровно одна неделя-шаблон Пн..Вс: модель иногда расписывает все недели подряд — берём первое вхождение каждого дня
+      out.week = DAYS.map((day) => out.week.find((d: any) => d.day === day) || { day, tasks: [{ type: 'rest', act: '', minutes: 0, note: '' }] });
       for (const d of out.week) for (const t of d.tasks || []) if (t.act === 'writing' && t.minutes < 40) t.minutes = 40;   // эссе короче 40 минут не написать
       const studyPlan = { answers: ans, plan: out, at: new Date().toISOString() };
       if (b.dry) return json({ studyPlan });   // проверка без сохранения
