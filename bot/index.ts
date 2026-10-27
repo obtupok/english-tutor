@@ -1241,14 +1241,32 @@ Questions: ${JSON.stringify(out.check.map((q: any) => ({ question: q.question, c
       if (Array.isArray(chk?.answers)) out.check = out.check.filter((q: any, i: number) => chk.answers[i] === q.answer);
       return json({ lesson: out });
     }
+    // повторение урока: только новые вопросы (без уже заданных), каждый решается заново вторым вызовом — неверные убираем
+    case 'lesson_quiz': {
+      const exam = b.exam === 'sat' ? 'Digital SAT' : 'IELTS Academic', name = String(b.name || '').slice(0, 120), focus = String(b.focus || '').slice(0, 700);
+      const n = Math.max(3, Math.min(8, Number(b.n) || 5)), avoid = (Array.isArray(b.avoid) ? b.avoid : []).map((q: any) => String(q).slice(0, 160)).slice(-30);
+      if (!name) return json({ error: 'bad' }, 400);
+      const QUIZ_SCHEMA = { type: 'object', additionalProperties: false, required: ['check'], properties: { check: LESSON_SCHEMA.properties.check } };
+      const out = await askJsonGroq(`You are an experienced ${exam} tutor. Explanations in Russian; questions and answer choices in English. The learner's English level is about ${owner.level || 'B1'}. Return JSON only.`,
+        `Write ${n + 1} new multiple-choice practice questions in the style of the real exam on this skill: "${name}".${focus ? ` Key facts — follow them exactly: ${focus}.` : ''} Vary the contexts, sentence types and difficulty (easy → hard). Exactly 4 choices each; "answer" is the 0-based index of the single correct choice; "explanation" in Russian says why it is right and why the most tempting wrong choice is wrong. Solve each yourself before choosing "answer".${avoid.length ? `\nDo not repeat or closely paraphrase these questions:\n- ${avoid.join('\n- ')}` : ''}`, QUIZ_SCHEMA, 'high');
+      let check = (out?.check || []).filter((q: any) => q.choices?.length === 4 && q.answer >= 0 && q.answer < 4);
+      if (!check.length) return json({ error: 'failed' }, 502);
+      const ver = await askJsonGroq(`You are a strict ${exam} expert. Return JSON only.`,
+        `Solve each question independently. For each, give the 0-based index of the single correct choice, or -1 if none or several are correct.${focus ? ` Key facts: ${focus}.` : ''}\n${JSON.stringify(check.map((q: any) => ({ question: q.question, choices: q.choices })))}`,
+        { type: 'object', additionalProperties: false, required: ['answers'], properties: { answers: { type: 'array', items: { type: 'integer' } } } }, 'high');
+      if (Array.isArray(ver?.answers)) check = check.filter((q: any, i: number) => ver.answers[i] === q.answer);
+      return check.length ? json({ check: check.slice(0, n) }) : json({ error: 'failed' }, 502);
+    }
     case 'lesson_done': {
       const skill = String(b.skill || '').slice(0, 60); if (!skill) return json({ error: 'bad' }, 400);
-      const rec = { at: new Date().toISOString(), score: Math.max(0, Number(b.score) | 0), total: Math.max(0, Number(b.total) | 0) };
-      owner.stats = { ...(owner.stats || {}), lessons: { ...(owner.stats?.lessons || {}), [skill]: rec } };
+      const score = Math.max(0, Number(b.score) | 0), total = Math.max(0, Number(b.total) | 0);
+      // повторы: сколько раз проходил, лучший и последний результат
+      await patchStats(owner, (x) => { const prev = x.lessons?.[skill] || {};
+        const best = Math.max(prev.best ?? (prev.total ? prev.score / prev.total : 0), total ? score / total : 0);
+        return { ...x, lessons: { ...(x.lessons || {}), [skill]: { at: new Date().toISOString(), score, total, reps: (prev.reps || 0) + 1, best: Math.round(best * 100) / 100 } } }; });
       const words = (Array.isArray(b.words) ? b.words : []).slice(0, 8).filter((w: any) => w?.word && w?.translation)
         .map((w: any) => ({ key: String(w.word).trim().toLowerCase().slice(0, 80), word: String(w.word).trim().slice(0, 80), translation: String(w.translation).trim().slice(0, 120), example: String(b.name || '').slice(0, 200) }));
       if (words.length) await admin.from('english_words').upsert(words, { onConflict: 'key', ignoreDuplicates: true });
-      await save(owner);
       return json({ ok: true, lessons: owner.stats.lessons });
     }
     // личный план: ответы человека + его результаты здесь (экзамены, SAT, эссе, пройденные уроки) → неделя по дням, порядок уроков, этапы до экзамена
