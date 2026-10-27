@@ -213,6 +213,8 @@ async function askClaude(st: any, text: string) {
 }
 // без ключа Claude — бесплатно через Groq (тот же ключ, что для голоса); ответ по той же JSON-схеме в строгом режиме
 const GROQ_MODEL = 'openai/gpt-oss-120b', GROQ_BACKUP = 'llama-3.3-70b-versatile';
+// запасная модель с тем же форматом ответов и своим лимитом: на неё переходим, когда основная упёрлась в лимит (429)
+const GROQ_LIGHT = 'openai/gpt-oss-20b';
 const normT = (t: string) => String(t || '').toLowerCase().replace(/[^a-z0-9а-яё' ]+/gi, ' ').replace(/\s+/g, ' ').trim();
 function isEcho(out: any, text: string) {
   const r = normT(out.reply), t = normT(text), f = normT(out.correction?.fixed || '');
@@ -350,19 +352,25 @@ const SAT_MATH = ['linear equations', 'systems of equations', 'linear functions 
 const pickThemes = (list: string[], n: number) => [...list].sort(() => Math.random() - 0.5).slice(0, n);
 const shortQ = (q: string) => String(q || '').replace(/\s+/g, ' ').slice(0, 90);
 
-async function askJsonGroq(system: string, user: string, schema: any, effort = 'medium', maxTokens = 16000) {
+async function askJsonGroq(system: string, user: string, schema: any, effort = 'medium', maxTokens = 16000, model = GROQ_MODEL) {
   for (let attempt = 0; attempt < 3; attempt++) {
     const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: { Authorization: 'Bearer ' + env('GROQ_API_KEY'), 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: GROQ_MODEL, reasoning_effort: effort, max_completion_tokens: maxTokens,
+        model, reasoning_effort: effort, max_completion_tokens: maxTokens,
         messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
         response_format: { type: 'json_schema', json_schema: { name: 'exam', strict: true, schema } },
       }),
     });
     // перегрузка (лимит запросов в минуту) — ждём, сколько просит Groq (не дольше 8 с), и пробуем снова
-    if (r.status === 429) { const wait = Math.min(8, Number(r.headers.get('retry-after')) || 2); console.error('exam 429, wait', wait); await new Promise((res) => setTimeout(res, wait * 1000)); continue; }
+    if (r.status === 429) {
+      const ra = Number(r.headers.get('retry-after')) || 2;
+      console.error('exam 429', model, 'retry-after', ra, (await r.text().catch(() => '')).slice(0, 200));
+      if (model !== GROQ_LIGHT) { model = GROQ_LIGHT; continue; }   // основная модель в лимите — сразу запасная
+      if (ra > 10) break;                                          // и запасная в лимите надолго — не держим человека
+      await new Promise((res) => setTimeout(res, ra * 1000)); continue;
+    }
     const j = await r.json().catch(() => ({}));
     try { return JSON.parse(j?.choices?.[0]?.message?.content || ''); } catch { console.error('exam', r.status, JSON.stringify(j).slice(0, 300)); }
   }
@@ -1414,13 +1422,13 @@ How to answer:
 - At the very end you may add up to 2 suggestions on separate lines in exactly this form: [[lesson:ID|short title]] to open a lesson in the app, or [[act:ACT|short title]] to start practice. Lesson IDs: ${skills.map((k: any) => `${k.id} (${String(k.name || '').slice(0, 60)})`).join('; ')}. ACT: ielts-full, ielts-p1, ielts-p2, ielts-p3, writing, sat-math, sat-rw, read, call. Use real values only — never write the placeholder words ID or ACT. Only suggest what really fits.
 Exam facts (always use these, never the old paper SAT): the Digital SAT (since 2024) has two sections — Reading and Writing (54 questions, 64 minutes, two adaptive modules; short passages, one question each) and Math (44 questions, 70 minutes, two adaptive modules; a calculator, including the built-in Desmos, is allowed on all Math questions); total score 400–1600 (200–800 per section); official practice is in the Bluebook app and on Khan Academy. There is no separate Writing and Language section, no No-Calculator section and no essay. IELTS Academic: Listening about 30 minutes (40 questions), Reading 60 minutes (3 passages, 40 questions), Writing 60 minutes (Task 1 — describe a graph/chart/process in 150+ words; Task 2 — essay of 250+ words), Speaking 11–14 minutes in 3 parts; band scores 0–9 in steps of 0.5.
 Learner profile: ${profile}`;
-      let reply = '';
+      let reply = '', tmodel = GROQ_MODEL;
       for (let attempt = 0; attempt < 3 && !reply; attempt++) {
         const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
           method: 'POST', headers: { Authorization: 'Bearer ' + env('GROQ_API_KEY'), 'Content-Type': 'application/json' },
-          body: JSON.stringify({ model: GROQ_MODEL, reasoning_effort: 'high', max_completion_tokens: 12000, messages: [{ role: 'system', content: system }, ...msgs] }),
+          body: JSON.stringify({ model: tmodel, reasoning_effort: 'high', max_completion_tokens: 12000, messages: [{ role: 'system', content: system }, ...msgs] }),
         });
-        if (r.status === 429) { const wait = Math.min(8, Number(r.headers.get('retry-after')) || 2); await new Promise((res) => setTimeout(res, wait * 1000)); continue; }
+        if (r.status === 429) { if (tmodel !== GROQ_LIGHT) { tmodel = GROQ_LIGHT; continue; } const wait = Number(r.headers.get('retry-after')) || 2; if (wait > 10) break; await new Promise((res) => setTimeout(res, wait * 1000)); continue; }
         const j = await r.json().catch(() => ({}));
         reply = String(j?.choices?.[0]?.message?.content || '').trim();
         if (!reply) console.error('tutor', r.status, JSON.stringify(j).slice(0, 300));
@@ -1430,7 +1438,7 @@ Learner profile: ${profile}`;
       try {
         const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
           method: 'POST', headers: { Authorization: 'Bearer ' + env('GROQ_API_KEY'), 'Content-Type': 'application/json' },
-          body: JSON.stringify({ model: GROQ_MODEL, reasoning_effort: 'high', max_completion_tokens: 12000, messages: [
+          body: JSON.stringify({ model: tmodel, reasoning_effort: 'high', max_completion_tokens: 12000, messages: [
             { role: 'system', content: 'You are a strict expert editor for English grammar, IELTS and SAT tutoring answers. Check every rule, example, "wrong → right" pair, exercise and calculation in the tutor answer below. Exam facts (always use these, never the old paper SAT): the Digital SAT (since 2024) has two sections — Reading and Writing (54 questions, 64 minutes, two adaptive modules; short passages, one question each) and Math (44 questions, 70 minutes, two adaptive modules; a calculator, including the built-in Desmos, is allowed on all Math questions); total score 400–1600 (200–800 per section); official practice is in the Bluebook app and on Khan Academy. There is no separate Writing and Language section, no No-Calculator section and no essay. IELTS Academic: Listening about 30 minutes (40 questions), Reading 60 minutes (3 passages, 40 questions), Writing 60 minutes (Task 1 — describe a graph/chart/process in 150+ words; Task 2 — essay of 250+ words), Speaking 11–14 minutes in 3 parts; band scores 0–9 in steps of 0.5. Exercises must be solvable as instructed (for example, never ask to put a sentence with "last year/yesterday/ago" into Present Perfect). Fix every factual or logical mistake and every exercise that is impossible or misleading. Keep the language, tone, markdown format, length and the [[...]] lines at the end exactly as they are when correct. Return only the final answer text, nothing else.' },
             { role: 'user', content: `Learner's message:
 ${msgs[msgs.length - 1].content}
@@ -1454,7 +1462,7 @@ ${reply}` }] }),
       const W_SCHEMA = { type: 'object', additionalProperties: false, required: ['lemma', 'ipa', 'pos', 'translation', 'example', 'example_ru'], properties: {
         lemma: { type: 'string' }, ipa: { type: 'string' }, pos: { type: 'string' }, translation: { type: 'string' }, example: { type: 'string' }, example_ru: { type: 'string' } } };
       const out = await askJsonGroq('You are a concise English–Russian learner\'s dictionary. Return JSON only.',
-        `Word: "${word}"${context ? `\nUsed in: "${context}"` : ''}\n"lemma": dictionary form; "ipa": British IPA of the word as used, in slashes; "pos": part of speech in Russian (сущ., глаг., прил., нареч., …); "translation": 1–3 short Russian translations that fit this context, comma-separated; "example": one short natural English sentence (max 10 words) with the word; "example_ru": its Russian translation.`, W_SCHEMA, 'low', 2000);
+        `Word: "${word}"${context ? `\nUsed in: "${context}"` : ''}\n"lemma": dictionary form; "ipa": British IPA of the word as used, in slashes; "pos": part of speech in Russian (сущ., глаг., прил., нареч., …); "translation": 1–3 short Russian translations that fit this context, comma-separated; "example": one short natural English sentence (max 10 words) with the word; "example_ru": its Russian translation.`, W_SCHEMA, 'low', 2000, GROQ_LIGHT);
       return out?.translation ? json(out) : json({ error: 'failed' }, 502);
     }
     case 'word_add': {
