@@ -670,6 +670,15 @@ nav button.on svg{color:var(--accent)}
 .pw-way.busy{opacity:.6;pointer-events:none}.pw-way.busy .pw-d b{animation:blink .8s steps(1) infinite}
 @media (hover:hover){.pw-way:hover{border-color:var(--fg)}}
 .pw-err{min-height:20px;margin:12px 0 0;font-size:14px;color:var(--fg-2)}
+/* «$8 включает YomiRead» — крупно на экране подписки */
+.pw-incl{display:flex;flex-direction:column;gap:4px;margin:0 0 18px;padding:14px 16px;border-radius:16px;background:var(--accent-bg);border:1px solid #F4C9AE}
+.pw-incl b{font-family:var(--head);font-weight:800;font-size:28px;letter-spacing:-.03em;line-height:1.1;color:var(--fg)}
+.pw-incl span{font-size:17px;font-weight:700;line-height:1.35;color:var(--ptext)}
+/* статьи в «Моём плане» */
+.arts{display:grid;gap:8px;margin-top:12px}
+.art{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:12px;background:#FAF9F7;border:1px solid var(--border);text-decoration:none;color:var(--fg);transition:border-color var(--t-fast)}
+.art b{font-size:14px}.art small{font-size:12.5px;color:var(--muted)}
+@media (hover:hover){.art:hover{border-color:var(--border-2)}}
 
 </style>
 </head>
@@ -1641,21 +1650,20 @@ function exTimer(sec, label, btn){
     const iv = setInterval(tick, 250); tick();
   });
 }
-async function exRecord(maxSec, vad){
+// ответ пишется до конца времени или до «Готово»: паузы в речи ответ не обрывают (раньше 3,5 с тишины переключали вопрос)
+async function exRecord(maxSec){
   const mime = ['audio/webm;codecs=opus', 'audio/mp4', 'audio/webm', 'audio/ogg'].find(t => MediaRecorder.isTypeSupported?.(t)) || '';
   const r = new MediaRecorder(exStream, mime ? {mimeType: mime} : undefined), parts = [];
   r.ondataavailable = e => { if(e.data.size) parts.push(e.data); };
   const stopped = new Promise(res => r.onstop = res);
-  r.start(250); faceState('listen'); $('#faceCap').textContent = EX.q || ''; $('#faceStatus').textContent = vad ? 'Говори — пауза или «Готово» закончит ответ' : 'Говори, пока не закончится время, или нажми «Готово»';
+  r.start(250); faceState('listen'); $('#faceCap').textContent = EX.q || ''; $('#faceStatus').textContent = 'Говори спокойно, паузы не страшны — ответ закончится, когда выйдет время или ты нажмёшь «Готово»';
   const buf = new Float32Array(exAn.fftSize), t0 = Date.now();
-  let floor = .01, spoke = false, last = 0, ms = 0;
+  let floor = .01;
   const vadIv = setInterval(() => {
     exAn.getFloatTimeDomainData(buf); let sum = 0; for(const v of buf) sum += v * v;
     const rms = Math.sqrt(sum / buf.length), now = Date.now();
     if(now - t0 < 500) floor = Math.max(floor, rms * .9);
     $('#face').style.setProperty('--lvl', Math.min(1, rms * 8).toFixed(2));
-    if(now - t0 > 500 && rms > Math.max(.03, floor * 3)){ ms += 50; spoke = spoke || ms > 400; last = now; }
-    if(vad && spoke && now - last > 3500) EX.skip?.();
   }, 50);
   await exTimer(maxSec, 'Ответ', 'Готово');
   clearInterval(vadIv); $('#face').style.setProperty('--lvl', 0);
@@ -1699,7 +1707,7 @@ async function runExam(kind, part = 0){
     if(it.prep){ faceState('think'); $('#faceStatus').textContent = 'Подумай, что скажешь.'; await exTimer(it.prep, 'Подготовка', 'Начать сразу'); }
     if(EX.stop) break;
     EX.q = it.q;
-    const blob = await exRecord(it.speak, !/^Part 2/i.test(it.part));
+    const blob = await exRecord(it.speak);
     if(EX.stop) break;
     faceState('think'); $('#faceStatus').textContent = 'Записываю ответ…';
     const audio = await new Promise(res => { const fr = new FileReader(); fr.onload = () => res(String(fr.result).split(',')[1] || ''); fr.readAsDataURL(blob); });
@@ -1947,8 +1955,9 @@ function showPlan(){
     <div class="sec-h"><h3>Этапы</h3></div><div class="card">${phases.map(([t, d]) => `<p style="margin:0 0 10px"><b>${t}.</b> ${d}</p>`).join('')}</div>
     <div class="sec-h"><h3>Как учиться, чтобы работало</h3></div>
     ${PRINCIPLES.map(([t, d]) => `<details class="rev"><summary><span class="dot" style="background:var(--primary)"></span>${t}</summary><p>${d}</p></details>`).join('')}
-    <div class="card" style="margin-top:14px"><span class="eyebrow">Официальные материалы</span>
+    <div class="card" style="margin-top:14px"><span class="eyebrow">Материалы и исследования</span>
       <p style="margin:8px 0 0">${ex === 'ielts' ? 'IELTS: <a href="https://ielts.org" target="_blank" rel="noopener">ielts.org</a> — формат и описания band; сборники Cambridge IELTS Academic — настоящие тесты для Reading и Listening.' : 'SAT: приложение Bluebook (полные пробные тесты в формате экзамена) и Official SAT Practice на Khan Academy — бесплатно.'}</p>
+      <div class="arts">${(ex === 'ielts' ? PLAN_ARTS.ielts : PLAN_ARTS.sat).concat(PLAN_ARTS.science).map(([u, t, d]) => `<a class="art" href="${u}" target="_blank" rel="noopener"><b>${t}</b><small>${d}</small></a>`).join('')}</div>
       <p style="margin:8px 0 0;font-size:13px;color:var(--muted)">Источники: <a href="https://ielts.org/news-and-insights/how-long-will-it-take-to-get-the-ielts-band-score-i-need" target="_blank" rel="noopener">IELTS.org</a> · <a href="https://newsroom.collegeboard.org/new-data-links-20-hours-personalized-official-sat-practice-khan-academy-115-point-average-score" target="_blank" rel="noopener">College Board</a> · <a href="https://www.frontiersin.org/articles/10.3389/feduc.2021.581216/full" target="_blank" rel="noopener">мета-анализ методов обучения, 2021</a></p></div>`;
   const save = () => { PLAN = p; store.set('yomi_plan', p); };
   const upd = () => { p[ex].now = +$('#pNow').value || p[ex].now; p[ex].target = +$('#pTarget').value || p[ex].target; p.date = $('#pDate').value; p.hours = +$('#pHours').value; save(); };
@@ -1970,6 +1979,24 @@ function showPlan(){
   };
 }
 
+// статьи и официальные страницы к «Моему плану» (ссылки проверены: страницы открываются, DOI существуют)
+const PLAN_ARTS = {
+  ielts: [
+    ['https://ielts.org/take-a-test/preparation-resources', 'IELTS: материалы для подготовки', 'Официальные пробные задания и советы по всем частям'],
+    ['https://ielts.org/organisations/ielts-for-organisations/ielts-scoring-in-detail', 'Как считается балл IELTS', 'Что значит каждый band и как выводится общий балл'],
+  ],
+  sat: [
+    ['https://satsuite.collegeboard.org/digital/digital-practice-preparation', 'College Board: подготовка к Digital SAT', 'Официальные пробники, вопросы и советы'],
+    ['https://bluebook.collegeboard.org/', 'Bluebook', 'Полные пробные тесты в формате настоящего экзамена'],
+    ['https://www.khanacademy.org/test-prep/digital-sat', 'Khan Academy · Digital SAT', 'Бесплатная официальная практика с разбором'],
+  ],
+  science: [
+    ['https://doi.org/10.1177/1529100612453266', 'Dunlosky и др., 2013', 'Обзор 10 техник учёбы: что работает, а что нет'],
+    ['https://doi.org/10.1111/j.1467-9280.2006.01693.x', 'Roediger, Karpicke, 2006', 'Самопроверка запоминается лучше перечитывания'],
+    ['https://doi.org/10.1037/0033-2909.132.3.354', 'Cepeda и др., 2006', 'Интервальное повторение: 317 экспериментов'],
+    ['https://doi.org/10.3389/feduc.2021.581216', 'Мета-анализ методов обучения, 2021', 'Какие приёмы сильнее всего влияют на результат'],
+  ],
+};
 /* ---------- вкладки и запуск ---------- */
 let curTab = 'home';
 function drawHead(){
@@ -2205,6 +2232,7 @@ function drawPaywall(){
       <div class="pw-hero">${miniBunny(LOOK.char, LOOK.color, 'gradcap', 'scarf', 'none')}</div>
       <p class="eyebrow">YomiScore + YomiRead</p>
       <h1>Готовься к экзамену без ограничений</h1>
+      <div class="pw-incl"><b>$8 в месяц</b><span>подписка на YomiRead уже включена — все книги без ограничений</span></div>
       <ul class="pw-feat">${SUB_FEATS.map(f => `<li>${I.check}<span>${f}</span></li>`).join('')}</ul>
       <div class="pw-plans" role="radiogroup" aria-label="Срок подписки">${SUB_PLANS.map(x => `
         <button class="pw-plan${x.id === subPick ? ' on' : ''}" role="radio" aria-checked="${x.id === subPick}" data-sp="${x.id}">
