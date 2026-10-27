@@ -810,18 +810,22 @@ nav button{font-size:11px!important}
 .tmsg.u .enw{border-color:rgba(255,255,255,.35)}
 @media (hover:hover){.enw:hover{background:var(--accent-bg);border-radius:4px}}
 .enw:active{background:var(--accent-bg);border-radius:4px}
-.wpop{position:fixed;inset:0;z-index:95;display:flex;align-items:flex-end;justify-content:center;background:rgba(22,23,27,.25);opacity:0;pointer-events:none;transition:opacity .2s var(--ease)}
+.wpop{position:fixed;inset:0;z-index:95;opacity:0;pointer-events:none;transition:opacity .15s var(--ease)}
 .wpop.on{opacity:1;pointer-events:auto}
-.wpin{width:100%;max-width:520px;background:var(--card);border-radius:22px 22px 0 0;padding:16px 18px calc(18px + var(--safe-b));box-shadow:0 -8px 30px rgba(22,23,27,.15);transform:translateY(16px);transition:transform .22s var(--ease)}
+.wpin{position:fixed;background:var(--card);border:1px solid var(--border);border-radius:18px;padding:12px 14px 14px;box-shadow:0 12px 36px rgba(22,23,27,.18),0 2px 6px rgba(22,23,27,.06);transform:scale(.96);transform-origin:var(--ax,50%) top;transition:transform .16s var(--ease)}
+.wpin[data-side="above"]{transform-origin:var(--ax,50%) bottom}
 .wpop.on .wpin{transform:none}
-.wph{display:flex;align-items:center;gap:10px}.wph>div{flex:1;display:flex;flex-direction:column;gap:2px}
-.wpw{font-family:var(--head);font-weight:800;font-size:26px;letter-spacing:-.02em}.wpipa{color:var(--muted);font-size:15px}
-.wpsay{width:44px;height:44px;flex:none;border-radius:14px;background:var(--accent-bg);color:var(--ptext);display:grid;place-items:center}.wpsay svg{width:20px;height:20px}
+.wpin::before{content:"";position:absolute;left:calc(var(--ax,50%) - 7px);top:-7px;width:12px;height:12px;background:var(--card);border-left:1px solid var(--border);border-top:1px solid var(--border);transform:rotate(45deg)}
+.wpin[data-side="above"]::before{top:auto;bottom:-7px;transform:rotate(225deg)}
+.wph{display:flex;align-items:center;gap:8px}.wph>div{flex:1;display:flex;flex-direction:column;gap:1px;min-width:0}
+.wpw{font-family:var(--head);font-weight:800;font-size:22px;letter-spacing:-.02em;overflow-wrap:anywhere}.wpipa{color:var(--muted);font-size:14px}
+.wpload{display:flex;gap:6px;padding:14px 2px 6px}.wpload i{width:8px;height:8px;border-radius:50%;background:var(--border-2);animation:blink 1s infinite}.wpload i:nth-child(2){animation-delay:.2s}.wpload i:nth-child(3){animation-delay:.4s}
+.wpsay{width:40px;height:40px;flex:none;border-radius:12px;background:var(--accent-bg);color:var(--ptext);display:grid;place-items:center}.wpsay svg{width:20px;height:20px}
 .wpsay.sm{width:30px;height:30px;border-radius:9px;display:inline-grid;vertical-align:-8px;margin-left:6px}.wpsay.sm svg{width:15px;height:15px}
-.wpx{width:40px;height:40px;flex:none;border-radius:12px;display:grid;place-items:center;color:var(--muted)}.wpx svg{width:20px;height:20px}
-.wptr{font-size:18px;font-weight:700;margin:12px 0 10px;line-height:1.4}.wptr small{font-size:13px;color:var(--muted);font-weight:600}.wptr.muted{color:var(--muted);font-weight:500;font-size:15px}
+.wpx{width:36px;height:36px;flex:none;border-radius:12px;display:grid;place-items:center;color:var(--muted)}.wpx svg{width:20px;height:20px}
+.wptr{font-size:16px;font-weight:700;margin:10px 0 8px;line-height:1.4}.wptr small{font-size:13px;color:var(--muted);font-weight:600}.wptr.muted{color:var(--muted);font-weight:500;font-size:15px}
 .wpex{background:#FAF9F7;border-radius:14px;padding:10px 12px;margin-bottom:12px}.wpex p{margin:0;font-style:italic;line-height:1.5}.wpex small{display:block;color:var(--muted);margin-top:4px;font-size:13.5px}
-.wpadd{width:100%;min-height:46px}.wpok{color:var(--green);font-weight:700;display:flex;gap:6px;align-items:center;margin:4px 0 0}.wpok svg{width:18px;height:18px}
+.wpadd{width:100%;min-height:42px}.wpok{color:var(--green);font-weight:700;display:flex;gap:6px;align-items:center;margin:4px 0 0}.wpok svg{width:18px;height:18px}
 
 </style>
 </head>
@@ -3141,11 +3145,23 @@ function tspeak(root){
 // карточка слова: транскрипция, звук, перевод по смыслу, пример; «В карточки»
 const WINFO = new Map(Object.entries(store.get('yomi_winfo', {})));
 const winfoSave = () => store.set('yomi_winfo', Object.fromEntries([...WINFO].slice(-300)));
-async function wordPop(word, ctx){
+// окно ставим под словом (или над ним, если внизу мало места), не шире экрана
+function wordPlace(pop, anchor){
+  const card = pop.querySelector('.wpin'); if(!card || !anchor) return;
+  const r = anchor.getBoundingClientRect(), vw = innerWidth, vh = innerHeight, w = Math.min(340, vw - 24), h = card.offsetHeight;
+  const left = Math.max(12, Math.min(vw - w - 12, r.left + r.width / 2 - w / 2));
+  const below = r.bottom + 10 + h < vh - 12 || r.top - 10 - h < 12;
+  card.style.width = w + 'px'; card.style.left = left + 'px';
+  card.style.top = (below ? Math.min(r.bottom + 10, vh - h - 12) : r.top - 10 - h) + 'px';
+  card.dataset.side = below ? 'below' : 'above';
+  card.style.setProperty('--ax', Math.max(18, Math.min(w - 18, r.left + r.width / 2 - left)) + 'px');
+}
+async function wordPop(word, ctx, anchor){
   let pop = $('#wpop');
   if(!pop){ pop = document.createElement('div'); pop.id = 'wpop'; pop.className = 'wpop'; document.body.append(pop); }
   if(typeof preSay === 'function') preSay(word);
   const key = word.toLowerCase();
+  pop._anchor = anchor; pop._ctx = ctx; pop._word = word;
   const draw = (info, err) => {
     pop.innerHTML = `<div class="wpin" role="dialog" aria-label="Слово ${esc(word)}">
       <div class="wph"><div><b class="wpw">${esc(info?.lemma || word)}</b>${info?.ipa ? `<span class="wpipa">${esc(info.ipa)}</span>` : ''}</div>
@@ -3153,22 +3169,24 @@ async function wordPop(word, ctx){
       ${info ? `<p class="wptr">${info.pos ? `<small>${esc(info.pos)}</small> ` : ''}${esc(info.translation)}</p>
         ${info.example ? `<div class="wpex"><p><span>${esc(info.example)}</span><button class="wpsay sm" data-wsay="${esc(info.example)}" aria-label="Послушать пример">${SAY_I}</button></p><small>${esc(info.example_ru || '')}</small></div>` : ''}
         <button class="btn line sm wpadd" data-wadd2>${I.card} В карточки</button>`
-      : `<p class="wptr muted">${err ? 'Не получилось загрузить перевод — нажми на слово ещё раз.' : 'Смотрю перевод…'}</p>`}
+      : err ? `<p class="wptr muted">Не получилось загрузить перевод.</p><button class="btn line sm wpadd" data-wretry>Повторить</button>`
+      : `<div class="wpload"><i></i><i></i><i></i></div>`}
     </div>`;
-    pop.classList.add('on');
+    pop.classList.add('on'); wordPlace(pop, anchor);
   };
   pop.dataset.word = key; draw(WINFO.get(key));
   if(!WINFO.has(key)){
-    const j = await api('word_info', {word, context: ctx}).catch(() => ({}));
-    if(pop.dataset.word !== key) return;
+    const j = await Promise.race([api('word_info', {word, context: ctx}).catch(() => ({})), sleep(8000).then(() => ({}))]);   // не дольше 8 секунд
+    if(pop.dataset.word !== key || !pop.classList.contains('on')) return;
     if(j.translation){ WINFO.set(key, j); winfoSave(); draw(j); if(typeof preSay === 'function' && j.example) preSay(j.example); } else draw(null, true);
   } else if(typeof preSay === 'function' && WINFO.get(key).example) preSay(WINFO.get(key).example);
 }
 document.addEventListener('click', e => {
   const t = e.target, pop = $('#wpop');
-  const w = t.closest('.enw'); if(w && t.closest('#tutor')){ e.stopPropagation(); unlock(); return wordPop(w.dataset.w, w.dataset.ctx); }
+  const w = t.closest('.enw'); if(w && t.closest('#tutor')){ e.stopPropagation(); unlock(); return wordPop(w.dataset.w, w.dataset.ctx, w); }
   if(!pop?.classList.contains('on')) return;
   const say = t.closest('[data-wsay]'); if(say){ e.stopPropagation(); return sayWord(say.dataset.wsay); }
+  if(t.closest('[data-wretry]')){ e.stopPropagation(); return wordPop(pop._word, pop._ctx, pop._anchor); }
   if(t.closest('[data-wadd2]')){ e.stopPropagation(); const info = WINFO.get(pop.dataset.word); if(!info) return;
     api('word_add', {word: info.lemma, translation: info.translation, example: info.example}).catch(() => {}); S.words = (S.words || 0) + 1; S.due = (S.due || 0) + 1;
     t.closest('[data-wadd2]').outerHTML = `<p class="wpok">${I.check} Добавлено в карточки</p>`; return; }
@@ -3192,6 +3210,8 @@ function tutorList(){
     </div>`;
   box.scrollTop = 0;
 }
+document.addEventListener('scroll', e => { if(e.target?.id === 'tmsgs' || e.target?.id === 'tutor') $('#wpop')?.classList.remove('on'); }, true);
+addEventListener('resize', () => $('#wpop')?.classList.remove('on'));
 function tutorChat(id){
   tcur = id; const c = TCH.find(x => x.id === id); if(!c) return tutorList();
   const box = tutorBox();
