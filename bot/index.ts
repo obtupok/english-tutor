@@ -1299,11 +1299,12 @@ Rules:
 - "priority": 8–15 lesson ids from this list, most important first (weakest areas and what the target needs): ${skills.map((k: any) => `${k.id} = ${k.name}`).join('; ')}.
 - "phases": 3–4 phases from now until the exam with week ranges like "1–3"; "milestones": 3–5 checkpoints (week number + what to do or reach, e.g. a full mock and the expected score); "tips": 3–5 personal tips for this learner.
 - "weeks": ${weeksPlan}. "verdict": exactly "${verdict}". In "summary" mention the hours honestly (${have} h available vs ${need}–${needHi} h typical)${verdict === 'short' ? ' and say clearly what to change: more minutes a day, more days, or a later date' : ''}.
-- Milestone scores must rise step by step from the current score to the target and never go below the current score.
+- Milestone scores must rise step by step from the current score to the target and never go below the current score. IELTS bands go in steps of 0.5 (6, 6.5, 7), SAT scores in steps of 10.
 - Essay practice ("writing") needs at least 40 minutes and a full Speaking mock about 15 minutes; on shorter days use ielts-p1/p2/p3, sat-math or sat-rw instead.
 - "summary": 2–3 honest sentences: where the learner is, what the plan focuses on and whether the goal is realistic.`, PLAN_SCHEMA, 'medium', 30000);
       if (!out?.week?.length) return json({ error: 'failed' }, 502);
       out.verdict = verdict; out.weeks = weeksPlan; out.hours = { have, need, needHi };
+      for (const d of out.week) for (const t of d.tasks || []) if (t.act === 'writing' && t.minutes < 40) t.minutes = 40;   // эссе короче 40 минут не написать
       const studyPlan = { answers: ans, plan: out, at: new Date().toISOString() };
       if (b.dry) return json({ studyPlan });   // проверка без сохранения
       owner.stats = { ...stt, studyPlan };
