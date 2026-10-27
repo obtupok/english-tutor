@@ -351,7 +351,7 @@ const pickThemes = (list: string[], n: number) => [...list].sort(() => Math.rand
 const shortQ = (q: string) => String(q || '').replace(/\s+/g, ' ').slice(0, 90);
 
 async function askJsonGroq(system: string, user: string, schema: any, effort = 'medium', maxTokens = 16000) {
-  for (let attempt = 0; attempt < 2; attempt++) {
+  for (let attempt = 0; attempt < 3; attempt++) {
     const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: { Authorization: 'Bearer ' + env('GROQ_API_KEY'), 'Content-Type': 'application/json' },
@@ -361,6 +361,8 @@ async function askJsonGroq(system: string, user: string, schema: any, effort = '
         response_format: { type: 'json_schema', json_schema: { name: 'exam', strict: true, schema } },
       }),
     });
+    // перегрузка (лимит запросов в минуту) — ждём, сколько просит Groq (не дольше 8 с), и пробуем снова
+    if (r.status === 429) { const wait = Math.min(8, Number(r.headers.get('retry-after')) || 2); console.error('exam 429, wait', wait); await new Promise((res) => setTimeout(res, wait * 1000)); continue; }
     const j = await r.json().catch(() => ({}));
     try { return JSON.parse(j?.choices?.[0]?.message?.content || ''); } catch { console.error('exam', r.status, JSON.stringify(j).slice(0, 300)); }
   }
@@ -1302,7 +1304,7 @@ Rules:
 - "weeks": ${weeksPlan}. "verdict": exactly "${verdict}". In "summary" mention the hours honestly (${have} h available vs ${need}–${needHi} h typical)${verdict === 'short' ? ' and say clearly what to change: more minutes a day, more days, or a later date' : ''}.
 - Milestone scores must rise step by step from the current score to the target and never go below the current score. IELTS bands go in steps of 0.5 (6, 6.5, 7), SAT scores in steps of 10.
 - Essay practice ("writing") needs at least 40 minutes and a full Speaking mock about 15 minutes; on shorter days use ielts-p1/p2/p3, sat-math or sat-rw instead.
-- "summary": 2–3 honest sentences: where the learner is, what the plan focuses on and whether the goal is realistic.`, PLAN_SCHEMA, 'medium', 30000);
+- "summary": 2–3 honest sentences: where the learner is, what the plan focuses on and whether the goal is realistic.`, PLAN_SCHEMA, 'medium', 16000);
       if (!out?.week?.length) return json({ error: 'failed' }, 502);
       out.verdict = verdict; out.weeks = weeksPlan; out.hours = { have, need, needHi };
       // ровно одна неделя-шаблон Пн..Вс: модель иногда расписывает все недели подряд — берём первое вхождение каждого дня
