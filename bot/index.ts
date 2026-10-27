@@ -1277,10 +1277,20 @@ Questions: ${JSON.stringify(out.check.map((q: any) => ({ question: q.question, c
         `Lessons already done: ${Object.keys(stt.lessons || {}).join(', ') || 'none'}.`,
       ].join(' ');
       const weeksLeft = ans.date ? Math.max(1, Math.round((Date.parse(ans.date) - Date.now()) / (7 * 864e5))) : 0;
+      // часы: IELTS — 160–250 ч на +1 band; SAT — ~20 ч ≈ +115 баллов, чем выше балл, тем дороже каждые 100 (как в «Моём плане»)
+      const weeksPlan = weeksLeft || 12, have = Math.round(weeksPlan * ans.days * ans.minutes / 60);
+      const needOf = (ex: string) => {
+        if (ex === 'ielts') { const now = ans.ielts.now ?? 5.5, gap = Math.max(0, (ans.ielts.target ?? now) - now); return [Math.round(gap * 160), Math.round(gap * 250)]; }
+        const now = ans.sat.now ?? 1000, gap = Math.max(0, (ans.sat.target ?? now) - now), per100 = now < 1200 ? 20 : now < 1400 ? 35 : 70; return [Math.round(gap / 100 * per100), Math.round(gap / 100 * per100 * 1.5)];
+      };
+      const needs = (ans.exam === 'both' ? ['ielts', 'sat'] : [ans.exam]).map(needOf), need = needs.reduce((x, n) => x + n[0], 0), needHi = needs.reduce((x, n) => x + n[1], 0);
+      const verdict = !needHi ? 'done' : have >= needHi ? 'ok' : have >= need ? 'tight' : 'short';
+      const perWeekNeed = Math.ceil(need / weeksPlan);
       const out = await askJsonGroq(`You are an expert IELTS and Digital SAT study coach. You build realistic, personal study plans grounded in learning research: spaced repetition, retrieval practice and full practice tests, interleaving, weak areas first, a full mock every 2–3 weeks, lighter final week. Write every text field in Russian — short, concrete, friendly, addressing the learner as "ты". Return JSON only.`,
-        `Learner: exam ${ans.exam === 'both' ? 'IELTS and SAT' : ans.exam.toUpperCase()}; ${ans.exam !== 'sat' ? `IELTS now ${ans.ielts.now ?? 'unknown'}, target ${ans.ielts.target ?? 'not set'}; ` : ''}${ans.exam !== 'ielts' ? `SAT now ${ans.sat.now ?? 'unknown'}, target ${ans.sat.target ?? 'not set'}; ` : ''}exam date ${ans.date ? `${ans.date} (about ${weeksLeft} weeks left)` : 'not booked (plan for 12 weeks)'}; ${ans.minutes} minutes a day, ${ans.days} days a week; finds hardest: ${ans.hard.join(', ') || 'not said'}. English level about ${owner.level || 'B1'}.
+        `Learner: exam ${ans.exam === 'both' ? 'IELTS and SAT' : ans.exam.toUpperCase()}; ${ans.exam !== 'sat' ? `IELTS now ${ans.ielts.now ?? 'unknown'}, target ${ans.ielts.target ?? 'not set'}; ` : ''}${ans.exam !== 'ielts' ? `SAT now ${ans.sat.now ?? 'unknown'}, target ${ans.sat.target ?? 'not set'}; ` : ''}exam date ${ans.date ? `${ans.date} (about ${weeksLeft} weeks left)` : 'not booked (plan for 12 weeks)'}; ${ans.minutes} minutes a day, ${ans.days} days a week; finds hardest: ${ans.hard.join(', ') || 'not said'}.${ans.ielts.now == null && ans.sat.now == null ? ` General English level about ${owner.level || 'B1'}.` : ''}
 Results in the app: ${facts}
-Typical effort: about 3 months per +0.5 IELTS band; SAT: ~20 hours of official practice ≈ +115 points on average, higher scores cost more time.
+Time check (already computed — do not recompute): the plan covers ${weeksPlan} weeks; available study time ≈ ${have} hours; typically needed ≈ ${need}–${needHi} hours (IELTS: 160–250 h per +1 band; SAT: ~20 h ≈ +115 points, more per 100 at higher scores). Verdict: ${verdict}.${verdict === 'short' ? ` To reach the goal they need about ${perWeekNeed} hours a week, or a later exam date.` : ''}
+The current score is what the learner told you; do not invent a different level.
 
 Rules:
 - "week": exactly 7 entries in order Пн..Вс. Exactly ${ans.days} study days spread through the week; every other day has one task {type:"rest", act:"", minutes:0, note:""}.
@@ -1288,9 +1298,12 @@ Rules:
 - Use only these practice acts: ${ACTS.join(', ')} (ielts-full = whole Speaking mock; read = reading a book; call = free speaking with the tutor). Match acts to the learner's exam.
 - "priority": 8–15 lesson ids from this list, most important first (weakest areas and what the target needs): ${skills.map((k: any) => `${k.id} = ${k.name}`).join('; ')}.
 - "phases": 3–4 phases from now until the exam with week ranges like "1–3"; "milestones": 3–5 checkpoints (week number + what to do or reach, e.g. a full mock and the expected score); "tips": 3–5 personal tips for this learner.
-- "weeks": total weeks of the plan. "verdict": ok (enough time), tight, short (not enough time — say honestly in the summary what to change), done (already at target).
+- "weeks": ${weeksPlan}. "verdict": exactly "${verdict}". In "summary" mention the hours honestly (${have} h available vs ${need}–${needHi} h typical)${verdict === 'short' ? ' and say clearly what to change: more minutes a day, more days, or a later date' : ''}.
+- Milestone scores must rise step by step from the current score to the target and never go below the current score.
+- Essay practice ("writing") needs at least 40 minutes and a full Speaking mock about 15 minutes; on shorter days use ielts-p1/p2/p3, sat-math or sat-rw instead.
 - "summary": 2–3 honest sentences: where the learner is, what the plan focuses on and whether the goal is realistic.`, PLAN_SCHEMA, 'medium', 30000);
       if (!out?.week?.length) return json({ error: 'failed' }, 502);
+      out.verdict = verdict; out.weeks = weeksPlan; out.hours = { have, need, needHi };
       const studyPlan = { answers: ans, plan: out, at: new Date().toISOString() };
       if (b.dry) return json({ studyPlan });   // проверка без сохранения
       owner.stats = { ...stt, studyPlan };
