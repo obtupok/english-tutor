@@ -783,6 +783,16 @@ nav button{font-size:11px!important}
 .sayi svg{width:14px;height:14px}.sayi:active{transform:scale(.9)}
 @media (hover:hover){.sayi:hover{background:#F8D9C6}}
 .rhint{color:var(--muted);font-size:13px;margin:-4px 0 8px}.ldot.rep{border:0;background:var(--accent-bg);color:var(--ptext)}.ldot.rep svg{width:13px;height:13px}
+/* практика с учителем */
+.tk .tkh{display:flex;justify-content:space-between;align-items:center}.tkt{font-size:12px;color:var(--muted);font-weight:700}
+.tkp{font-size:17px;font-weight:700;line-height:1.45;margin:8px 0 10px}
+.tkhint{display:flex;gap:8px;align-items:flex-start;color:var(--fg-2);font-size:14px;line-height:1.45;background:#FDF3DC;border-radius:12px;padding:8px 10px;margin:0 0 12px}.tkhint svg{width:18px;height:18px;flex:none;color:#9A6A08;margin-top:1px}
+.tkin{min-height:0!important;margin-bottom:10px}
+.btn.rec{background:#C2412D!important;color:#fff!important;border-color:#C2412D!important;animation:blink 1.2s infinite}
+.btn svg{width:18px;height:18px;vertical-align:-4px;margin-right:4px}
+.tkfb{margin-top:10px}.tkfb h4{margin:14px 0 6px;font-size:15px}.tkfb p{line-height:1.55;color:var(--fg-2)}.tkheard{font-style:italic}.tkheard small{display:block;font-style:normal;color:var(--muted)}
+.tkiss{display:grid;gap:8px}.tktip{background:var(--green-bg);border-radius:12px;padding:8px 10px;color:var(--fg)!important}
+.tkmodel{margin-top:12px}
 
 </style>
 </head>
@@ -3190,6 +3200,134 @@ document.addEventListener('click', e => {
     return askTutor({label: `IELTS Writing · band ${r.overall}`, body: `Моё эссе IELTS Task 2 получило band ${r.overall}. Критерии: ${(r.criteria || []).map(c => `${c.name} ${c.score} — ${c.comment}`).join('; ')}. Исправления: ${(r.fixes || []).map(f => `${f.original} → ${f.better}`).join('; ')}.`}, 'Почему такая оценка? Объясни по критериям и что изменить в следующем эссе.'); }
   if(t.closest('[data-tutor]')){ unlock(); return openTutor(); }
 }, true);
+
+
+/* ---------- «Практика с учителем» в уроках Speaking, Writing и грамматики ----------
+   Вместо теста с вариантами: задание → свой ответ (текстом или голосом) → разбор как у учителя
+   (что хорошо, ошибки «как у тебя → как правильно → почему», как сказать сильнее, совет) → «ещё раз» или следующее.
+   Тесты с вариантами остаются там, где это формат экзамена: SAT, Reading, Listening. */
+const teachKind = k => k.id.startsWith('ie-') ? 'speaking' : k.id.startsWith('wt-') ? 'writing' : k.id.startsWith('g-') ? 'grammar' : null;
+const teachPart = k => ({'ie-p1': '1', 'ie-p2': '2', 'ie-p3': '3'})[k.id] || '';
+const VERD = {great: ['green', 'Отлично'], good: ['green', 'Хорошо'], retry: ['orange', 'Давай ещё раз']};
+const MIC_I = svgI('<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>');
+let teachRec = null;
+function teachLoad(ls, avoid = []){
+  const k = ls.k;
+  return api('lesson_tasks', {exam: k.exam, name: k.name, focus: k.f || (k.id.startsWith('g-') ? GRAMMAR_FOCUS : ''), kind: teachKind(k), part: teachPart(k), n: 3, avoid})
+    .then(j => j.tasks || null).catch(() => null);
+}
+function teachHtml(){
+  const ls = LS, T = ls.teach, k = ls.k, kind = teachKind(k);
+  if(!T.tasks) return `<div class="card lres"><p>${T.failed ? 'Не получилось подготовить задания.' : 'Учитель готовит задания под этот урок…'}</p>${T.failed ? '<button class="btn" data-tkretry>Попробовать ещё раз</button>' : ''}</div>`;
+  if(T.i >= T.tasks.length){
+    const ok = T.res.filter(r => r && r !== 'retry').length;
+    return `<div class="card lres"><b class="big">${ok} из ${T.tasks.length}</b><p>${ok === T.tasks.length ? 'Отлично — навык получается. Закрепи его через пару дней в «Повторении».' : 'Хорошая тренировка. Повтори урок через день-два — с новыми заданиями.'}</p>
+      <div class="wbtns"><button class="btn" data-tkmore>Ещё задания</button><button class="btn line" data-tkdone>Готово</button></div></div>`;
+  }
+  const t = T.tasks[T.i], a = T.cur || {};
+  const fb = a.fb, v = fb && (VERD[fb.verdict] || VERD.good);
+  return `<div class="card tk">
+      <div class="tkh"><span class="eyebrow">Задание ${T.i + 1} из ${T.tasks.length}</span>${a.tries ? `<span class="tkt">попытка ${a.tries + (fb ? 0 : 1)}</span>` : ''}</div>
+      <p class="tkp">${esc(t.prompt).replace(/\n/g, '<br>')}</p>
+      ${t.hint ? `<p class="tkhint">${svgI('<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.4 1 1.1 1 1.8V16h5v-.3c0-.7.4-1.4 1-1.8A6 6 0 0 0 12 3z"/>')}${esc(t.hint)}</p>` : ''}
+      ${fb ? '' : `<textarea class="essay tkin" id="tkIn" rows="${kind === 'writing' ? 7 : 4}" placeholder="${kind === 'speaking' ? 'Ответь так, как сказал бы на экзамене…' : 'Напиши свой ответ…'}">${esc(a.draft || '')}</textarea>
+        <div class="wbtns">${kind === 'speaking' ? `<button class="btn line${teachRec ? ' rec' : ''}" data-tkmic>${MIC_I} ${teachRec ? 'Стоп — отправить' : 'Ответить голосом'}</button>` : ''}<button class="btn" data-tksend${a.busy ? ' disabled' : ''}>${a.busy ? 'Учитель смотрит ответ…' : 'Проверить'}</button></div>`}
+    </div>
+    ${fb ? `<div class="card tkfb">
+      <span class="vchip ${v[0]}">${v[1]}</span>
+      ${a.heard ? `<p class="tkheard"><small>Ты ответил:</small> «${esc(a.heard)}»</p>` : ''}
+      <p>${esc(fb.praise)}</p>
+      ${fb.issues?.length ? `<h4>Что исправить</h4><div class="tkiss">${fb.issues.map(x => `<div class="fix"><s>${esc(x.wrong)}</s><p>${esc(x.right)}</p><small>${esc(x.why)}</small></div>`).join('')}</div>` : ''}
+      ${fb.better ? `<h4>Как сказать сильнее</h4><div class="lex"><p class="model">${esc(fb.better)}</p></div><button class="btn line sm" data-tksay>${I.play} Послушать</button>` : ''}
+      ${fb.tip ? `<p class="tktip"><b>Совет:</b> ${esc(fb.tip)}</p>` : ''}
+      <div class="wbtns"><button class="btn${fb.verdict === 'retry' ? '' : ' line'}" data-tkagain>Ответить ещё раз</button><button class="btn${fb.verdict === 'retry' ? ' line' : ''}" data-tknext>${T.i + 1 < T.tasks.length ? 'Следующее задание' : 'Итог'}</button></div>
+      ${t.model ? `<details class="rev tkmodel"><summary>Пример сильного ответа</summary><p>${esc(t.model)}</p></details>` : ''}
+    </div>` : ''}`;
+}
+function teachRender(scroll){
+  const box = $('#teach'); if(!box || !LS?.teach) return;
+  box.innerHTML = teachHtml();
+  if(scroll) box.scrollIntoView({block: 'start', behavior: RM ? 'auto' : 'smooth'});
+}
+// урок навыка «говорить/писать»: секцию с тестом заменяем практикой с учителем
+const _drawLessonT = drawLesson;
+drawLesson = function(){
+  _drawLessonT();
+  const ls = LS, kind = ls && teachKind(ls.k);
+  if(!kind) return;
+  const head = $('#lcheck'); if(!head) return;
+  while(head.nextElementSibling) head.nextElementSibling.remove();
+  head.querySelector('h3').textContent = ls.teach?.round ? `Практика с учителем · раунд ${ls.teach.round + 1}` : 'Практика с учителем';
+  head.insertAdjacentHTML('afterend', '<p class="rhint">Отвечай сам — учитель разберёт ответ, покажет ошибки и как сказать сильнее.</p><div id="teach"></div>');
+  if(!ls.teach){
+    ls.teach = {tasks: null, i: 0, res: [], round: 0, seen: []};
+    teachLoad(ls).then(tasks => { if(LS !== ls) return; ls.teach.tasks = tasks; ls.teach.failed = !tasks; if(tasks) ls.teach.seen.push(...tasks.map(t => t.prompt)); teachRender(); });
+  }
+  teachRender();
+};
+async function teachSend(audio){
+  const ls = LS, T = ls.teach, t = T.tasks[T.i], a = T.cur ||= {tries: 0};
+  const text = $('#tkIn')?.value.trim() || '';
+  if(!audio && text.split(/\s+/).filter(Boolean).length < 2){ notify('Напиши ответ — хотя бы пару слов'); return; }
+  a.draft = text; a.busy = true; teachRender();
+  const body = {name: ls.k.name, focus: ls.k.f || '', kind: teachKind(ls.k), part: teachPart(ls.k), task: {prompt: t.prompt, hint: t.hint}};
+  if(audio) Object.assign(body, audio); else body.answer = text;
+  const j = await api('lesson_feedback', body).catch(() => ({}));
+  if(LS !== ls) return;
+  a.busy = false;
+  if(!j.feedback){ notify(j.error === 'empty' ? 'Не расслышал ответ — попробуй ещё раз' : 'Не получилось проверить — попробуй ещё раз'); return teachRender(); }
+  a.fb = j.feedback; a.heard = audio ? j.heard : ''; a.tries++;
+  T.res[T.i] = a.fb.verdict === 'retry' && T.res[T.i] && T.res[T.i] !== 'retry' ? T.res[T.i] : a.fb.verdict;   // лучший результат по заданию
+  sfx(a.fb.verdict === 'retry' ? 'oops' : 'happy'); if(a.fb.better && typeof preSay === 'function') preSay(a.fb.better);
+  teachRender(true);
+}
+async function teachMic(){
+  if(teachRec){ teachRec.stop(); return; }
+  let stream; try{ stream = await navigator.mediaDevices.getUserMedia({audio: true}); }catch{ notify('Нет доступа к микрофону — можно написать ответ'); return; }
+  const mime = ['audio/webm;codecs=opus', 'audio/mp4', 'audio/webm', 'audio/ogg'].find(m => window.MediaRecorder?.isTypeSupported?.(m)) || '';
+  const rec = new MediaRecorder(stream, mime ? {mimeType: mime} : undefined), parts = [];
+  rec.ondataavailable = e => { if(e.data.size) parts.push(e.data); };
+  rec.onstop = async () => {
+    stream.getTracks().forEach(t => t.stop()); clearTimeout(rec.t); teachRec = null;
+    const blob = new Blob(parts, {type: rec.mimeType || 'audio/webm'});
+    const b64 = await new Promise(res => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1] || ''); r.readAsDataURL(blob); });
+    teachSend({audio: b64, mime: blob.type});
+  };
+  rec.start(250); teachRec = rec; rec.t = setTimeout(() => rec.state === 'recording' && rec.stop(), 150000);   // не дольше 2,5 минут
+  teachRender();
+}
+$('#learnBox').addEventListener('click', e => {
+  const t = e.target, ls = LS; if(!ls?.teach) return;
+  const T = ls.teach;
+  if(t.closest('[data-tksend]')) return teachSend();
+  if(t.closest('[data-tkmic]')){ unlock(); return teachMic(); }
+  if(t.closest('[data-tkagain]')){ T.cur = {tries: T.cur?.tries || 0, draft: ''}; teachRender(); return $('#tkIn')?.focus(); }
+  if(t.closest('[data-tknext]')){ T.i++; T.cur = null; return teachRender(true); }
+  if(t.closest('[data-tksay]')) return sayWord(T.cur?.fb?.better || '');
+  if(t.closest('[data-tkretry]')){ T.failed = false; teachRender(); return teachLoad(ls, T.seen).then(tasks => { if(LS !== ls) return; T.tasks = tasks; T.failed = !tasks; if(tasks) T.seen.push(...tasks.map(x => x.prompt)); teachRender(); }); }
+  if(t.closest('[data-tkmore]')){
+    const ok = T.res.filter(r => r && r !== 'retry').length;
+    api('lesson_done', {skill: ls.k.id, score: ok, total: T.tasks.length, words: T.round ? [] : ls.lesson.words, name: ls.lesson.title}).then(j => { if(j.lessons) S.stats = {...(S.stats || {}), lessons: j.lessons}; }).catch(() => {});
+    Object.assign(T, {tasks: null, i: 0, res: [], cur: null, round: T.round + 1});
+    $('#learnBox').dataset.still = 1; drawLesson(); $('#lcheck')?.scrollIntoView({block: 'start'});
+    return teachLoad(ls, T.seen).then(tasks => { if(LS !== ls) return; T.tasks = tasks; T.failed = !tasks; if(tasks) T.seen.push(...tasks.map(x => x.prompt)); teachRender(); });
+  }
+  if(t.closest('[data-tkdone]')){
+    const ok = T.res.filter(r => r && r !== 'retry').length;
+    api('lesson_done', {skill: ls.k.id, score: ok, total: T.tasks.length, words: T.round ? [] : ls.lesson.words, name: ls.lesson.title}).then(j => { if(j.lessons) S.stats = {...(S.stats || {}), lessons: j.lessons}; }).catch(() => {});
+    if(course().lesson === ls.k.id){ courseMark('lesson'); courseMark('practice'); }   // практика с учителем и есть практика
+    notify(`Урок: ${ok} из ${T.tasks.length} заданий получились`); LS = null; return showLearn();
+  }
+});
+// открыть урок из «Повторения» для навыков «говорить/писать» — сразу к практике
+{ const _open = openLesson;
+  openLesson = async function(id, fresh = false, repeat = false){
+    const k = SKILLS.find(x => x.id === id);
+    if(!(repeat && k && teachKind(k))) return _open(id, fresh, repeat);
+    await _open(id, fresh, false);
+    setTimeout(() => $('#lcheck')?.scrollIntoView({block: 'start'}), 50);
+  };
+}
 </script>
 </body>
 </html>
