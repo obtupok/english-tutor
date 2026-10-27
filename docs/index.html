@@ -2481,7 +2481,7 @@ function showLearn(){
   const sub = t => t.type === 'lesson' ? esc(k.name) : t.type === 'words' ? (S.due ? `${S.due} ${plural(S.due, 'слово', 'слова', 'слов')} на повторение` : 'Добавить 10 новых слов') : PRACTICE_NAME[t.act] || '';
   const step = (t, i) => `<button class="cstep${c.done[i] ? ' ok' : ''}" data-cs="${i}"><span class="cdot">${c.done[i] ? CHECK_I : ICON[t.type] || I.target}</span><span class="t"><b>${title(t)}${t.min ? ` · ${t.min} мин` : ''}</b><small>${sub(t)}</small>${t.note ? `<small class="cnote">${esc(t.note)}</small>` : ''}</span>${I.chev}</button>`;
   const groups = [...new Set(SKILLS.map(x => x.g))];
-  $('#learnBox').innerHTML = `<div class="lhead top"><div><h2>Учёба</h2><p class="lead">Уроки по каждому навыку, карточки слов и курс на каждый день.</p></div>${LSLOT}</div>
+  parkBunny(); $('#learnBox').innerHTML = `<div class="lhead top"><div><h2>Учёба</h2><p class="lead">Уроки по каждому навыку, карточки слов и курс на каждый день.</p></div>${LSLOT}</div>
     <div class="card course"><div class="ch"><span class="eyebrow">Курс · день ${c.day}${p ? ' · по твоему плану' : ''}</span><span class="cn">${ts.length ? `${n} из ${ts.length}` : 'отдых'}</span></div>
       <span class="bar"><i style="width:${ts.length ? n / ts.length * 100 : 100}%"></i></span>
       ${ts.length ? `<div class="csteps">${ts.map(step).join('')}</div>` : '<p class="cfin">Сегодня по плану отдых — мозгу нужно время, чтобы всё улеглось. Хочешь — повтори карточки.</p>'}
@@ -2526,9 +2526,9 @@ async function openLesson(id, fresh = false){
   let lesson = fresh ? null : store.get('yomi_lsn_' + id, null);
   if(!lessonOk(lesson)) lesson = null;
   if(!lesson){
-    box.innerHTML = `${BACK()}<div class="empty">Yomi готовит урок «${esc(k.name)}» и проверяет каждый ответ — это до 30 секунд…</div>`; homeBunny();
+    parkBunny(); box.innerHTML = `${BACK()}<div class="empty">Yomi готовит урок «${esc(k.name)}» и проверяет каждый ответ — это до 30 секунд…</div>`; homeBunny();
     lesson = await loadLesson(k, fresh);
-    if(!lesson){ box.innerHTML = `${BACK()}<div class="empty">Не получилось подготовить урок. Попробуй ещё раз.</div>`; homeBunny(); return; }
+    if(!lesson){ parkBunny(); box.innerHTML = `${BACK()}<div class="empty">Не получилось подготовить урок. Попробуй ещё раз.</div>`; homeBunny(); return; }
     if(LS?.id && LS.id !== id) return;
   }
   LS = {id, k, lesson, picks: []}; drawLesson();
@@ -2536,7 +2536,7 @@ async function openLesson(id, fresh = false){
 }
 function drawLesson(){
   const {k, lesson: L, picks} = LS, answered = picks.filter(p => p != null).length, score = L.check.filter((q, i) => picks[i] === q.answer).length;
-  $('#learnBox').innerHTML = `${BACK()}
+  parkBunny(); $('#learnBox').innerHTML = `${BACK()}
     <p class="eyebrow">${esc(k.g)} · <button class="relink" data-lfresh>Обновить урок</button></p><h2>${esc(L.title)}</h2><p class="lead">${esc(L.intro)}</p>
     <div class="sec-h"><h3>Как делать</h3></div>
     <div class="lsteps">${L.steps.map((s, i) => `<div class="card lstep"><span class="num">${i + 1}</span><div><b>${esc(s.title)}</b><p>${esc(s.text)}</p></div></div>`).join('')}</div>
@@ -2573,9 +2573,19 @@ $('#learnBox').addEventListener('click', async e => {
 
 /* ---- карточки слов: показал слово → вспомнил → «Забыл / Трудно / Знаю» (интервалы считает сервер) ---- */
 let WC = null;
+// произношение слова: голос Yomi с сервера, а если он сейчас недоступен (лимит озвучки) — голос браузера, чтобы кнопка всегда работала
+const wordAudio = new Map();
+async function sayWord(w){
+  unlock(); stopAudio();
+  if(!wordAudio.has(w)){ const j = await api('tts', {text: w, lang: 'en', speaker: S.speaker, char: LOOK.char}).catch(() => ({})); wordAudio.set(w, j.audio ? [j.audio, j.mime || 'audio/mpeg'] : null); }
+  const a = wordAudio.get(w);
+  if(!a || !(await playB64(a[0], a[1]))) speakLocal(w, 'en');
+}
+// пример показываем, только если в нём есть само слово (раньше попадались случайные фразы из разговора)
+const hasWord = (ex, w) => { const stem = String(w).toLowerCase().split(/\s+/)[0].slice(0, Math.max(3, String(w).length - 2)); return !!ex && String(ex).toLowerCase().includes(stem); };
 async function reviewWords(){
   const box = $('#learnBox'); parkBunny();
-  box.innerHTML = `${BACK()}<div class="empty">Достаю карточки…</div>`; homeBunny();
+  parkBunny(); box.innerHTML = `${BACK()}<div class="empty">Достаю карточки…</div>`; homeBunny();
   const j = await api('words').catch(() => ({}));
   const now = Date.now(), due = (j.words || []).filter(w => !w.due || Date.parse(w.due) <= now).sort(() => Math.random() - .5).slice(0, 20);
   if(!due.length){ S.due = 0; return addWords(); }
@@ -2583,25 +2593,25 @@ async function reviewWords(){
 }
 function drawCard(){
   const w = WC.list[WC.i];
-  $('#learnBox').innerHTML = `${BACK()}
+  parkBunny(); $('#learnBox').innerHTML = `${BACK()}
     <div class="qtop"><span class="bar"><i style="width:${WC.i / WC.list.length * 100}%"></i></span><b>${WC.i + 1}/${WC.list.length}</b></div>
     <div class="card wcard${WC.open ? ' open' : ''}" data-wflip>
       <b class="ww">${esc(w.word)}</b><button class="ib" data-wsay aria-label="Послушать">${I.play}</button>
-      ${WC.open ? `<p class="wt">${esc(w.translation)}</p>${w.example ? `<p class="we">${esc(w.example)}</p>` : ''}` : '<p class="wh">Вспомни перевод и нажми на карточку</p>'}
+      ${WC.open ? `<p class="wt">${esc(w.translation)}</p>${hasWord(w.example, w.word) ? `<p class="we">${esc(w.example)}</p>` : ''}` : '<p class="wh">Вспомни перевод и нажми на карточку</p>'}
     </div>
-    ${WC.open ? `<div class="wgrade"><button class="btn line" data-wg="0">Забыл</button><button class="btn line" data-wg="1">Трудно</button><button class="btn green" data-wg="2">Знаю</button></div>` : ''}`;
+    ${WC.open ? `<div class="wgrade"><button class="btn line" data-wg="0">Не знаю</button><button class="btn line" data-wg="1">Трудно</button><button class="btn green" data-wg="2">Знаю</button></div>` : ''}`;
   homeBunny();
 }
 $('#learnBox').addEventListener('click', async e => {
   if(!WC) return;
-  if(e.target.closest('[data-wsay]')){ unlock(); sayText(WC.list[WC.i].word, 'en'); return; }
+  if(e.target.closest('[data-wsay]')){ sayWord(WC.list[WC.i].word); return; }
   if(e.target.closest('[data-wflip]') && !WC.open){ WC.open = true; $('#learnBox').dataset.still = 1; return drawCard(); }
   const g = e.target.closest('[data-wg]'); if(!g) return;
   const w = WC.list[WC.i], grade = +g.dataset.wg; if(grade === 2) WC.ok++;
   api('review', {id: w.id, grade}).catch(() => {});
   if(++WC.i < WC.list.length){ WC.open = false; $('#learnBox').dataset.still = 1; return drawCard(); }
   const n = WC.list.length, ok = WC.ok; WC = null; S.due = Math.max(0, (S.due || 0) - n); courseMark('words');
-  $('#learnBox').innerHTML = `${BACK()}
+  parkBunny(); $('#learnBox').innerHTML = `${BACK()}
     <div class="card lres"><b class="big">${ok} из ${n}</b><p>Слова, которые ты знаешь, вернутся через несколько дней, а трудные — уже сегодня. Так они запоминаются надолго.</p>
     <div class="wbtns"><button class="btn" data-lback>К учёбе</button><button class="btn line" data-wadd>+10 слов по теме</button></div></div>`;
   homeBunny();
@@ -2610,18 +2620,18 @@ $('#learnBox').addEventListener('click', e => { if(!WC && !LS && e.target.closes
 function addWords(){
   WC = null; LS = null; parkBunny();
   const topics = [...LEARN_THEMES].sort(() => Math.random() - .5).slice(0, 8);
-  $('#learnBox').innerHTML = `${BACK()}
+  parkBunny(); $('#learnBox').innerHTML = `${BACK()}
     <h2>Новые слова</h2><p class="lead">Выбери тему — Yomi подберёт 10 слов чуть выше твоего уровня, которые поднимают балл за лексику.</p>
     <div class="topics">${topics.map(t => `<button class="chip" data-wtopic="${t}">${t}</button>`).join('')}<button class="chip" data-wtopic="">Любая тема</button></div>`;
   homeBunny();
 }
 async function loadWordset(topic){
-  $('#learnBox').innerHTML = `${BACK()}<div class="empty">Подбираю слова…</div>`; homeBunny();
+  parkBunny(); $('#learnBox').innerHTML = `${BACK()}<div class="empty">Подбираю слова…</div>`; homeBunny();
   homeBunny();
   const j = await api('wordset', {topic}).catch(() => ({}));
   if(!j.words?.length){ notify('Не получилось подобрать слова'); return addWords(); }
   S.words = (S.words || 0) + j.words.length; S.due = (S.due || 0) + j.words.length;
-  $('#learnBox').innerHTML = `${BACK()}
+  parkBunny(); $('#learnBox').innerHTML = `${BACK()}
     <p class="eyebrow">${esc(j.topic)}</p><h2>10 новых слов</h2>
     <div class="card phr">${j.words.map(w => `<div><b>${esc(w.word)}</b><span>${esc(w.translation)}</span><small>${esc(w.example)}</small></div>`).join('')}</div>
     <div class="wbtns" style="margin-top:14px"><button class="btn" data-wrev>Учить карточками</button></div>`;
@@ -2658,7 +2668,7 @@ function showPlanQuiz(){
   QZ ||= quizDefaults();
   const q = QZ, ie = q.exam !== 'sat', sa = q.exam !== 'ielts';
   parkBunny();
-  $('#homeBox').innerHTML = `<div class="lhead"><button class="btn line sm" data-home>${I.back} Главная</button><div class="lslot" id="heroSlot" aria-hidden="true"></div></div>
+  parkBunny(); $('#homeBox').innerHTML = `<div class="lhead"><button class="btn line sm" data-home>${I.back} Главная</button><div class="lslot" id="heroSlot" aria-hidden="true"></div></div>
     <h2>Личный план</h2><p class="lead">Ответь на 6 вопросов — Yomi составит план под тебя: что делать каждый день, в каком порядке учить и успеваешь ли к экзамену.</p>
     <div class="card qz">
       <label class="lbl">1. Что сдаёшь</label>${chips('exam', [['ielts', 'IELTS'], ['sat', 'SAT'], ['both', 'Оба']], q.exam)}
@@ -2688,7 +2698,7 @@ function readQuiz(){
 }
 async function makePlan(answers){
   parkBunny();
-  $('#homeBox').innerHTML = `<div class="hero" style="margin-top:20px"><div class="hero-slot" id="heroSlot"></div><div class="bubble"><b>Составляю твой план…</b>Считаю часы до экзамена, смотрю твои результаты и раскладываю неделю. Это до 30 секунд.</div></div>`;
+  parkBunny(); $('#homeBox').innerHTML = `<div class="hero" style="margin-top:20px"><div class="hero-slot" id="heroSlot"></div><div class="bubble"><b>Составляю твой план…</b>Считаю часы до экзамена, смотрю твои результаты и раскладываю неделю. Это до 30 секунд.</div></div>`;
   homeBunny();
   // уроки только по выбранному экзамену (грамматика нужна и там, и там)
   const skills = SKILLS.filter(k => k.id.startsWith('g-') || answers.exam === 'both' || k.exam === answers.exam).map(k => ({id: k.id, name: k.name}));
@@ -2707,7 +2717,7 @@ function showStudyPlan(){
   const sp = SPA(), p = sp.plan, v = VERDICT[p.verdict] || VERDICT.ok, today = todayDow(), h = p.hours;
   const pri = (p.priority || []).map(id => SKILLS.find(k => k.id === id)).filter(Boolean).slice(0, 6);
   parkBunny();
-  $('#homeBox').innerHTML = `<div class="lhead"><button class="btn line sm" data-home>${I.back} Главная</button><div class="lslot" id="heroSlot" aria-hidden="true"></div></div>
+  parkBunny(); $('#homeBox').innerHTML = `<div class="lhead"><button class="btn line sm" data-home>${I.back} Главная</button><div class="lslot" id="heroSlot" aria-hidden="true"></div></div>
     <p class="eyebrow">Личный план · составлен ${dateRu(sp.at)}</p>
     <h2>Твой план на ${p.weeks} ${plural(p.weeks, 'неделю', 'недели', 'недель')}</h2>
     <p class="spdate">${sp.answers?.date ? dateHint(sp.answers.date) : 'Дата экзамена не указана — план на 12 недель.'}</p>
