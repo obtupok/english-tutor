@@ -1362,6 +1362,22 @@ Learner profile: ${profile}`;
         if (!reply) console.error('tutor', r.status, JSON.stringify(j).slice(0, 300));
       }
       if (!reply) return json({ error: 'failed' }, 502);
+      // второй проход: строгий редактор проверяет правила, примеры, упражнения и расчёты и исправляет ошибки, не меняя формат
+      try {
+        const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST', headers: { Authorization: 'Bearer ' + env('GROQ_API_KEY'), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model: GROQ_MODEL, reasoning_effort: 'high', max_completion_tokens: 12000, messages: [
+            { role: 'system', content: 'You are a strict expert editor for English grammar, IELTS and SAT tutoring answers. Check every rule, example, "wrong → right" pair, exercise and calculation in the tutor answer below. Exercises must be solvable as instructed (for example, never ask to put a sentence with "last year/yesterday/ago" into Present Perfect). Fix every factual or logical mistake and every exercise that is impossible or misleading. Keep the language, tone, markdown format, length and the [[...]] lines at the end exactly as they are when correct. Return only the final answer text, nothing else.' },
+            { role: 'user', content: `Learner's message:
+${msgs[msgs.length - 1].content}
+
+Tutor answer to check:
+${reply}` }] }),
+        });
+        const j = await r.json().catch(() => ({}));
+        const fixed = String(j?.choices?.[0]?.message?.content || '').trim();
+        if (fixed.length > reply.length * 0.5) reply = fixed;
+      } catch (e) { console.error('tutor check', e); }
       // короткое название чата по первому вопросу
       let title = '';
       if (b.wantTitle) title = msgs[0].content.replace(/\s+/g, ' ').slice(0, 60);
