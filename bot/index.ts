@@ -300,6 +300,14 @@ const LESSON_SCHEMA = {
     words: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['word', 'translation'], properties: { word: { type: 'string' }, translation: { type: 'string' } } } },
   },
 };
+// проверка урока вторым вызовом: правило по шагам, пример и ответы на вопросы — заново и независимо
+const LESSON_CHECK_SCHEMA = {
+  type: 'object', additionalProperties: false, required: ['steps', 'example', 'answers'],
+  properties: {
+    steps: LESSON_SCHEMA.properties.steps, example: LESSON_SCHEMA.properties.example,
+    answers: { type: 'array', items: { type: 'integer' } },
+  },
+};
 const WORDSET_SCHEMA = {
   type: 'object', additionalProperties: false, required: ['words'],
   properties: { words: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['word', 'translation', 'example'],
@@ -342,13 +350,13 @@ const SAT_MATH = ['linear equations', 'systems of equations', 'linear functions 
 const pickThemes = (list: string[], n: number) => [...list].sort(() => Math.random() - 0.5).slice(0, n);
 const shortQ = (q: string) => String(q || '').replace(/\s+/g, ' ').slice(0, 90);
 
-async function askJsonGroq(system: string, user: string, schema: any) {
+async function askJsonGroq(system: string, user: string, schema: any, effort = 'medium') {
   for (let attempt = 0; attempt < 2; attempt++) {
     const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: { Authorization: 'Bearer ' + env('GROQ_API_KEY'), 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: GROQ_MODEL, reasoning_effort: 'medium', max_completion_tokens: 8000,
+        model: GROQ_MODEL, reasoning_effort: effort, max_completion_tokens: 8000,
         messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
         response_format: { type: 'json_schema', json_schema: { name: 'exam', strict: true, schema } },
       }),
@@ -1192,19 +1200,32 @@ async function web(req: Request) {
     }
     // уроки: текст урока генерируется по запросу (сайт хранит его у себя), здесь — только отметка о прохождении
     case 'lesson': {
-      const exam = b.exam === 'sat' ? 'Digital SAT' : 'IELTS Academic', name = String(b.name || '').slice(0, 120), focus = String(b.focus || '').slice(0, 300);
+      const exam = b.exam === 'sat' ? 'Digital SAT' : 'IELTS Academic', name = String(b.name || '').slice(0, 120), focus = String(b.focus || '').slice(0, 700);
       if (!name) return json({ error: 'bad' }, 400);
       const out = await askJsonGroq(`You are an experienced ${exam} tutor who explains things simply. Write in Russian; every English example, phrase, task and answer choice stays in English. The learner's English level is about ${owner.level || 'B1'}. Return JSON only.`,
-        `Write one short, practical lesson on this ${exam} skill: "${name}".${focus ? ` Focus: ${focus}.` : ''}
+        `Write one short, practical lesson on this ${exam} skill: "${name}".${focus ? ` Key facts — follow them exactly: ${focus}.` : ''}
 - "title": the lesson title in Russian; "intro": 2–3 sentences — what the exam checks here and why it matters for the score.
 - "steps": 3–5 steps of a concrete method the learner can apply right away (each: short title + 1–3 sentences).
 - "example": a real exam-style task, a model answer (for speaking/writing — a strong band 7–8 answer; for SAT — the solution worked step by step) and "why" — why it scores well.
 - "phrases": 4–8 useful phrases or patterns (for SAT math — key formulas or patterns), each with a Russian gloss.
 - "mistakes": 3–4 typical mistakes to avoid.
 - "check": exactly 3 multiple-choice questions in the style of the real exam that test this skill, exactly 4 choices each, "answer" is the 0-based index of the correct choice, "explanation" in Russian. Solve each yourself first and make sure exactly one choice is correct.
-- "words": 5 key English words or collocations from this lesson with Russian translations.`, LESSON_SCHEMA);
+- "words": 5 key English words or collocations from this lesson with Russian translations.`, LESSON_SCHEMA, 'high');
       if (!out?.steps?.length) return json({ error: 'failed' }, 502);
       out.check = (out.check || []).filter((q: any) => q.choices?.length === 4 && q.answer >= 0 && q.answer < 4).slice(0, 3);
+      // второй взгляд: строгий эксперт исправляет ошибки в правиле и примере и решает вопросы сам; вопросы, где ответы разошлись, убираем
+      const chk = await askJsonGroq(`You are a strict ${exam} expert and editor. Find and fix factual mistakes. Keep the Russian language of the explanations. Return JSON only.`,
+        `Lesson topic: "${name}".${focus ? ` Key facts: ${focus}.` : ''}
+1) "steps": return the method steps below, unchanged if correct, corrected if any rule or claim is wrong or misleading.
+2) "example": return the example, corrected if the model answer or explanation is wrong.
+3) "answers": solve each question yourself, independently, and give the 0-based index of the single correct choice, or -1 if none or several are correct.
+
+Steps: ${JSON.stringify(out.steps)}
+Example: ${JSON.stringify(out.example)}
+Questions: ${JSON.stringify(out.check.map((q: any) => ({ question: q.question, choices: q.choices })))}`, LESSON_CHECK_SCHEMA, 'high');
+      if (chk?.steps?.length) out.steps = chk.steps;
+      if (chk?.example?.answer) out.example = chk.example;
+      if (Array.isArray(chk?.answers)) out.check = out.check.filter((q: any, i: number) => chk.answers[i] === q.answer);
       return json({ lesson: out });
     }
     case 'lesson_done': {
