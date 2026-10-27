@@ -751,6 +751,32 @@ nav button{font-size:11px!important}
 .qz-hint.bad{color:#C2412D;font-weight:700}.spdate{margin:2px 0 10px;color:var(--fg-2);font-weight:700}
 .lvhint{color:var(--muted);font-size:13px;line-height:1.45;margin:0 4px 10px}.setrow small{display:block;color:var(--muted);font-size:12px;font-weight:500}
 .wgrade .btn{padding-inline:6px;white-space:nowrap;font-size:15px}
+/* репетитор */
+.tutor{padding-bottom:0}
+.thero{display:flex;gap:14px;align-items:center}.thero .buddy.mini{--bsize:84px!important;width:auto;filter:none;flex:none}.thero h1{margin:2px 0 6px}
+.tstarts{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.tstarts .chip{min-height:40px;padding:8px 12px;background:var(--card);font-weight:600;font-size:14px;text-align:left}
+.tchats{display:grid;gap:8px}.tchat{padding:0;overflow:hidden}.tchat .t{flex:1;text-align:left;padding:12px 14px;display:flex;flex-direction:column;gap:2px;min-width:0}.tchat .t b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tchat .t small{color:var(--muted)}
+.tdel{flex:none;width:48px;align-self:stretch;display:grid;place-items:center;color:var(--muted)}.tdel svg{width:18px;height:18px}
+.tbar{gap:8px}.ttitle{flex:1;text-align:center;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tmsgs{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding:8px 0 14px}
+.tempty{color:var(--muted);text-align:center;padding:30px 4px}.tempty .tstarts{justify-content:center}
+.tmsg{display:flex;flex-direction:column;max-width:92%}.tmsg.u{align-self:flex-end;align-items:flex-end}.tmsg.a{align-self:flex-start}
+.tbub{padding:11px 14px;border-radius:18px;line-height:1.55;font-size:15px;overflow-wrap:anywhere}
+.tmsg.u .tbub{background:var(--fg);color:#fff;border-bottom-right-radius:6px}
+.tmsg.a .tbub{background:var(--card);border:1px solid var(--border);border-bottom-left-radius:6px;box-shadow:var(--clay-sm)}
+.tbub p{margin:0 0 8px}.tbub p:last-child{margin:0}.tbub h4{margin:12px 0 6px;font-size:15px}.tbub h4:first-child{margin-top:0}
+.tbub ul,.tbub ol{margin:0 0 8px;padding-left:20px;display:grid;gap:4px}.tbub code{background:var(--muted-bg);padding:1px 5px;border-radius:6px;font-size:14px}
+.tctx{font-size:12px;font-weight:700;color:var(--muted);background:var(--muted-bg);padding:3px 9px;border-radius:99px;margin-bottom:4px}
+.tacts{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}.tacts .btn{min-height:40px}
+.typing{display:flex;gap:5px;padding:14px 16px}.typing i{width:7px;height:7px;border-radius:50%;background:var(--muted);animation:blink 1s infinite}.typing i:nth-child(2){animation-delay:.2s}.typing i:nth-child(3){animation-delay:.4s}
+.tcomp{position:sticky;bottom:0;display:flex;gap:8px;align-items:flex-end;padding:10px 0 calc(12px + var(--safe-b));background:var(--bg)}
+.tcomp textarea{flex:1;min-height:48px;max-height:140px;resize:none;padding:12px 14px;border-radius:16px;border:1px solid var(--border-2);background:var(--card);font:inherit;font-size:16px;color:var(--fg)}
+.tcomp textarea:focus{outline:none;border-color:var(--fg)}
+.tsend{width:48px;height:48px;flex:none;border-radius:14px;background:var(--fg);color:#fff;display:grid;place-items:center}.tsend svg{width:22px;height:22px}
+.tutorcard{display:flex;align-items:center;gap:12px;width:100%;text-align:left;margin:4px 0 12px;padding:12px 14px;border-radius:16px;background:var(--green-bg);border:1px solid #BFE3CB}
+.tutorcard .ic{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;flex:none}.tutorcard .t{flex:1;display:flex;flex-direction:column;gap:2px}.tutorcard small{color:var(--fg-2);font-size:13px}.tutorcard>svg{width:18px;height:18px;color:var(--muted)}
+.lqask{display:block;margin-top:8px;font-size:14px;font-weight:700}
+.typing{align-items:center}.typing span{margin-left:6px;color:var(--muted);font-size:13px}
 
 </style>
 </head>
@@ -1581,6 +1607,7 @@ function showHome(){
     <div class="sec-h"><h3>Начать сейчас</h3></div>
     <div class="tiles">
       ${tileHtml('data-act="learn"', 'violet', I.book, 'Курс на сегодня', 'Урок по навыку, практика и карточки слов')}
+      ${tileHtml('data-tutor', 'green', I.talk, 'Репетитор Yomi', 'Напиши, что хочешь выучить, или спроси про любое задание')}
       ${planTile()}
       ${readingTile()}
       ${tileHtml('data-act="call"', 'indigo', I.mic, 'Поговорить с Yomi', 'Голосом, как по телефону: исправит ошибки и подскажет слова')}
@@ -1657,7 +1684,7 @@ function showSpeakResult(r){
         <p><b>Ты сказал:</b> <i>${esc(r.said?.[i] || '— нет ответа')}</i></p><p>${esc(a.feedback || '')}</p>
         <div class="fix"><small>Как сказать сильнее</small><p style="color:var(--fg)">${esc(a.better || '')}</p><button class="btn line sm" data-gsay="${esc(a.better || '')}" style="margin-top:8px">${I.play} Послушать</button></div><div style="height:12px"></div></details>`; }).join('')}
     ${(r.words || []).length ? `<div class="sec-h"><h3>Полезные слова</h3></div><div class="card">${r.words.map(w => `<p style="margin:4px 0"><b>${esc(w.word)}</b> — ${esc(w.translation)}</p>`).join('')}</div>` : ''}
-    <div class="actions"><button class="btn" data-act="ielts-full">Пройти ещё раз</button></div>`;
+    <div class="actions"><button class="btn line" data-askspeak>${I.talk} Спросить Yomi про оценку</button><button class="btn" data-act="ielts-full">Пройти ещё раз</button></div>`;
   $('#v-ielts .scroll').scrollTop = 0;
 }
 
@@ -1698,13 +1725,14 @@ async function checkEssay(){
   btn.disabled = false; btn.innerHTML = `${I.check} Проверить эссе`;
   if(!j.result){ notify('Не получилось проверить — попробуй ещё раз'); return; }
   S.stats = {...(S.stats || {}), writing: j.writing};
-  const r = j.result; $('#buddy').dataset.p = r.overall >= GOALS.ielts ? 'proud' : 'determined'; moodWear($('#buddy').dataset.p); sfx('happy');
+  const r = j.result; window.__lastEssay = r; $('#buddy').dataset.p = r.overall >= GOALS.ielts ? 'proud' : 'determined'; moodWear($('#buddy').dataset.p); sfx('happy');
   $('#wrRes').innerHTML = `<div class="sec-h"><h3>Результат</h3></div>
     <div class="card"><div class="score"><div class="ring" style="--p:${r.overall / 9 * 100}"><div><b>${r.overall}</b><small>band</small></div></div><div class="crit">${critRows(r.criteria, 9)}</div></div><p class="lead" style="margin:12px 0 0">${esc(r.summary)}</p></div>
     ${(r.criteria || []).map(c => `<div class="card"><h3>${esc(c.name)} · ${c.score}</h3><p style="margin:6px 0 0;color:var(--fg-2)">${esc(c.comment)}</p></div>`).join('')}
     <div class="card"><h3>Получилось</h3><ul class="list">${r.strengths.map(x => `<li>${esc(x)}</li>`).join('')}</ul><h3 style="margin-top:12px">Что подтянуть</h3><ul class="list">${r.improve.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>
     <div class="card"><h3>Исправления</h3>${r.fixes.map(f => `<div class="fix"><s>${esc(f.original)}</s><p>${esc(f.better)}</p><small>${esc(f.note)}</small></div>`).join('')}</div>
-    <div class="card"><h3>Как это звучит на band 8</h3><p style="margin:8px 0 0;white-space:pre-wrap;color:var(--fg-2)">${esc(r.better)}</p></div>`;
+    <div class="card"><h3>Как это звучит на band 8</h3><p style="margin:8px 0 0;white-space:pre-wrap;color:var(--fg-2)">${esc(r.better)}</p></div>
+    <div class="actions"><button class="btn line" data-askessay>${I.talk} Спросить Yomi про оценку</button></div>`;
   $('#wrRes').scrollIntoView({behavior: 'smooth', block: 'start'});
 }
 
@@ -1866,7 +1894,7 @@ function drawSat(){
     <p class="question">${esc(it.question)}</p>
     <div class="choices">${it.choices.map((c, k) => `<button class="choice${done ? (k === it.answer ? ' ok' : k === s.pick ? ' bad' : '') : ''}" data-ch="${k}" ${done ? 'disabled' : ''}><span class="l">${'ABCD'[k]}</span><span>${esc(c)}</span></button>`).join('')}</div>
     ${done ? `<div class="explain ${ok ? 'ok' : 'bad'}" role="status"><b>${ok ? I.check + ' Верно!' : I.x + ` Правильный ответ — ${'ABCD'[it.answer]}`}</b>${esc(it.explanation)}</div>
-      <div class="actions"><button class="btn line" data-askyomi>${I.talk} Разобрать с Yomi</button><button class="btn" data-next>${s.i + 1 < s.items.length ? 'Дальше' : 'Результат'}</button></div>` : ''}`;
+      <div class="actions"><button class="btn line" data-askyomi>${I.talk} Спросить Yomi почему</button><button class="btn" data-next>${s.i + 1 < s.items.length ? 'Дальше' : 'Результат'}</button></div>` : ''}`;
   homeBunny();
   if(!done) $('#v-sat .scroll').scrollTop = 0;
 }
@@ -2484,6 +2512,7 @@ function showLearn(){
   const step = (t, i) => `<button class="cstep${c.done[i] ? ' ok' : ''}" data-cs="${i}"><span class="cdot">${c.done[i] ? CHECK_I : ICON[t.type] || I.target}</span><span class="t"><b>${title(t)}${t.min ? ` · ${t.min} мин` : ''}</b><small>${sub(t)}</small>${t.note ? `<small class="cnote">${esc(t.note)}</small>` : ''}</span>${I.chev}</button>`;
   const groups = [...new Set(SKILLS.map(x => x.g))];
   parkBunny(); $('#learnBox').innerHTML = `<div class="lhead top"><div><h2>Учёба</h2><p class="lead">Уроки по каждому навыку, карточки слов и курс на каждый день.</p></div>${LSLOT}</div>
+    <button class="tutorcard" data-tutor><span class="ic green">${I.talk}</span><span class="t"><b>Репетитор Yomi</b><small>Напиши «хочу выучить …» — объяснит правила, даст примеры и задания</small></span>${I.chev}</button>
     <div class="card course"><div class="ch"><span class="eyebrow">Курс · день ${c.day}${p ? ' · по твоему плану' : ''}</span><span class="cn">${ts.length ? `${n} из ${ts.length}` : 'отдых'}</span></div>
       <span class="bar"><i style="width:${ts.length ? n / ts.length * 100 : 100}%"></i></span>
       ${ts.length ? `<div class="csteps">${ts.map(step).join('')}</div>` : '<p class="cfin">Сегодня по плану отдых — мозгу нужно время, чтобы всё улеглось. Хочешь — повтори карточки.</p>'}
@@ -2550,7 +2579,7 @@ function drawLesson(){
     <div class="sec-h"><h3>Проверь себя</h3></div>
     ${L.check.map((q, i) => { const p = picks[i], done = p != null;
       return `<div class="card lq"><p class="q"><b>${i + 1}.</b> ${esc(q.question)}</p><div class="choices">${q.choices.map((c, j) => `<button class="choice${done ? (j === q.answer ? ' ok' : j === p ? ' bad' : '') : ''}" data-lq="${i}:${j}" ${done ? 'disabled' : ''}><span class="l">${'ABCD'[j]}</span><span>${esc(c)}</span></button>`).join('')}</div>
-        ${done ? `<div class="explain ${p === q.answer ? 'ok' : 'bad'}"><b>${p === q.answer ? I.check + ' Верно' : I.x + ` Правильно — ${'ABCD'[q.answer]}`}</b>${esc(q.explanation)}</div>` : ''}</div>`; }).join('')}
+        ${done ? `<div class="explain ${p === q.answer ? 'ok' : 'bad'}"><b>${p === q.answer ? I.check + ' Верно' : I.x + ` Правильно — ${'ABCD'[q.answer]}`}</b>${esc(q.explanation)}<button class="relink lqask" data-lqask="${i}">${p === q.answer ? 'Объясни подробнее' : 'Почему так?'} · спросить Yomi</button></div>` : ''}</div>`; }).join('')}
     ${answered === L.check.length ? `<div class="card lres"><b class="big">${score} из ${L.check.length}</b><p>${score === L.check.length ? 'Отлично, навык понят. Закрепи его практикой.' : 'Перечитай шаги выше и закрепи практикой — так навык встанет на место.'}</p>
       <div class="wbtns"><button class="btn" data-ldone>Готово · дальше практика</button><button class="btn line" data-lfresh>Новый урок по теме</button></div></div>` : ''}`;
   homeBunny();
@@ -2932,6 +2961,135 @@ document.addEventListener('click', e => {
   if(s){ e.stopPropagation(); LV.pick[engineNow() + ':' + LOOK.char] = s.dataset.lvs; store.set('yomi_lvoice', LV.pick); voicesOpen = false; return openSettings(); }
   if(t.closest('[data-lkok]')){ e.stopPropagation(); LV.engine = engineNow() === 'kokoro' ? 'piper' : 'kokoro'; store.set('yomi_lengine', LV.engine); localReady = false; if(LV.engine === 'kokoro') notify('Загружаю голос высокого качества (326 МБ)…'); return openSettings(); }
   if(t.closest('[data-loff]')){ e.stopPropagation(); LV.off = !LV.off; store.set('yomi_loff', LV.off); return openSettings(); }
+}, true);
+
+
+/* ---------- ИИ-репетитор: чаты «хочу выучить …», разбор любого задания («почему такой ответ?») ----------
+   Чаты хранятся в этом браузере (yomi_tchats); на сервер (действие tutor) уходят последние сообщения и профиль ученика.
+   Ответ — короткий markdown; в конце могут быть кнопки [[lesson:id|…]] и [[act:…|…]] — открыть урок или практику. */
+const TCH_KEY = 'yomi_tchats', TUTOR_ACTS = ['ielts-full', 'ielts-p1', 'ielts-p2', 'ielts-p3', 'writing', 'sat-math', 'sat-rw', 'read', 'call'];
+let TCH = store.get(TCH_KEY, []), tcur = null, tbusy = false;
+const tsave = () => { TCH = TCH.slice(0, 30); TCH.forEach(c => { c.msgs = c.msgs.slice(-40); }); store.set(TCH_KEY, TCH); };
+const TUTOR_STARTS = ['Хочу разобраться с Present Perfect', 'Как писать эссе IELTS Task 2 на 7+', 'Объясни линейные уравнения для SAT', 'Как отвечать на Part 2 и не молчать', 'Какие связки использовать в Speaking', 'С чего начать подготовку к SAT'];
+// markdown → html: экранируем, потом **жирный**, `код`, заголовки, списки, абзацы
+function tmd(text){
+  const lines = esc(text).split('\n'); let html = '', list = '';
+  const inline = s => s.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/(^|[^*])\*(?!\s)(.+?)\*/g, '$1<i>$2</i>').replace(/`([^`]+)`/g, '<code>$1</code>');
+  const close = () => { if(list){ html += `</${list}>`; list = ''; } };
+  for(const raw of lines){
+    const l = raw.trimEnd();
+    if(/^\s*-{3,}\s*$/.test(l)){ close(); continue; }
+    let m;
+    if((m = l.match(/^#{1,4}\s+(.*)/))){ close(); html += `<h4>${inline(m[1])}</h4>`; continue; }
+    if((m = l.match(/^\s*[-•]\s+(.*)/))){ if(list !== 'ul'){ close(); html += '<ul>'; list = 'ul'; } html += `<li>${inline(m[1])}</li>`; continue; }
+    if((m = l.match(/^\s*\d+[.)]\s+(.*)/))){ if(list !== 'ol'){ close(); html += '<ol>'; list = 'ol'; } html += `<li>${inline(m[1])}</li>`; continue; }
+    close(); if(l.trim()) html += `<p>${inline(l)}</p>`;
+  }
+  close(); return html;
+}
+// кнопки из ответа: только настоящие уроки и практики приложения
+function tactions(text){
+  const out = [];
+  for(const m of text.matchAll(/\[\[(lesson|act):([a-z0-9-]+)\|([^\]]{1,60})\]\]/g)){
+    if(m[1] === 'lesson' && SKILLS.some(k => k.id === m[2])) out.push(`<button class="btn line sm" data-tles="${m[2]}">${I.book} ${esc(m[3])}</button>`);
+    if(m[1] === 'act' && TUTOR_ACTS.includes(m[2])) out.push(`<button class="btn line sm" data-tact="${m[2]}">${I.target} ${esc(m[3])}</button>`);
+  }
+  return out.slice(0, 2).join('');
+}
+const tclean = text => text.replace(/\[\[[^\]]*\]\]/g, '').trim();
+
+function tutorBox(){
+  let box = $('#tutor');
+  if(!box){ box = document.createElement('div'); box.id = 'tutor'; box.className = 'intro tutor'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Репетитор Yomi'); document.body.append(box); }
+  return box;
+}
+function openTutor(){ tcur = null; tutorList(); }
+function closeTutor(){ const b = $('#tutor'); if(!b) return; b.classList.add('out'); setTimeout(() => b.remove(), RM ? 0 : 250); }
+function tutorList(){
+  const box = tutorBox();
+  box.innerHTML = `<div class="in-top"><button class="in-skip pw-back" data-tclose>${svgI('<path d="M15 6l-6 6 6 6"/>')} Назад</button><span></span></div>
+    <div class="in-body">
+      <div class="thero">${miniBunny(LOOK.char, LOOK.color, 'gradcap')}<div><p class="eyebrow">Репетитор Yomi</p><h1>Спроси что угодно</h1><p class="in-lead">Напиши, что хочешь выучить, — Yomi объяснит правила, покажет примеры и даст задание. Или разбери любой вопрос из тестов.</p></div></div>
+      <div class="tstarts">${TUTOR_STARTS.map(t => `<button class="chip" data-tstart="${esc(t)}">${esc(t)}</button>`).join('')}</div>
+      <button class="btn" data-tnew style="width:100%;min-height:52px;margin-top:14px">${I.talk} Новый чат</button>
+      ${TCH.length ? `<div class="sec-h"><h3>Мои чаты</h3></div><div class="tchats">${TCH.map(c => `<div class="hrow tchat"><button class="t" data-topen="${c.id}"><b>${esc(c.title || 'Чат')}</b><small>${dateRu(c.at)} · ${c.msgs.length} ${plural(c.msgs.length, 'сообщение', 'сообщения', 'сообщений')}</small></button><button class="tdel" data-tdel="${c.id}" aria-label="Удалить чат">${I.x}</button></div>`).join('')}</div>` : ''}
+    </div>`;
+  box.scrollTop = 0;
+}
+function tutorChat(id){
+  tcur = id; const c = TCH.find(x => x.id === id); if(!c) return tutorList();
+  const box = tutorBox();
+  box.innerHTML = `<div class="in-top tbar"><button class="in-skip pw-back" data-tlist>${svgI('<path d="M15 6l-6 6 6 6"/>')} Чаты</button><b class="ttitle">${esc(c.title || 'Новый чат')}</b><span></span></div>
+    <div class="tmsgs" id="tmsgs">${c.msgs.length ? '' : `<div class="tempty"><p>Напиши, что хочешь выучить или что непонятно.</p><div class="tstarts">${TUTOR_STARTS.slice(0, 4).map(t => `<button class="chip" data-tstart="${esc(t)}">${esc(t)}</button>`).join('')}</div></div>`}
+      ${c.msgs.map(m => tmsgHtml(m)).join('')}${tbusy ? '<div class="tmsg a"><div class="tbub typing"><i></i><i></i><i></i><span>Yomi думает и перепроверяет ответ…</span></div></div>' : ''}</div>
+    <form class="tcomp" id="tcomp"><textarea id="tin" rows="1" placeholder="Спроси Yomi…" aria-label="Сообщение"></textarea><button class="tsend" aria-label="Отправить">${svgI('<path d="M5 12h14M13 6l6 6-6 6"/>')}</button></form>`;
+  const ms = $('#tmsgs'); ms.scrollTop = ms.scrollHeight;
+  const tin = $('#tin'); tin.oninput = () => { tin.style.height = 'auto'; tin.style.height = Math.min(140, tin.scrollHeight) + 'px'; };
+  tin.onkeydown = e => { if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); $('#tcomp').requestSubmit(); } };
+  $('#tcomp').onsubmit = e => { e.preventDefault(); const t = tin.value.trim(); if(t && !tbusy){ tin.value = ''; tutorSend(t); } };
+}
+function tmsgHtml(m){
+  if(m.role === 'user') return `<div class="tmsg u">${m.ctx ? `<div class="tctx">${esc(m.ctx.label)}</div>` : ''}<div class="tbub">${esc(m.text).replace(/\n/g, '<br>')}</div></div>`;
+  return `<div class="tmsg a"><div class="tbub">${tmd(tclean(m.text))}</div>${tactions(m.text) ? `<div class="tacts">${tactions(m.text)}</div>` : ''}</div>`;
+}
+async function tutorSend(text, ctx){
+  let c = TCH.find(x => x.id === tcur);
+  if(!c){ c = {id: Date.now().toString(36), title: '', at: new Date().toISOString(), msgs: []}; TCH.unshift(c); tcur = c.id; }
+  c.msgs.push({role: 'user', text, ctx}); c.at = new Date().toISOString();
+  if(!c.title) c.title = (ctx ? ctx.label + ' · ' : '') + text.replace(/\s+/g, ' ').slice(0, 50);
+  TCH = [c, ...TCH.filter(x => x.id !== c.id)]; tsave();
+  tbusy = true; tutorChat(c.id);
+  const msgs = c.msgs.slice(-16).map(m => ({role: m.role, text: m.ctx ? `${m.ctx.body}\n\n${m.text}` : m.text}));
+  const j = await api('tutor', {messages: msgs, skills: SKILLS.map(k => ({id: k.id, name: k.name}))}).catch(() => ({}));
+  tbusy = false;
+  c.msgs.push({role: 'assistant', text: j.reply || 'Не получилось ответить — попробуй отправить ещё раз через минуту.'}); tsave();
+  if($('#tutor') && tcur === c.id) tutorChat(c.id);
+}
+// «Спросить Yomi» из задания: новый чат или текущий
+function askTutor(ctx, question){
+  const last = TCH[0];
+  if(!last) return startAsk(null, ctx, question);
+  sheet(`<h2>Спросить Yomi</h2><p class="lead" style="margin-bottom:12px">${esc(ctx.label)}</p>
+    <div class="tiles"><button class="tile" data-ask="new"><span class="ic indigo">${I.talk}</span><span class="t"><b>Новый чат</b><small>Разобрать это задание отдельно</small></span></button>
+    <button class="tile" data-ask="${last.id}"><span class="ic green">${I.talk}</span><span class="t"><b>В чат «${esc((last.title || 'Чат').slice(0, 40))}»</b><small>Продолжить разговор с этим вопросом</small></span></button></div>`);
+  $('#sheetIn').onclick = e => { const b = e.target.closest('[data-ask]'); if(b){ closeSheet(); startAsk(b.dataset.ask === 'new' ? null : b.dataset.ask, ctx, question); } };
+}
+function startAsk(chatId, ctx, question){ tcur = chatId; tutorBox(); tutorSend(question, ctx); }
+document.addEventListener('click', e => {
+  const t = e.target; if(!t.closest('#tutor')) return;
+  const st = t.closest('[data-tstart]'), op = t.closest('[data-topen]'), del = t.closest('[data-tdel]'), les = t.closest('[data-tles]'), act = t.closest('[data-tact]');
+  if(t.closest('[data-tclose]')) return closeTutor();
+  if(t.closest('[data-tlist]')) return tutorList();
+  if(t.closest('[data-tnew]')){ tcur = null; const id = Date.now().toString(36); TCH.unshift({id, title: '', at: new Date().toISOString(), msgs: []}); tsave(); return tutorChat(id); }
+  if(st){ if(!tcur){ tcur = null; } return tutorSend(st.dataset.tstart); }
+  if(op) return tutorChat(op.dataset.topen);
+  if(del){ TCH = TCH.filter(x => x.id !== del.dataset.tdel); tsave(); return tutorList(); }
+  if(les){ closeTutor(); tab('learn'); return openLesson(les.dataset.tles); }
+  if(act){ closeTutor(); return startAct(act.dataset.tact); }
+});
+
+/* ---- откуда открыть: «Учёба», главная, разбор SAT, проверка урока, результаты IELTS ---- */
+// SAT: «Разобрать с Yomi» теперь открывает репетитора с этим вопросом
+askYomiSat = function(){
+  const it = SAT.items[SAT.i], pick = SAT.pick;
+  askTutor({label: `Вопрос SAT · ${it.skill}`, body: `Задание Digital SAT (${it.skill}, ${it.difficulty}):\n${it.passage ? it.passage + '\n' : ''}${it.question}\n${it.choices.map((c, k) => 'ABCD'[k] + ') ' + c).join('\n')}\nПравильный ответ: ${'ABCD'[it.answer]}. Мой ответ: ${pick != null ? 'ABCD'[pick] : 'нет'}.\nОбъяснение из теста: ${it.explanation}`},
+    pick === it.answer ? 'Объясни подробнее, как решать такие задания быстро.' : `Почему правильный ответ ${'ABCD'[it.answer]}, а не ${'ABCD'[pick]}?`);
+};
+document.addEventListener('click', e => {
+  const t = e.target;
+  // вопрос из проверки урока
+  const lq = t.closest('[data-lqask]');
+  if(lq && LS){ const i = +lq.dataset.lqask, q = LS.lesson.check[i], p = LS.picks[i];
+    return askTutor({label: `Урок · ${LS.lesson.title}`.slice(0, 70), body: `Вопрос из урока «${LS.lesson.title}»:\n${q.question}\n${q.choices.map((c, k) => 'ABCD'[k] + ') ' + c).join('\n')}\nПравильный ответ: ${'ABCD'[q.answer]}. Мой ответ: ${'ABCD'[p]}.\nОбъяснение: ${q.explanation}`},
+      p === q.answer ? 'Объясни это правило ещё раз другими словами и дай пару похожих примеров.' : `Почему правильно ${'ABCD'[q.answer]}, а не ${'ABCD'[p]}?`); }
+  // результаты IELTS Speaking и эссе
+  const sr = t.closest('[data-askspeak]');
+  if(sr){ const r = S.stats?.examLast; if(!r) return;
+    return askTutor({label: `IELTS Speaking · band ${r.overall}`, body: `Мой пробный IELTS Speaking (${r.topic || ''}): band ${r.overall}. Критерии: ${(r.criteria || []).map(c => `${c.name} ${c.score} — ${c.comment}`).join('; ')}. Что подтянуть: ${(r.improve || []).join('; ')}.`}, 'Почему такая оценка и что конкретно мне делать, чтобы поднять балл на 0.5–1?'); }
+  const wr = t.closest('[data-askessay]');
+  if(wr && window.__lastEssay){ const r = window.__lastEssay;
+    return askTutor({label: `IELTS Writing · band ${r.overall}`, body: `Моё эссе IELTS Task 2 получило band ${r.overall}. Критерии: ${(r.criteria || []).map(c => `${c.name} ${c.score} — ${c.comment}`).join('; ')}. Исправления: ${(r.fixes || []).map(f => `${f.original} → ${f.better}`).join('; ')}.`}, 'Почему такая оценка? Объясни по критериям и что изменить в следующем эссе.'); }
+  if(t.closest('[data-tutor]')){ unlock(); return openTutor(); }
 }, true);
 </script>
 </body>
