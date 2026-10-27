@@ -1447,6 +1447,22 @@ ${reply}` }] }),
       if (b.wantTitle) title = msgs[0].content.replace(/\s+/g, ' ').slice(0, 60);
       return json({ reply, title });
     }
+    // карточка слова: транскрипция, перевод по смыслу в этом предложении, короткий пример
+    case 'word_info': {
+      const word = String(b.word || '').trim().slice(0, 60), context = String(b.context || '').slice(0, 300);
+      if (!/^[A-Za-z][A-Za-z'’-]*$/.test(word)) return json({ error: 'bad' }, 400);
+      const W_SCHEMA = { type: 'object', additionalProperties: false, required: ['lemma', 'ipa', 'pos', 'translation', 'example', 'example_ru'], properties: {
+        lemma: { type: 'string' }, ipa: { type: 'string' }, pos: { type: 'string' }, translation: { type: 'string' }, example: { type: 'string' }, example_ru: { type: 'string' } } };
+      const out = await askJsonGroq('You are a concise English–Russian learner\'s dictionary. Return JSON only.',
+        `Word: "${word}"${context ? `\nUsed in: "${context}"` : ''}\n"lemma": dictionary form; "ipa": British IPA of the word as used, in slashes; "pos": part of speech in Russian (сущ., глаг., прил., нареч., …); "translation": 1–3 short Russian translations that fit this context, comma-separated; "example": one short natural English sentence (max 10 words) with the word; "example_ru": its Russian translation.`, W_SCHEMA, 'low', 2000);
+      return out?.translation ? json(out) : json({ error: 'failed' }, 502);
+    }
+    case 'word_add': {
+      const word = String(b.word || '').trim().slice(0, 80), translation = String(b.translation || '').trim().slice(0, 120);
+      if (!word || !translation) return json({ error: 'bad' }, 400);
+      await admin.from('english_words').upsert({ key: word.toLowerCase(), word, translation, example: String(b.example || '').slice(0, 300) }, { onConflict: 'key', ignoreDuplicates: true });
+      return json({ ok: true });
+    }
     // подборка слов по теме экзамена — сразу в карточки (без повторов того, что уже есть)
     case 'wordset': {
       const topic = String(b.topic || '').slice(0, 80) || pickThemes(THEMES, 1)[0];
