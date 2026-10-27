@@ -782,6 +782,7 @@ nav button{font-size:11px!important}
 .sayi{display:inline-grid;place-items:center;width:24px;height:24px;margin:0 2px 0 3px;vertical-align:-6px;border-radius:8px;background:var(--accent-bg);color:var(--ptext);transition:transform var(--t-fast)}
 .sayi svg{width:14px;height:14px}.sayi:active{transform:scale(.9)}
 @media (hover:hover){.sayi:hover{background:#F8D9C6}}
+.rhint{color:var(--muted);font-size:13px;margin:-4px 0 8px}.ldot.rep{border:0;background:var(--accent-bg);color:var(--ptext)}.ldot.rep svg{width:13px;height:13px}
 
 </style>
 </head>
@@ -2456,6 +2457,11 @@ const SKILLS = [
 ];
 const LEARN_THEMES = ['education', 'technology', 'environment', 'health', 'work', 'cities', 'travel', 'media', 'science', 'culture', 'crime and law', 'economy', 'family', 'sport', 'art'];
 const lessonsDone = () => S.stats?.lessons || {};
+// пора повторить: были ошибки или прошло 2+ дня; сначала самые слабые и самые давние
+function reviewDue(){
+  return Object.entries(lessonsDone()).filter(([id, d]) => SKILLS.some(k => k.id === id) && d?.at && (d.score < d.total || Date.now() - Date.parse(d.at) > 2 * 864e5))
+    .sort((a, b) => ((a[1].best ?? a[1].score / (a[1].total || 1)) - (b[1].best ?? b[1].score / (b[1].total || 1))) || (Date.parse(a[1].at) - Date.parse(b[1].at))).slice(0, 4);
+}
 // грамматика: общее правило, как в справочниках (British Council LearnEnglish), с упором на IELTS Speaking/Writing и SAT
 const GRAMMAR_FOCUS = 'General English grammar used in IELTS Speaking and Writing (Grammatical Range and Accuracy) and in SAT Writing. Explain the rule as standard usage: form, when to use it, signal words, and the contrast with the similar form learners confuse it with';
 function weakSkills(){
@@ -2523,6 +2529,8 @@ function showLearn(){
       ${ts.length ? `<div class="csteps">${ts.map(step).join('')}</div>` : '<p class="cfin">Сегодня по плану отдых — мозгу нужно время, чтобы всё улеглось. Хочешь — повтори карточки.</p>'}
       ${ts.length && n === ts.length ? '<p class="cfin">День закрыт. Завтра откроется следующий.</p>' : ''}
       ${p ? '' : `<button class="mkplan" data-mkplan>${I.target}<span><b>Составить личный план</b><small>Курс подстроится под твою цель, дату экзамена и время</small></span>${I.chev}</button>`}</div>
+    ${(() => { const due = reviewDue(); return due.length ? `<div class="sec-h"><h3>Повторение</h3></div><p class="rhint">Тот же урок, новые задания — так тема закрепляется надолго.</p><div class="lessons">${due.map(([id, d]) => { const x = SKILLS.find(k => k.id === id), ago = Math.floor((Date.now() - Date.parse(d.at)) / 864e5);
+      return `<button class="hrow lrow" data-lrep="${id}"><span class="ldot rep">${svgI('<path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5"/>')}</span><span class="t"><b>${esc(x.name)}</b><small>${ago ? `${ago} ${plural(ago, 'день', 'дня', 'дней')} назад` : 'сегодня'} · ${d.score} из ${d.total}${d.reps > 1 ? ` · повторов ${d.reps - 1}` : ''}</small></span>${I.chev}</button>`; }).join('')}</div>` : ''; })()}
     <div class="sec-h"><h3>Карточки слов</h3></div>
     <div class="card wordsc"><div><b class="big">${S.due || 0}</b><span>на повторение</span></div><div><b class="big">${S.words || 0}</b><span>всего слов</span></div>
       <div class="wbtns"><button class="btn" data-wrev${S.due ? '' : ' disabled'}>Повторять</button><button class="btn line" data-wadd>+10 слов по теме</button></div></div>
@@ -2540,6 +2548,7 @@ $('#learnBox').onclick = e => {
     courseMark(task.type, i); return startAct(task.act); }
   if(t.closest('[data-mkplan]')){ tab('home'); return showPlan(); }
   if(ls) return openLesson(ls.dataset.ls);
+  const lr = t.closest('[data-lrep]'); if(lr) return openLesson(lr.dataset.lrep, false, true);
   if(t.closest('[data-wrev]')) return reviewWords();
   if(t.closest('[data-wadd]')) return addWords();
   if(t.closest('[data-lback]')) return showLearn();
@@ -2556,7 +2565,10 @@ function loadLesson(k, fresh = false){
     .then(j => { lessonLoads.delete(k.id); if(j.lesson) store.set('yomi_lsn_' + k.id, j.lesson); return j.lesson || null; }));
   return lessonLoads.get(k.id);
 }
-async function openLesson(id, fresh = false){
+function fetchQuiz(k, avoid){
+  return api('lesson_quiz', {exam: k.exam, name: k.name, focus: k.f || (k.id.startsWith('g-') ? GRAMMAR_FOCUS : ''), n: 5, avoid}).then(j => j.check || null).catch(() => null);
+}
+async function openLesson(id, fresh = false, repeat = false){
   const k = SKILLS.find(x => x.id === id); if(!k) return;
   const box = $('#learnBox'); parkBunny();
   let lesson = fresh ? null : store.get('yomi_lsn_' + id, null);
@@ -2567,8 +2579,23 @@ async function openLesson(id, fresh = false){
     if(!lesson){ parkBunny(); box.innerHTML = `${BACK()}<div class="empty">Не получилось подготовить урок. Попробуй ещё раз.</div>`; homeBunny(); return; }
     if(LS?.id && LS.id !== id) return;
   }
-  LS = {id, k, lesson, picks: []}; drawLesson();
+  LS = {id, k, lesson, picks: [], round: 0, seen: lesson.check.map(q => q.question)};
+  drawLesson();
   box.scrollTop = 0; $('#v-learn .scroll').scrollTop = 0;
+  if(repeat) moreQuiz();   // из «Повторения» — сразу новые задания
+}
+// ещё один раунд: тот же урок, новые задания (без уже заданных вопросов)
+async function moreQuiz(){
+  const ls = LS; if(!ls || ls.loading) return;
+  ls.loading = true; $('#learnBox').dataset.still = 1; drawLesson(); document.getElementById('lcheck')?.scrollIntoView({block: 'start'});
+  let check = await ls.next;
+  if(!check?.length) check = await fetchQuiz(ls.k, ls.seen);
+  if(LS !== ls) return;
+  ls.loading = false;
+  if(!check?.length){ notify('Не получилось подготовить задания — попробуй ещё раз'); $('#learnBox').dataset.still = 1; return drawLesson(); }
+  ls.lesson = {...ls.lesson, check}; ls.picks = []; ls.round++; ls.seen.push(...check.map(q => q.question));
+  ls.next = fetchQuiz(ls.k, ls.seen);
+  $('#learnBox').dataset.still = 1; drawLesson(); document.getElementById('lcheck')?.scrollIntoView({block: 'start'});
 }
 function drawLesson(){
   const {k, lesson: L, picks} = LS, answered = picks.filter(p => p != null).length, score = L.check.filter((q, i) => picks[i] === q.answer).length;
@@ -2581,23 +2608,34 @@ function drawLesson(){
     ${L.phrases?.length ? `<div class="sec-h"><h3>${k.id.startsWith('m-') ? 'Формулы и приёмы' : 'Полезные фразы'}</h3></div><div class="card phr">${L.phrases.map(p => `<div><b>${esc(p.en)}</b><span>${esc(p.ru)}</span></div>`).join('')}</div>` : ''}
     ${L.mistakes?.length ? `<div class="sec-h"><h3>Частые ошибки</h3></div><div class="card"><ul class="mist">${L.mistakes.map(m => `<li>${esc(m)}</li>`).join('')}</ul></div>` : ''}
     ${k.src?.length ? `<div class="sec-h"><h3>Правило подробнее</h3></div><div class="arts">${k.src.map(u => `<a class="art" href="${u}" target="_blank" rel="noopener"><b>British Council · LearnEnglish</b><small>${esc(u.split('/').pop().replace(/-/g, ' '))} — объяснение и упражнения</small></a>`).join('')}</div>` : ''}
-    <div class="sec-h"><h3>Проверь себя</h3></div>
-    ${L.check.map((q, i) => { const p = picks[i], done = p != null;
+    <div class="sec-h" id="lcheck"><h3>${LS.round ? `Новые задания · раунд ${LS.round}` : 'Проверь себя'}</h3></div>
+    ${LS.loading ? '<div class="card lres"><p>Yomi готовит новые задания по этой теме и проверяет каждый ответ…</p></div>' : L.check.map((q, i) => { const p = picks[i], done = p != null;
       return `<div class="card lq"><p class="q"><b>${i + 1}.</b> ${esc(q.question)}</p><div class="choices">${q.choices.map((c, j) => `<button class="choice${done ? (j === q.answer ? ' ok' : j === p ? ' bad' : '') : ''}" data-lq="${i}:${j}" ${done ? 'disabled' : ''}><span class="l">${'ABCD'[j]}</span><span>${esc(c)}</span></button>`).join('')}</div>
         ${done ? `<div class="explain ${p === q.answer ? 'ok' : 'bad'}"><b>${p === q.answer ? I.check + ' Верно' : I.x + ` Правильно — ${'ABCD'[q.answer]}`}</b>${esc(q.explanation)}<button class="relink lqask" data-lqask="${i}">${p === q.answer ? 'Объясни подробнее' : 'Почему так?'} · спросить Yomi</button></div>` : ''}</div>`; }).join('')}
-    ${answered === L.check.length ? `<div class="card lres"><b class="big">${score} из ${L.check.length}</b><p>${score === L.check.length ? 'Отлично, навык понят. Закрепи его практикой.' : 'Перечитай шаги выше и закрепи практикой — так навык встанет на место.'}</p>
-      <div class="wbtns"><button class="btn" data-ldone>Готово · дальше практика</button><button class="btn line" data-lfresh>Новый урок по теме</button></div></div>` : ''}`;
+    ${!LS.loading && answered === L.check.length ? `<div class="card lres"><b class="big">${score} из ${L.check.length}</b><p>${score === L.check.length ? 'Отлично, навык понят. Закрепи его практикой.' : 'Перечитай шаги выше и закрепи практикой — так навык встанет на место.'}</p>
+      <div class="wbtns"><button class="btn" data-lmore>Ещё 5 заданий по теме</button><button class="btn line" data-ldone>${LS.round ? 'Готово' : 'Готово · дальше практика'}</button><button class="btn line" data-lfresh>Новый урок по теме</button></div></div>` : ''}`;
   homeBunny();
 }
 $('#learnBox').addEventListener('click', async e => {
   if(!LS) return;
   const q = e.target.closest('[data-lq]');
   if(q){ const [i, j] = q.dataset.lq.split(':').map(Number); if(LS.picks[i] != null) return; LS.picks[i] = j;
+    LS.next ||= fetchQuiz(LS.k, LS.seen);   // начал отвечать — следующий набор заданий готовим заранее, в фоне
     const ok = j === LS.lesson.check[i].answer; sfx(ok ? 'happy' : 'oops'); if(ok && typeof burst === 'function') burst(q);
     const y = $('#v-learn .scroll').scrollTop; $('#learnBox').dataset.still = 1; drawLesson(); $('#v-learn .scroll').scrollTop = y; return; }
   if(e.target.closest('[data-lfresh]')) return openLesson(LS.id, true);
+  if(e.target.closest('[data-lmore]')){   // засчитываем этот раунд и даём новые задания
+    const L = LS.lesson, score = L.check.filter((x, i) => LS.picks[i] === x.answer).length;
+    api('lesson_done', {skill: LS.k.id, score, total: L.check.length, words: LS.round ? [] : L.words, name: L.title}).then(j => { if(j.lessons) S.stats = {...(S.stats || {}), lessons: j.lessons}; }).catch(() => {});
+    if(!LS.round && course().lesson === LS.k.id) courseMark('lesson');
+    return moreQuiz();
+  }
   if(e.target.closest('[data-ldone]')){
     const L = LS.lesson, score = L.check.filter((x, i) => LS.picks[i] === x.answer).length, k = LS.k;
+    if(LS.round){   // повторение: засчитали и вернулись в «Учёбу»
+      api('lesson_done', {skill: k.id, score, total: L.check.length, words: [], name: L.title}).then(j => { if(j.lessons) S.stats = {...(S.stats || {}), lessons: j.lessons}; }).catch(() => {});
+      notify(`Повторение: ${score} из ${L.check.length}`); LS = null; return showLearn();
+    }
     const j = await api('lesson_done', {skill: k.id, score, total: L.check.length, words: L.words, name: L.title}).catch(() => ({}));
     if(j.lessons) S.stats = {...(S.stats || {}), lessons: j.lessons};
     if(course().lesson === k.id){ courseMark('lesson'); courseMark('practice'); }   // практика запускается сразу после урока
