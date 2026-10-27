@@ -749,6 +749,7 @@ nav button{font-size:11px!important}
 .cstep .cnote{color:var(--ptext)!important;font-size:12.5px!important}
 .lslot{width:72px;height:66px;flex:none}.lslot .buddy.staged{--bsize:72px!important}
 .qz-hint.bad{color:#C2412D;font-weight:700}.spdate{margin:2px 0 10px;color:var(--fg-2);font-weight:700}
+.lvhint{color:var(--muted);font-size:13px;line-height:1.45;margin:0 4px 10px}.setrow small{display:block;color:var(--muted);font-size:12px;font-weight:500}
 
 </style>
 </head>
@@ -2768,7 +2769,7 @@ const PRIVACY = [
   ]],
   ['Кто обрабатывает данные', [
     'Groq — распознавание речи и ответы Yomi (искусственный интеллект).',
-    'Голос Yomi делают Microsoft Azure или Google Gemini: им уходит только текст реплики Yomi, а не твой голос.',
+    'Голос Yomi создаётся прямо на твоём устройстве (открытые модели Piper и Kokoro скачиваются один раз с Hugging Face) — текст для озвучки никуда не уходит. Если это не получилось, запасной вариант — Google Gemini или Microsoft Azure: им уходит только текст реплики Yomi, а не твой голос.',
     'Supabase — сервер и база данных.',
     'Оплата — Telegram Stars, NOWPayments, xRocket. Данные карты и кошелька к нам не попадают.',
     'Шрифты загружаются с Google Fonts.',
@@ -2812,6 +2813,125 @@ function openPrivacy(){
 }
 // ссылки «Политика конфиденциальности» в вступлении, на экране подписки и в настройках
 document.addEventListener('click', e => { const a = e.target.closest('[data-privacy]'); if(a){ e.preventDefault(); openPrivacy(); } });
+
+
+/* ---------- голос Yomi прямо на устройстве: без ключей и без дневных лимитов ----------
+   Piper (piper-tts-web, MIT): ~63 МБ на голос, быстро даже без видеокарты, есть русский. Скачивается один раз и хранится в браузере.
+   Kokoro (kokoro-js, Apache 2.0): живее, но нужен WebGPU и 326 МБ — включается в настройках («голос высокого качества»).
+   Замеры: Piper ~0,6–0,9 с на фразу 2–4 с без видеокарты; Kokoro fp32 на WebGPU ~1 с (fp16/q4f16 дают тишину, q8 медленный).
+   Если локальный голос не готов или не работает — прежний серверный голос. */
+const PIPER_EN = {bunny: 'en_US-hfc_female-medium', cat: 'en_GB-jenny_dioco-medium', bear: 'en_US-ryan-medium', fox: 'en_GB-alba-medium', panda: 'en_US-joe-medium', hamster: 'en_US-amy-medium', dog: 'en_US-hfc_male-medium'};
+const PIPER_RU_M = 'ru_RU-dmitri-medium', PIPER_RU_F = 'ru_RU-irina-medium', MALE = new Set(['bear', 'panda', 'dog']);
+const KOKORO_EN = {bunny: 'af_heart', cat: 'af_bella', bear: 'am_michael', fox: 'bf_emma', panda: 'am_puck', hamster: 'af_nicole', dog: 'am_fenrir'};
+const LOCAL_VOICES = {
+  piper: [['en_US-hfc_female-medium', 'Хлоя', 'американский, тёплый'], ['en_US-amy-medium', 'Эми', 'американский, звонкий'], ['en_US-kristin-medium', 'Кристин', 'американский, спокойный'],
+    ['en_GB-jenny_dioco-medium', 'Дженни', 'британский'], ['en_GB-alba-medium', 'Альба', 'шотландский акцент'], ['en_US-ryan-medium', 'Райан', 'американский, мужской'],
+    ['en_US-joe-medium', 'Джо', 'американский, низкий'], ['en_US-hfc_male-medium', 'Хью', 'американский, бодрый'], ['en_GB-alan-medium', 'Алан', 'британский, мужской']],
+  kokoro: [['af_heart', 'Харт', 'самый естественный'], ['af_bella', 'Белла', 'живой, эмоциональный'], ['af_nicole', 'Николь', 'мягкий, тихий'], ['bf_emma', 'Эмма', 'британский'],
+    ['am_michael', 'Майкл', 'спокойный, мужской'], ['am_puck', 'Пак', 'весёлый, мужской'], ['am_fenrir', 'Фенрир', 'энергичный, мужской'], ['bm_george', 'Джордж', 'британский, мужской']],
+};
+const LV = {engine: store.get('yomi_lengine', 'piper'), pick: store.get('yomi_lvoice', {}), off: store.get('yomi_loff', false)};
+const kokoroOk = () => !!navigator.gpu;
+const engineNow = () => LV.engine === 'kokoro' && kokoroOk() ? 'kokoro' : 'piper';
+const enVoice = char => LV.pick[engineNow() + ':' + char] || (engineNow() === 'kokoro' ? KOKORO_EN : PIPER_EN)[char] || (engineNow() === 'kokoro' ? 'af_heart' : PIPER_EN.bunny);
+
+// загрузка движков (лениво, один раз)
+let piperMod = null, kokoro = null;
+const piperSessions = {};
+async function piperSay(voiceId, text){
+  piperMod ||= import('https://esm.sh/@mintplex-labs/piper-tts-web@1.0.5?deps=onnxruntime-web@1.20.1');
+  const m = await piperMod;
+  piperSessions[voiceId] ||= m.TtsSession.create({voiceId, wasmPaths: {onnxWasm: 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/', piperData: m.WASM_BASE + '.data', piperWasm: m.WASM_BASE + '.wasm'}});
+  return (await piperSessions[voiceId]).predict(text);
+}
+async function kokoroSay(voice, text){
+  kokoro ||= import('https://cdn.jsdelivr.net/npm/kokoro-js@1.2.1/+esm').then(m => m.KokoroTTS.from_pretrained('onnx-community/Kokoro-82M-v1.0-ONNX', {dtype: 'fp32', device: 'webgpu'}));
+  return (await (await kokoro).generate(text, {voice})).toBlob();
+}
+// кусок текста → голос: латиница — английский голос питомца, кириллица — русский (только Piper)
+function synth(part, char){
+  const ru = /[а-яё]/i.test(part) && !/[a-z]{3}/i.test(part);
+  if(ru) return piperSay(MALE.has(char) ? PIPER_RU_M : PIPER_RU_F, part);
+  return engineNow() === 'kokoro' ? kokoroSay(enVoice(char), part) : piperSay(enVoice(char), part);
+}
+// режем на предложения и отдельно — русские и английские куски, чтобы каждый звучал своим голосом и речь начиналась сразу
+function splitSpeech(text){
+  const out = [];
+  for(const sent of String(text).replace(/\s+/g, ' ').match(/[^.!?…]+[.!?…]*["»)]?\s*/g) || [text]){
+    let cur = '', lang = '';
+    for(const w of sent.trim().split(' ')){
+      const l = /[а-яё]/i.test(w) ? 'ru' : /[a-z]/i.test(w) ? 'en' : lang;   // слова без букв (числа, тире) — к текущему куску
+      if(cur && l && lang && l !== lang){ out.push(cur); cur = ''; }
+      cur += (cur ? ' ' : '') + w; lang = l || lang;
+    }
+    if(cur.trim()) out.push(cur.trim());
+  }
+  return out;
+}
+function playBlob(blob){
+  return new Promise(res => {
+    const url = URL.createObjectURL(blob);
+    player.onended = () => { URL.revokeObjectURL(url); res(true); }; player.onerror = () => res(false);
+    player.src = url; player.play().catch(() => res(false));
+  });
+}
+let localReady = false;   // хотя бы раз уже получилось — значит, движок и модель на месте
+async function sayLocal(text, char, my){
+  const parts = splitSpeech(text); if(!parts.length) return false;
+  let next = synth(parts[0], char);
+  for(let i = 0; i < parts.length; i++){
+    const blob = await next; if(my !== sayGen) return true;
+    if(i + 1 < parts.length) next = synth(parts[i + 1], char);   // следующий кусок готовится, пока играет этот
+    localReady = true;
+    if(!(await playBlob(blob))) return false;
+    if(my !== sayGen) return true;
+  }
+  return true;
+}
+// заменяем озвучку: сначала голос на устройстве; пока модель впервые качается — серверный голос, если он есть
+const sayTextServer = sayText;
+sayText = async function(text, lang = 'en', speaker = S.speaker, char = LOOK.char){
+  if(LV.off || !window.WebAssembly) return sayTextServer(text, lang, speaker, char);
+  stopAudio(); const my = ++sayGen;
+  if(!localReady){
+    const local = sayLocal(text, char, my).catch(() => false);
+    const first = await Promise.race([local, sleep(2500).then(() => 'slow')]);
+    if(first === 'slow'){   // модель ещё качается: пока говорим голосом сервера, а если его нет — ждём свой голос
+      const ok = await sayTextServer(text, lang, speaker, char); if(ok) return ok;
+      const my2 = ++sayGen; return sayLocal(text, char, my2).catch(() => false);
+    }
+    if(first) return true;
+    return sayTextServer(text, lang, speaker, char);
+  }
+  try{ if(await sayLocal(text, char, my)) return true; }catch(e){ console.warn('local voice', e); }
+  return my === sayGen ? sayTextServer(text, lang, speaker, char) : false;
+};
+// заранее подгружаем голос питомца после первого касания (≈63 МБ один раз), чтобы первый ответ не ждал
+{ const _unlock = unlock; let warmed = false;
+  unlock = function(){ _unlock(); if(!warmed && !LV.off && window.WebAssembly){ warmed = true; setTimeout(() => synth('Hi.', LOOK.char).then(() => { localReady = true; }).catch(() => {}), 300); } }; }
+
+// настройки: список голосов на устройстве вместо серверных, переключатель Kokoro, выключатель
+const _openSettings = openSettings;
+openSettings = function(){
+  _openSettings();
+  const box = $('#vbox .voices'); if(!box) return;
+  const eng = engineNow(), cur = enVoice(LOOK.char), name = (LOCAL_VOICES[eng].find(v => v[0] === cur) || [cur, cur])[1];
+  $('#vbox .vcur').textContent = LV.off ? 'голос сервера' : `${name} · на устройстве`;
+  box.innerHTML = `<p class="lvhint">${LV.off ? 'Сейчас Yomi говорит голосом с сервера (бывает дневной лимит).' : 'Голос создаётся прямо на твоём устройстве: без лимитов и без интернета после первой загрузки (~63 МБ).'}</p>
+    ${LV.off ? '' : LOCAL_VOICES[eng].map(([id, n, d]) => `<div class="voice${cur === id ? ' on' : ''}"><button class="ib" data-lvp="${id}" aria-label="Послушать ${n}">${I.play}</button><div class="w"><b>${n}</b><span>${d}</span></div><button class="btn ${cur === id ? '' : 'line'} sm" data-lvs="${id}">${cur === id ? 'Выбран' : 'Выбрать'}</button></div>`).join('')}
+    ${kokoroOk() && !LV.off ? `<div class="setrow"><span>Голос высокого качества<small>Kokoro · 326 МБ · для мощного телефона или компьютера</small></span><button class="btn sm ${eng === 'kokoro' ? '' : 'line'}" data-lkok>${eng === 'kokoro' ? 'Включён' : 'Включить'}</button></div>` : ''}
+    <div class="setrow"><span>Голос на устройстве</span><button class="btn sm line" data-loff>${LV.off ? 'Включить' : 'Выключить'}</button></div>`;
+};
+document.addEventListener('click', e => {
+  const t = e.target; if(!t.closest('#sheetIn')) return;
+  const p = t.closest('[data-lvp]'), s = t.closest('[data-lvs]');
+  if(p){ e.stopPropagation(); unlock(); const v = p.dataset.lvp, eng = engineNow(); stopAudio(); const my = ++sayGen;
+    (eng === 'kokoro' ? kokoroSay(v, "Hi, I'm Yomi! Let's get you ready for the exam.") : piperSay(v, "Hi, I'm Yomi! Let's get you ready for the exam.")).then(b => my === sayGen && playBlob(b)).catch(() => notify('Голос пока не загрузился — попробуй ещё раз'));
+    if(!p.dataset.loading){ p.dataset.loading = 1; notify('Загружаю голос… первый раз это до 30 секунд'); } return; }
+  if(s){ e.stopPropagation(); LV.pick[engineNow() + ':' + LOOK.char] = s.dataset.lvs; store.set('yomi_lvoice', LV.pick); voicesOpen = false; return openSettings(); }
+  if(t.closest('[data-lkok]')){ e.stopPropagation(); LV.engine = engineNow() === 'kokoro' ? 'piper' : 'kokoro'; store.set('yomi_lengine', LV.engine); localReady = false; if(LV.engine === 'kokoro') notify('Загружаю голос высокого качества (326 МБ)…'); return openSettings(); }
+  if(t.closest('[data-loff]')){ e.stopPropagation(); LV.off = !LV.off; store.set('yomi_loff', LV.off); return openSettings(); }
+}, true);
 </script>
 </body>
 </html>
