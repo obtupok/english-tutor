@@ -750,6 +750,7 @@ nav button{font-size:11px!important}
 .lslot{width:72px;height:66px;flex:none}.lslot .buddy.staged{--bsize:72px!important}
 .qz-hint.bad{color:#C2412D;font-weight:700}.spdate{margin:2px 0 10px;color:var(--fg-2);font-weight:700}
 .lvhint{color:var(--muted);font-size:13px;line-height:1.45;margin:0 4px 10px}.setrow small{display:block;color:var(--muted);font-size:12px;font-weight:500}
+.wgrade .btn{padding-inline:6px;white-space:nowrap;font-size:15px}
 
 </style>
 </head>
@@ -2600,7 +2601,7 @@ function drawCard(){
       <b class="ww">${esc(w.word)}</b><button class="ib" data-wsay aria-label="Послушать">${I.play}</button>
       ${WC.open ? `<p class="wt">${esc(w.translation)}</p>${hasWord(w.example, w.word) ? `<p class="we">${esc(w.example)}</p>` : ''}` : '<p class="wh">Вспомни перевод и нажми на карточку</p>'}
     </div>
-    ${WC.open ? `<div class="wgrade"><button class="btn line" data-wg="0">Не знаю</button><button class="btn line" data-wg="1">Трудно</button><button class="btn green" data-wg="2">Знаю</button></div>` : ''}`;
+    ${WC.open ? `<div class="wgrade"><button class="btn line" data-wg="0">Не знаю</button><button class="btn line" data-wg="1">Забыл</button><button class="btn green" data-wg="2">Знаю</button></div>` : ''}`;
   homeBunny();
 }
 $('#learnBox').addEventListener('click', async e => {
