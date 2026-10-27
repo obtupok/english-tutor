@@ -716,6 +716,11 @@ nav button{font-size:11px!important}
 .lhead{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:64px}.lhead.top{align-items:flex-start}.lhead.top .lead{margin-bottom:6px}
 #learnSlot{width:72px;height:66px;flex:none}#learnSlot .buddy.staged{--bsize:72px!important}
 .lhead.top>div:first-child{flex:1;min-width:0}
+/* политика конфиденциальности */
+.privacy .pv{margin-top:12px}.privacy .pv h3{display:flex;align-items:center;gap:8px;margin:0 0 8px;font-size:17px}.privacy .pv h3 svg{width:20px;height:20px;color:var(--green)}
+.privacy .pv ul{margin:0;padding-left:18px;display:grid;gap:8px;line-height:1.5;color:var(--fg-2);font-size:15px}
+.privacy .arts{margin-top:14px}
+.in-note a,.pw-fine a{color:var(--fg);text-decoration:underline;text-underline-offset:2px}
 
 </style>
 </head>
@@ -1890,6 +1895,7 @@ function openSettings(){
     <div class="setrow" style="margin-top:12px"><span>Кролик на экране</span><button class="btn sm ${bunnyOn ? 'line' : ''}" data-bon>${bunnyOn ? 'Спрятать' : 'Показать'}</button></div>
     <div class="setrow"><span>Звуки кролика</span><button class="btn sm ${sfxOn ? 'line' : ''}" data-sfx>${sfxOn ? 'Выключить' : 'Включить'}</button></div>
     <div class="setrow"><span>Подписка YomiRead + YomiScore</span><button class="btn sm" data-subs>Тарифы</button></div>
+    <div class="setrow"><span>Конфиденциальность</span><button class="btn sm line" data-privacy>Открыть</button></div>
     <div class="setrow"><span>Вступление о YomiScore</span><button class="btn sm line" data-intro>Показать</button></div>`);
   $('#vbox').ontoggle = e => { voicesOpen = e.target.open; };
   $('#gIelts').onchange = e => { GOALS.ielts = +e.target.value; saveGoals(); tab(curTab); };
@@ -1901,6 +1907,7 @@ function openSettings(){
     if(vp){ unlock(); sayText(`Hi, I'm Yomi! Привет, я Йоми. Let's get you ready for the exam!`, 'en', vp.dataset.vp, LOOK.char); return; }
     if(vs){ const j = await api('speaker', {speaker: vs.dataset.vs, char: LOOK.char}); if(j.ok){ if(j.game) G = j.game; S.speaker = j.speaker; voicesOpen = false; openSettings(); } return; }
     if(t.closest('[data-bon]')){ bunnyOn = !bunnyOn; store.set('yomi_bunny', bunnyOn); placeBunny(); homeBunny(); return openSettings(); }
+    if(t.closest('[data-privacy]')){ closeSheet(); return; }
     if(t.closest('[data-subs]')){ closeSheet(); return openPaywall(); }
     if(t.closest('[data-intro]')){ closeSheet?.(); return openIntro(); }
     if(t.closest('[data-sfx]')){ sfxOn = !sfxOn; store.set('yomi_sfx', sfxOn); return openSettings(); }
@@ -2183,7 +2190,7 @@ function introSlides(){
      <select class="inp" id="inIelts">${[5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9].map(v => `<option ${GOALS.ielts == v ? 'selected' : ''}>${v}</option>`).join('')}</select>
      <label class="lbl" for="inSat">SAT (400–1600)</label>
      <select class="inp" id="inSat">${Array.from({length: 17}, (_, k) => 800 + k * 50).map(v => `<option ${GOALS.sat == v ? 'selected' : ''}>${v}</option>`).join('')}</select>
-     <p class="in-note">Цели можно поменять в настройках.</p>`,
+     <p class="in-note">Цели можно поменять в настройках. Нажимая «Начать», ты соглашаешься с <a href="#" data-privacy>политикой конфиденциальности</a>.</p>`,
   ];
 }
 function introCount(root){
@@ -2284,7 +2291,7 @@ function drawPaywall(){
           <span class="pw-t"><b>${x.name}</b><small>${usd(x.usd)}${x.m > 1 ? ` · <s>${usd(8 * x.m)}</s>` : ''}</small></span>
           <span class="pw-d">${x.m > 1 ? `<i>−${saveP(x)}%</i>` : ''}<b>${perDay(x)}</b><small>в день</small></span>
         </button>`).join('')}</div>
-      <p class="pw-fine">Звёзды Telegram или криптовалюта. Разовый платёж за весь срок, без автопродления.</p>
+      <p class="pw-fine">Звёзды Telegram или криптовалюта. Разовый платёж за весь срок, без автопродления. <a href="#" data-privacy>Политика конфиденциальности</a></p>
     </div>
     <div class="in-foot"><button class="btn" data-pbuy>Продолжить · ${usd(p.usd)}</button></div>`;
 }
@@ -2346,6 +2353,24 @@ const SKILLS = [
   {id: 'rd-tfng', exam: 'ielts', g: 'IELTS Reading и Listening', name: 'Reading: True / False / Not Given'},
   {id: 'rd-head', exam: 'ielts', g: 'IELTS Reading и Listening', name: 'Reading: Matching Headings'},
   {id: 'ls-gap', exam: 'ielts', g: 'IELTS Reading и Listening', name: 'Listening: как ловить ответы в заполнении пропусков'},
+  {id: 'g-pp', exam: 'ielts', g: 'Грамматика', name: 'Present perfect или past simple', src: ['https://learnenglish.britishcouncil.org/free-resources/grammar/b1-b2/present-perfect', 'https://learnenglish.britishcouncil.org/free-resources/grammar/b1-b2/present-perfect-just-yet-still-already']},
+  {id: 'g-ppc', exam: 'ielts', g: 'Грамматика', name: 'Present perfect simple и continuous', src: ['https://learnenglish.britishcouncil.org/free-resources/grammar/b1-b2/present-perfect-simple-continuous']},
+  {id: 'g-pastp', exam: 'ielts', g: 'Грамматика', name: 'Past perfect: что случилось раньше', src: ['https://learnenglish.britishcouncil.org/free-resources/grammar/b1-b2/past-perfect']},
+  {id: 'g-future', exam: 'ielts', g: 'Грамматика', name: 'Будущее: will, be going to, present continuous', src: ['https://learnenglish.britishcouncil.org/free-resources/grammar/b1-b2/future-forms-will-be-going-present-continuous', 'https://learnenglish.britishcouncil.org/free-resources/grammar/b1-b2/future-degrees-certainty']},
+  {id: 'g-futperf', exam: 'ielts', g: 'Грамматика', name: 'Future continuous и future perfect', src: ['https://learnenglish.britishcouncil.org/free-resources/grammar/b1-b2/future-continuous-future-perfect']},
+  {id: 'g-stative', exam: 'ielts', g: 'Грамматика', name: 'Глаголы состояния: know, believe, own', src: ['https://learnenglish.britishcouncil.org/free-resources/grammar/b1-b2/stative-verbs']},
+  {id: 'g-cond12', exam: 'ielts', g: 'Грамматика', name: 'Условные предложения: zero, first, second', src: ['https://learnenglish.britishcouncil.org/free-resources/grammar/b1-b2/conditionals-zero-first-second']},
+  {id: 'g-cond3', exam: 'ielts', g: 'Грамматика', name: 'Third и mixed conditionals', src: ['https://learnenglish.britishcouncil.org/free-resources/grammar/b1-b2/conditionals-third-mixed']},
+  {id: 'g-wish', exam: 'ielts', g: 'Грамматика', name: 'Wish и if only', src: ['https://learnenglish.britishcouncil.org/free-resources/grammar/b1-b2/wishes-wish-if-only']},
+  {id: 'g-passive', exam: 'ielts', g: 'Грамматика', name: 'Пассивный залог', src: ['https://learnenglish.britishcouncil.org/free-resources/grammar/b1-b2/passives']},
+  {id: 'g-rel-d', exam: 'ielts', g: 'Грамматика', name: 'Relative clauses: who, which, that (defining)', src: ['https://learnenglish.britishcouncil.org/free-resources/grammar/b1-b2/relative-clauses-defining-relative-clauses']},
+  {id: 'g-rel-nd', exam: 'ielts', g: 'Грамматика', name: 'Relative clauses с запятыми (non-defining)', src: ['https://learnenglish.britishcouncil.org/free-resources/grammar/b1-b2/relative-clauses-non-defining-relative-clauses']},
+  {id: 'g-reported', exam: 'ielts', g: 'Грамматика', name: 'Косвенная речь: утверждения и вопросы', src: ['https://learnenglish.britishcouncil.org/free-resources/grammar/b1-b2/reported-speech-statements', 'https://learnenglish.britishcouncil.org/free-resources/grammar/b1-b2/reported-speech-questions', 'https://learnenglish.britishcouncil.org/free-resources/grammar/b1-b2/reported-speech-reporting-verbs']},
+  {id: 'g-modals', exam: 'ielts', g: 'Грамматика', name: 'Модальные: must, might, can’t have', src: ['https://learnenglish.britishcouncil.org/free-resources/grammar/b1-b2/modals-deductions-about-present', 'https://learnenglish.britishcouncil.org/free-resources/grammar/b1-b2/modals-deductions-about-past', 'https://learnenglish.britishcouncil.org/free-resources/grammar/b1-b2/modals-permission-obligation']},
+  {id: 'g-ingto', exam: 'ielts', g: 'Грамматика', name: 'Глагол + -ing или + to: stop doing / stop to do', src: ['https://learnenglish.britishcouncil.org/free-resources/grammar/b1-b2/verbs-followed-ing-or-infinitive-change-meaning']},
+  {id: 'g-contrast', exam: 'ielts', g: 'Грамматика', name: 'Although, despite, however: противопоставление', src: ['https://learnenglish.britishcouncil.org/free-resources/grammar/b1-b2/contrasting-ideas-although-despite-others']},
+  {id: 'g-compar', exam: 'ielts', g: 'Грамматика', name: 'Сравнения: much better, far more, slightly less', src: ['https://learnenglish.britishcouncil.org/free-resources/grammar/b1-b2/modifying-comparatives']},
+  {id: 'g-inv', exam: 'ielts', g: 'Грамматика', name: 'Инверсия на band 8: Never have I…, Had I known…', src: ['https://learnenglish.britishcouncil.org/free-resources/grammar/c1/inversion-after-negative-adverbials', 'https://learnenglish.britishcouncil.org/free-resources/grammar/c1/inversion-conditionals']},
   {id: 'rw-words', exam: 'sat', g: 'SAT Reading & Writing', name: 'Words in Context: слово по смыслу текста', dom: 'Craft and Structure'},
   {id: 'rw-purpose', exam: 'sat', g: 'SAT Reading & Writing', name: 'Text Structure and Purpose: зачем написан текст', dom: 'Craft and Structure'},
   {id: 'rw-cross', exam: 'sat', g: 'SAT Reading & Writing', name: 'Cross-Text Connections: два текста', dom: 'Craft and Structure'},
@@ -2368,6 +2393,8 @@ const SKILLS = [
 ];
 const LEARN_THEMES = ['education', 'technology', 'environment', 'health', 'work', 'cities', 'travel', 'media', 'science', 'culture', 'crime and law', 'economy', 'family', 'sport', 'art'];
 const lessonsDone = () => S.stats?.lessons || {};
+// грамматика: общее правило, как в справочниках (British Council LearnEnglish), с упором на IELTS Speaking/Writing и SAT
+const GRAMMAR_FOCUS = 'General English grammar used in IELTS Speaking and Writing (Grammatical Range and Accuracy) and in SAT Writing. Explain the rule as standard usage: form, when to use it, signal words, and the contrast with the similar form learners confuse it with';
 function weakSkills(){
   const sat = new Set((S.stats?.sat || []).slice(-6).flatMap(x => x.weak || []));
   const crit = (S.stats?.examLast?.criteria || []).filter(c => c.score <= (S.stats.examLast.overall || 9) - .5).map(c => c.name.split(' ')[0]);
@@ -2380,7 +2407,7 @@ function nextLesson(){
   return order[0] || SKILLS[0];
 }
 // практика к уроку — тот же навык на реальном формате
-const practiceFor = k => k.id.startsWith('ie-p1') ? 'ielts-p1' : k.id.startsWith('ie-p2') ? 'ielts-p2' : k.id.startsWith('ie-') ? 'ielts-p3' : k.id.startsWith('wt-') ? 'writing'
+const practiceFor = k => k.id.startsWith('g-') ? 'ielts-p1' : k.id.startsWith('ie-p1') ? 'ielts-p1' : k.id.startsWith('ie-p2') ? 'ielts-p2' : k.id.startsWith('ie-') ? 'ielts-p3' : k.id.startsWith('wt-') ? 'writing'
   : k.id.startsWith('rd-') || k.id.startsWith('ls-') ? 'read' : k.id.startsWith('m-') ? 'sat-math' : 'sat-rw';
 const PRACTICE_NAME = {'ielts-p1': 'IELTS Speaking Part 1', 'ielts-p2': 'IELTS Speaking Part 2', 'ielts-p3': 'IELTS Speaking Part 3', 'writing': 'эссе IELTS Writing', 'read': 'чтение книги на YomiRead', 'sat-math': '10 задач SAT Math', 'sat-rw': '10 вопросов SAT Reading & Writing'};
 
@@ -2440,7 +2467,7 @@ let LS = null;
 const lessonLoads = new Map();
 function loadLesson(k, fresh = false){
   if(!fresh){ const c = store.get('yomi_lsn_' + k.id, null); if(c) return Promise.resolve(c); }
-  if(!lessonLoads.has(k.id)) lessonLoads.set(k.id, api('lesson', {exam: k.exam, name: k.name, focus: k.f || ''}).catch(() => ({}))
+  if(!lessonLoads.has(k.id)) lessonLoads.set(k.id, api('lesson', {exam: k.exam, name: k.name, focus: k.f || (k.id.startsWith('g-') ? GRAMMAR_FOCUS : '')}).catch(() => ({}))
     .then(j => { lessonLoads.delete(k.id); if(j.lesson) store.set('yomi_lsn_' + k.id, j.lesson); return j.lesson || null; }));
   return lessonLoads.get(k.id);
 }
@@ -2467,6 +2494,7 @@ function drawLesson(){
     <div class="card lex"><span class="eyebrow">Задание</span><p class="task">${esc(L.example.task)}</p><span class="eyebrow">Сильный ответ</span><p class="model">${esc(L.example.answer)}</p><span class="eyebrow">Почему это работает</span><p>${esc(L.example.why)}</p></div>
     ${L.phrases?.length ? `<div class="sec-h"><h3>${k.id.startsWith('m-') ? 'Формулы и приёмы' : 'Полезные фразы'}</h3></div><div class="card phr">${L.phrases.map(p => `<div><b>${esc(p.en)}</b><span>${esc(p.ru)}</span></div>`).join('')}</div>` : ''}
     ${L.mistakes?.length ? `<div class="sec-h"><h3>Частые ошибки</h3></div><div class="card"><ul class="mist">${L.mistakes.map(m => `<li>${esc(m)}</li>`).join('')}</ul></div>` : ''}
+    ${k.src?.length ? `<div class="sec-h"><h3>Правило подробнее</h3></div><div class="arts">${k.src.map(u => `<a class="art" href="${u}" target="_blank" rel="noopener"><b>British Council · LearnEnglish</b><small>${esc(u.split('/').pop().replace(/-/g, ' '))} — объяснение и упражнения</small></a>`).join('')}</div>` : ''}
     <div class="sec-h"><h3>Проверь себя</h3></div>
     ${L.check.map((q, i) => { const p = picks[i], done = p != null;
       return `<div class="card lq"><p class="q"><b>${i + 1}.</b> ${esc(q.question)}</p><div class="choices">${q.choices.map((c, j) => `<button class="choice${done ? (j === q.answer ? ' ok' : j === p ? ' bad' : '') : ''}" data-lq="${i}:${j}" ${done ? 'disabled' : ''}><span class="l">${'ABCD'[j]}</span><span>${esc(c)}</span></button>`).join('')}</div>
@@ -2549,6 +2577,68 @@ async function loadWordset(topic){
     <div class="wbtns" style="margin-top:14px"><button class="btn" data-wrev>Учить карточками</button></div>`;
   homeBunny();
 }
+
+
+/* ---------- политика конфиденциальности: только то, что приложение делает на самом деле ----------
+   Голос: запись уходит в Groq (Whisper) и сразу становится текстом, звук нигде не сохраняется (сервер его не пишет в базу и хранилище).
+   Голос Yomi: в Azure / Google Gemini / Groq уходит только текст реплики Yomi. Хранятся тексты, прогресс, слова — в Supabase. */
+const PRIVACY = [
+  ['Твой голос никто не слушает', [
+    'Микрофон включается, только когда ты сам нажимаешь кнопку или отвечаешь на вопрос экзамена.',
+    'Запись сразу отправляется в сервис распознавания речи (Groq, модель Whisper) и превращается в текст. Сам звук мы не сохраняем — ни на сервере, ни в базе. Люди твои записи не слушают.',
+    'Не хочешь говорить вслух — в разговоре с Yomi можно печатать. Экзамен Speaking без микрофона пройти нельзя.',
+  ]],
+  ['Что мы храним', [
+    'Тексты разговоров с Yomi, расшифровки твоих ответов на экзаменах, исправленные ошибки, слова для карточек, результаты тестов и эссе, пройденные уроки.',
+    'Telegram ID — чтобы узнавать тебя и включать подписку. Номер телефона, контакты и переписки в Telegram мы не получаем.',
+    'В твоём браузере: настройки, цели, план и сохранённые уроки. Их можно стереть, очистив данные сайта.',
+  ]],
+  ['Кто обрабатывает данные', [
+    'Groq — распознавание речи и ответы Yomi (искусственный интеллект).',
+    'Голос Yomi делают Microsoft Azure или Google Gemini: им уходит только текст реплики Yomi, а не твой голос.',
+    'Supabase — сервер и база данных.',
+    'Оплата — Telegram Stars, NOWPayments, xRocket. Данные карты и кошелька к нам не попадают.',
+    'Шрифты загружаются с Google Fonts.',
+  ]],
+  ['Чего мы не делаем', [
+    'Не продаём данные и не передаём их рекламщикам. В YomiScore нет рекламы и рекламных трекеров.',
+    'Не обучаем свои модели на твоих разговорах и записях.',
+    'Технический доступ к базе есть только у владельца YomiScore — чтобы сервис работал и чтобы исправлять ошибки.',
+  ]],
+  ['Твои права', [
+    'Ты можешь попросить выгрузить или удалить все свои данные — напиши через страницу контактов, и мы удалим их.',
+    'Если тебе меньше 14 лет, пользуйся YomiScore с разрешения родителей.',
+  ]],
+  ['Согласие', [
+    'Пользуясь YomiScore, ты соглашаешься с этой политикой: на запись голоса по нажатию, на передачу записей и текстов сервисам из списка выше — только для работы приложения, и на хранение данных, описанных здесь.',
+    'Если политика изменится, мы обновим её здесь и дату вверху. Подписка и оплата проходят через YomiRead — для них действует и политика YomiRead.',
+  ]],
+];
+const PRIVACY_LINKS = [
+  ['https://yomiread.com/contacts', 'Контакты — запрос на удаление данных'],
+  ['https://yomiread.com/privacy', 'Политика конфиденциальности YomiRead'],
+  ['https://groq.com/privacy-policy', 'Groq: политика конфиденциальности'],
+  ['https://supabase.com/privacy', 'Supabase: политика конфиденциальности'],
+  ['https://policies.google.com/privacy', 'Google: политика конфиденциальности'],
+  ['https://privacy.microsoft.com/privacystatement', 'Microsoft: заявление о конфиденциальности'],
+];
+function openPrivacy(){
+  if($('#privacy')) return;
+  const box = document.createElement('div'); box.id = 'privacy'; box.className = 'intro privacy'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Конфиденциальность');
+  box.innerHTML = `<div class="in-top"><button class="in-skip pw-back" data-pvclose>${svgI('<path d="M15 6l-6 6 6 6"/>')} Назад</button><span></span></div>
+    <div class="in-body">
+      <p class="eyebrow">YomiScore · обновлено 27 октября 2026</p>
+      <h1>Конфиденциальность</h1>
+      <p class="in-lead">Коротко и честно: что происходит с твоим голосом и данными.</p>
+      ${PRIVACY.map(([h, list], i) => `<div class="card pv"><h3>${i === 0 ? svgI('<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>') : ''}${h}</h3><ul>${list.map(t => `<li>${t}</li>`).join('')}</ul></div>`).join('')}
+      <div class="arts">${PRIVACY_LINKS.map(([u, t]) => `<a class="art" href="${u}" target="_blank" rel="noopener"><b>${t}</b><small>${u.replace('https://', '')}</small></a>`).join('')}</div>
+    </div>`;
+  document.body.append(box);
+  if(!RM) box.querySelectorAll('.in-body > *').forEach((el, k) => { el.style.setProperty('--i', Math.min(k, 10)); el.classList.add('pop'); });
+  box.onclick = e => { if(e.target.closest('[data-pvclose]')){ box.classList.add('out'); setTimeout(() => box.remove(), RM ? 0 : 280); } };
+}
+// ссылки «Политика конфиденциальности» в вступлении, на экране подписки и в настройках
+document.addEventListener('click', e => { const a = e.target.closest('[data-privacy]'); if(a){ e.preventDefault(); openPrivacy(); } });
 </script>
 </body>
 </html>
