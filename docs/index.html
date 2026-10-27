@@ -2629,6 +2629,7 @@ async function reviewWords(){
 }
 function drawCard(){
   const w = WC.list[WC.i];
+  if(typeof preSay === 'function'){ preSay(w.word); const nx = WC.list[WC.i + 1]; if(nx) preSay(nx.word); }
   parkBunny(); $('#learnBox').innerHTML = `${BACK()}
     <div class="qtop"><span class="bar"><i style="width:${WC.i / WC.list.length * 100}%"></i></span><b>${WC.i + 1}/${WC.list.length}</b></div>
     <div class="card wcard${WC.open ? ' open' : ''}" data-wflip>
@@ -2968,6 +2969,40 @@ document.addEventListener('click', e => {
   if(t.closest('[data-loff]')){ e.stopPropagation(); LV.off = !LV.off; store.set('yomi_loff', LV.off); return openSettings(); }
 }, true);
 
+/* ---- кнопки звука (карточки, чат репетитора): мгновенно ----
+   Фразы озвучиваются заранее, в фоне, по очереди (preSay) и лежат в памяти; нажатие просто включает готовый звук.
+   Сервер для кнопок не используется. Пока голос на устройстве ещё качается — сразу голос браузера, а свой докачивается. */
+const sayCache = new Map(), sayDone = new Map(), sayQueue = [];
+let sayRunning = false;
+const sayKey = text => `${engineNow()}|${enVoice(LOOK.char)}|${text}`;
+function preSay(text){
+  if(LV.off || !window.WebAssembly || !text) return;
+  const k = sayKey(text); if(sayCache.has(k)) return sayCache.get(k);
+  const p = new Promise(res => sayQueue.push({text, res}));
+  sayCache.set(k, p); runSayQueue(); return p;
+}
+async function runSayQueue(){
+  if(sayRunning) return; sayRunning = true;
+  while(sayQueue.length){
+    const {text, res} = sayQueue.shift();
+    const blob = await synth(text, LOOK.char).catch(() => null);
+    if(blob){ sayDone.set(sayKey(text), blob); localReady = true; } else sayCache.delete(sayKey(text));
+    res(blob);
+  }
+  sayRunning = false;
+}
+sayWord = async function(text){
+  unlock(); stopAudio(); const my = ++sayGen, k = sayKey(text);
+  const ready = sayDone.get(k);
+  if(ready) return playBlob(ready);                                   // уже готово — без задержки
+  if(LV.off || !window.WebAssembly) return speakLocal(text, 'en');
+  if(!localReady){ speakLocal(text, 'en'); preSay(text); return; }    // свой голос ещё качается — сразу голос браузера
+  const i = sayQueue.findIndex(q => q.text === text); if(i > 0) sayQueue.unshift(...sayQueue.splice(i, 1));   // эту фразу — первой
+  const blob = await (preSay(text) || null);
+  if(blob && my === sayGen) return playBlob(blob);
+  if(!blob) speakLocal(text, 'en');
+};
+
 
 /* ---------- ИИ-репетитор: чаты «хочу выучить …», разбор любого задания («почему такой ответ?») ----------
    Чаты хранятся в этом браузере (yomi_tchats); на сервер (действие tutor) уходят последние сообщения и профиль ученика.
@@ -3048,6 +3083,7 @@ function tutorChat(id){
       ${c.msgs.map(m => tmsgHtml(m)).join('')}${tbusy ? '<div class="tmsg a"><div class="tbub typing"><i></i><i></i><i></i><span>Yomi думает и перепроверяет ответ…</span></div></div>' : ''}</div>
     <form class="tcomp" id="tcomp"><textarea id="tin" rows="1" placeholder="Спроси Yomi…" aria-label="Сообщение"></textarea><button class="tsend" aria-label="Отправить">${svgI('<path d="M5 12h14M13 6l6 6-6 6"/>')}</button></form>`;
   const ms = $('#tmsgs'); ms.querySelectorAll('.tmsg.a .tbub').forEach(tspeak); ms.scrollTop = ms.scrollHeight;
+  if(typeof preSay === 'function') [...ms.querySelectorAll('[data-tsay]')].reverse().forEach(b => preSay(b.dataset.tsay));   // заранее, чтобы звук был сразу
   const tin = $('#tin'); tin.oninput = () => { tin.style.height = 'auto'; tin.style.height = Math.min(140, tin.scrollHeight) + 'px'; };
   tin.onkeydown = e => { if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); $('#tcomp').requestSubmit(); } };
   $('#tcomp').onsubmit = e => { e.preventDefault(); const t = tin.value.trim(); if(t && !tbusy){ tin.value = ''; tutorSend(t); } };
