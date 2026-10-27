@@ -286,6 +286,25 @@ const SAT_SET_SCHEMA = {
     properties: { skill: { type: 'string' }, difficulty: { type: 'string', enum: ['easy', 'medium', 'hard'] }, passage: { type: 'string' }, question: { type: 'string' },
       choices: { type: 'array', items: { type: 'string' } }, answer: { type: 'integer' }, explanation: { type: 'string' } } } } },
 };
+// урок по одному навыку: метод по шагам, разобранный пример, фразы, частые ошибки, 3 вопроса на проверку, ключевые слова
+const LESSON_SCHEMA = {
+  type: 'object', additionalProperties: false, required: ['title', 'intro', 'steps', 'example', 'phrases', 'mistakes', 'check', 'words'],
+  properties: {
+    title: { type: 'string' }, intro: { type: 'string' },
+    steps: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['title', 'text'], properties: { title: { type: 'string' }, text: { type: 'string' } } } },
+    example: { type: 'object', additionalProperties: false, required: ['task', 'answer', 'why'], properties: { task: { type: 'string' }, answer: { type: 'string' }, why: { type: 'string' } } },
+    phrases: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['en', 'ru'], properties: { en: { type: 'string' }, ru: { type: 'string' } } } },
+    mistakes: { type: 'array', items: { type: 'string' } },
+    check: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['question', 'choices', 'answer', 'explanation'],
+      properties: { question: { type: 'string' }, choices: { type: 'array', items: { type: 'string' } }, answer: { type: 'integer' }, explanation: { type: 'string' } } } },
+    words: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['word', 'translation'], properties: { word: { type: 'string' }, translation: { type: 'string' } } } },
+  },
+};
+const WORDSET_SCHEMA = {
+  type: 'object', additionalProperties: false, required: ['words'],
+  properties: { words: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['word', 'translation', 'example'],
+    properties: { word: { type: 'string' }, translation: { type: 'string' }, example: { type: 'string' } } } } },
+};
 const SAT_SECTIONS: Record<string, string> = {
   rw: 'Digital SAT Reading and Writing. Each item: a short passage (25–150 words; for paired-text items put "Text 1: … Text 2: …"), one question, exactly 4 answer choices. Mix the four official domains and name the skill in "skill": "Information and Ideas", "Craft and Structure", "Expression of Ideas" (rhetorical synthesis, transitions), "Standard English Conventions" (boundaries, form, structure, sense). Use a blank "______" where a word or punctuation is missing.',
   math: 'Digital SAT Math. Each item: one multiple-choice problem with exactly 4 choices, "passage" empty unless a short table or context is needed. Mix the four domains and name the skill in "skill": "Algebra", "Advanced Math", "Problem-Solving and Data Analysis", "Geometry and Trigonometry". Write math in plain text (x^2, sqrt(5), 3/4, pi). Solve each problem yourself step by step before choosing "answer", and make sure exactly one choice is correct.',
@@ -1170,6 +1189,45 @@ async function web(req: Request) {
       const j = await r.json().catch(() => ({}));
       const url = j.link || j.url;
       return url ? json({ url, stars: j.stars }) : json({ error: j.error || 'pay' }, 502);
+    }
+    // уроки: текст урока генерируется по запросу (сайт хранит его у себя), здесь — только отметка о прохождении
+    case 'lesson': {
+      const exam = b.exam === 'sat' ? 'Digital SAT' : 'IELTS Academic', name = String(b.name || '').slice(0, 120), focus = String(b.focus || '').slice(0, 300);
+      if (!name) return json({ error: 'bad' }, 400);
+      const out = await askJsonGroq(`You are an experienced ${exam} tutor who explains things simply. Write in Russian; every English example, phrase, task and answer choice stays in English. The learner's English level is about ${owner.level || 'B1'}. Return JSON only.`,
+        `Write one short, practical lesson on this ${exam} skill: "${name}".${focus ? ` Focus: ${focus}.` : ''}
+- "title": the lesson title in Russian; "intro": 2–3 sentences — what the exam checks here and why it matters for the score.
+- "steps": 3–5 steps of a concrete method the learner can apply right away (each: short title + 1–3 sentences).
+- "example": a real exam-style task, a model answer (for speaking/writing — a strong band 7–8 answer; for SAT — the solution worked step by step) and "why" — why it scores well.
+- "phrases": 4–8 useful phrases or patterns (for SAT math — key formulas or patterns), each with a Russian gloss.
+- "mistakes": 3–4 typical mistakes to avoid.
+- "check": exactly 3 multiple-choice questions in the style of the real exam that test this skill, exactly 4 choices each, "answer" is the 0-based index of the correct choice, "explanation" in Russian. Solve each yourself first and make sure exactly one choice is correct.
+- "words": 5 key English words or collocations from this lesson with Russian translations.`, LESSON_SCHEMA);
+      if (!out?.steps?.length) return json({ error: 'failed' }, 502);
+      out.check = (out.check || []).filter((q: any) => q.choices?.length === 4 && q.answer >= 0 && q.answer < 4).slice(0, 3);
+      return json({ lesson: out });
+    }
+    case 'lesson_done': {
+      const skill = String(b.skill || '').slice(0, 60); if (!skill) return json({ error: 'bad' }, 400);
+      const rec = { at: new Date().toISOString(), score: Math.max(0, Number(b.score) | 0), total: Math.max(0, Number(b.total) | 0) };
+      owner.stats = { ...(owner.stats || {}), lessons: { ...(owner.stats?.lessons || {}), [skill]: rec } };
+      const words = (Array.isArray(b.words) ? b.words : []).slice(0, 8).filter((w: any) => w?.word && w?.translation)
+        .map((w: any) => ({ key: String(w.word).trim().toLowerCase().slice(0, 80), word: String(w.word).trim().slice(0, 80), translation: String(w.translation).trim().slice(0, 120), example: String(b.name || '').slice(0, 200) }));
+      if (words.length) await admin.from('english_words').upsert(words, { onConflict: 'key', ignoreDuplicates: true });
+      await save(owner);
+      return json({ ok: true, lessons: owner.stats.lessons });
+    }
+    // подборка слов по теме экзамена — сразу в карточки (без повторов того, что уже есть)
+    case 'wordset': {
+      const topic = String(b.topic || '').slice(0, 80) || pickThemes(THEMES, 1)[0];
+      const { data: have } = await admin.from('english_words').select('key').order('added', { ascending: false }).limit(300);
+      const out = await askJsonGroq(`You pick vocabulary for IELTS and SAT learners. Return JSON only.`,
+        `Give 10 useful English words or collocations for the topic "${topic}", a bit above the learner's level (${owner.level || 'B1'}) — the kind that lifts an IELTS Lexical Resource score or appears in SAT texts. "translation" — short Russian translation; "example" — one natural English sentence.${have?.length ? ` Do not include: ${have.map((w: any) => w.key).join(', ')}.` : ''}`, WORDSET_SCHEMA);
+      const words = (out?.words || []).filter((w: any) => w.word?.trim() && w.translation?.trim()).slice(0, 12)
+        .map((w: any) => ({ key: w.word.trim().toLowerCase(), word: w.word.trim(), translation: w.translation.trim(), example: String(w.example || '').slice(0, 500) }));
+      if (!words.length) return json({ error: 'failed' }, 502);
+      await admin.from('english_words').upsert(words, { onConflict: 'key', ignoreDuplicates: true });
+      return json({ topic, words });
     }
     case 'writing_prompt': {
       const recent = (owner.stats?.writing || []).slice(-5).map((w: any) => w.prompt).join(' | ');
