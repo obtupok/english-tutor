@@ -826,6 +826,38 @@ nav button{font-size:11px!important}
 .wptr{font-size:16px;font-weight:700;margin:10px 0 8px;line-height:1.4}.wptr small{font-size:13px;color:var(--muted);font-weight:600}.wptr.muted{color:var(--muted);font-weight:500;font-size:15px}
 .wpex{background:#FAF9F7;border-radius:14px;padding:10px 12px;margin-bottom:12px}.wpex p{margin:0;font-style:italic;line-height:1.5}.wpex small{display:block;color:var(--muted);margin-top:4px;font-size:13.5px}
 .wpadd{width:100%;min-height:42px}.wpok{color:var(--green);font-weight:700;display:flex;gap:6px;align-items:center;margin:4px 0 0}.wpok svg{width:18px;height:18px}
+/* урок с учителем */
+.classcard{margin:0 0 14px;padding:14px;border-radius:20px;background:var(--card);border:1.5px solid #D9CFF5;box-shadow:0 1px 2px rgba(22,23,27,.04),0 8px 24px rgba(91,75,154,.10)}
+.cch{display:flex;gap:12px;align-items:center;margin-bottom:12px}.cch .ic{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;flex:none}.cch .ic svg{width:22px;height:22px}
+.cch .t{display:flex;flex-direction:column;gap:2px}.cch b{font-size:17px}.cch small{color:var(--muted);font-size:13px;line-height:1.35}
+.ccin{display:flex;gap:8px;margin-bottom:10px}.ccin .inp{flex:1;min-height:46px}.ccin .btn{min-height:46px;padding:0 18px}
+.clgo{width:100%;min-height:48px;margin:10px 0 4px}
+.classroom{padding-bottom:0}
+.clbar{gap:8px}.cltopic{flex:1;text-align:center;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.clprog{height:6px;margin:2px 0 6px}
+.clbody{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding-bottom:12px}
+.clteacher{display:flex;gap:10px;align-items:flex-start}
+.clava{width:60px;height:60px;flex:none;border-radius:50%;background:#EEEAF8;display:grid;place-items:center;transition:box-shadow .2s}
+.clava .buddy.mini{--bsize:54px!important;width:auto;filter:none}
+.clteacher.talk .clava{animation:clpulse 1.2s ease-in-out infinite}
+@keyframes clpulse{0%,100%{box-shadow:0 0 0 0 rgba(91,75,154,.35)}50%{box-shadow:0 0 0 8px rgba(91,75,154,0)}}
+.clsay{position:relative;flex:1;background:var(--card);border:1px solid var(--border);border-radius:6px 18px 18px 18px;padding:12px 40px 12px 14px;font-size:15.5px;line-height:1.55;box-shadow:var(--clay-sm)}
+.clreplay{position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:9px;background:var(--accent-bg);color:var(--ptext);display:grid;place-items:center}.clreplay svg{width:15px;height:15px}
+.cldots{display:inline-flex;gap:4px;margin-right:6px}.cldots i{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:blink 1s infinite}.cldots i:nth-child(2){animation-delay:.2s}.cldots i:nth-child(3){animation-delay:.4s}
+.clfix{display:flex;flex-direction:column;gap:3px;padding:10px 12px;border-radius:14px;font-size:14px}
+.clfix.green{background:var(--green-bg)}.clfix.orange{background:#FDF3DC}.clfix.red{background:#FBECEA}
+.clfix b{font-size:13px}.clfix small{color:var(--muted)}.clfix i{font-weight:700;color:var(--fg)}.clfix .wpsay{align-self:flex-start;margin:4px 0 0}
+.clboard{background:#1F3B2D;color:#F1F5EE;border-radius:16px;padding:12px 14px;box-shadow:inset 0 0 0 3px #3B5A48}
+.clbt{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#A9C7B4}.clbt svg{width:16px;height:16px}
+.clboard h4{margin:8px 0 6px;font-size:16px;color:#fff}.clboard p{margin:0 0 6px;line-height:1.5;font-size:14.5px}
+.clex{margin-top:8px;padding-top:8px;border-top:1px dashed rgba(255,255,255,.2)}.clex span{font-style:italic;color:#fff}.clex small{display:block;color:#A9C7B4;margin-top:2px}
+.clex .wpsay{background:rgba(255,255,255,.12);color:#fff}
+.cltask{background:var(--accent-bg);border-radius:14px;padding:10px 12px}.cltask p{margin:4px 0 0;font-weight:700;font-size:16px;line-height:1.45}
+.clans{position:sticky;bottom:0;background:var(--bg);padding-top:6px}
+.clquick{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:2px}.clquick .chip{min-height:34px;padding:4px 10px;font-size:13px;font-weight:700;background:var(--card)}
+.clcomp{padding-top:6px}
+.clmic{width:48px;height:48px;flex:none;border-radius:14px;background:var(--fg);color:#fff;display:grid;place-items:center}.clmic svg{width:22px;height:22px}
+.clmic.rec{background:#C2412D;animation:clpulse 1.2s infinite}
 
 </style>
 </head>
@@ -2572,6 +2604,9 @@ function showLearn(){
       <div class="tqs">${['Объясни Present Perfect', 'Как писать эссе на 7+', 'Разбери SAT Math'].map(q => `<button class="chip" data-tq="${q}">${q}</button>`).join('')}</div>
       <button class="tfake" data-tnewchat><span>Спроси Yomi что угодно…</span><i>${svgI('<path d="M5 12h14M13 6l6 6-6 6"/>')}</i></button>
     </div>
+    <div class="classcard"><div class="cch"><span class="ic violet">${svgI('<path d="M22 9L12 4 2 9l10 5 10-5z"/><path d="M6 11v5c3 2.5 9 2.5 12 0v-5"/>')}</span><span class="t"><b>Урок с учителем</b><small>Голосом, один на один: объяснит тему, спросит, исправит ошибки</small></span></div>
+      <div class="ccin"><input class="inp" id="classTopic" placeholder="Какую тему разобрать?" autocomplete="off"><button class="btn" data-classgo="">Начать</button></div>
+      <div class="tqs">${CLASS_TOPICS.slice(0, 4).map(x => `<button class="chip" data-classtopic="${x}">${x}</button>`).join('')}</div></div>
     <div class="card course"><div class="ch"><span class="eyebrow">Курс · день ${c.day}${p ? ' · по твоему плану' : ''}</span><span class="cn">${ts.length ? `${n} из ${ts.length}` : 'отдых'}</span></div>
       <span class="bar"><i style="width:${ts.length ? n / ts.length * 100 : 100}%"></i></span>
       ${ts.length ? `<div class="csteps">${ts.map(step).join('')}</div>` : '<p class="cfin">Сегодня по плану отдых — мозгу нужно время, чтобы всё улеглось. Хочешь — повтори карточки.</p>'}
@@ -2649,6 +2684,7 @@ function drawLesson(){
   const {k, lesson: L, picks} = LS, answered = picks.filter(p => p != null).length, score = L.check.filter((q, i) => picks[i] === q.answer).length;
   parkBunny(); $('#learnBox').innerHTML = `${BACK()}
     <p class="eyebrow">${esc(k.g)} · <button class="relink" data-lfresh>Обновить урок</button></p><h2>${esc(L.title)}</h2><p class="lead">${esc(L.intro)}</p>
+    <button class="btn line clgo" data-lclass>${svgI('<path d="M22 9L12 4 2 9l10 5 10-5z"/><path d="M6 11v5c3 2.5 9 2.5 12 0v-5"/>')} Пройти этот урок с учителем голосом</button>
     <div class="sec-h"><h3>Как делать</h3></div>
     <div class="lsteps">${L.steps.map((s, i) => `<div class="card lstep"><span class="num">${i + 1}</span><div><b>${esc(s.title)}</b><p>${esc(s.text)}</p></div></div>`).join('')}</div>
     <div class="sec-h"><h3>Разбор примера</h3></div>
@@ -3417,6 +3453,109 @@ $('#learnBox').addEventListener('click', e => {
     setTimeout(() => $('#lcheck')?.scrollIntoView({block: 'start'}), 50);
   };
 }
+
+
+/* ---------- «Урок с учителем»: живой урок один на один голосом ----------
+   Учитель (сервер class_turn) ведёт урок по шагам: разминка → объяснение маленькими порциями → задания → свободная практика → итог и домашка.
+   Говорит вслух (голос на устройстве, русский и английский), на «доске» — правило и примеры; ответ — голосом или текстом. */
+let CL = null, clRec = null;
+const CLASS_TOPICS = ['Present Perfect или Past Simple', 'Условные предложения (if)', 'Как отвечать на IELTS Speaking Part 1', 'Связки для эссе IELTS', 'Артикли a / an / the', 'Пассивный залог'];
+function openClass(topic, focus = ''){
+  if(!topic) return;
+  stopAudio();
+  CL = {topic, focus, hist: [], turn: null, busy: false, speaking: false, last: null};
+  let box = $('#class');
+  if(!box){ box = document.createElement('div'); box.id = 'class'; box.className = 'intro classroom'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Урок с учителем'); document.body.append(box); }
+  classRender(); classStep('');
+}
+function closeClass(){ if(clRec) try{ clRec.stop(); }catch{} stopAudio(); CL = null; const b = $('#class'); if(!b) return; b.classList.add('out'); setTimeout(() => b.remove(), RM ? 0 : 250); }
+function classRender(){
+  const box = $('#class'); if(!box || !CL) return;
+  const t = CL.turn, l = CL.last, done = t?.stage === 'done';
+  const verdict = l && l.verdict !== 'none' ? (l.verdict === 'correct' ? ['green', 'Верно'] : l.verdict === 'partly' ? ['orange', 'Почти'] : ['red', 'Есть ошибка']) : null;
+  box.innerHTML = `<div class="in-top clbar"><button class="in-skip pw-back" data-clclose>${svgI('<path d="M15 6l-6 6 6 6"/>')} Закончить</button><b class="cltopic">${esc(CL.topic)}</b><span></span></div>
+    <span class="bar clprog"><i style="width:${t?.progress || 2}%"></i></span>
+    <div class="in-body clbody">
+      <div class="clteacher${CL.speaking ? ' talk' : ''}"><span class="clava">${miniBunny(LOOK.char, LOOK.color, 'gradcap', 'scarf', 'round')}</span>
+        <div class="clsay">${t ? `${esc(t.say).replace(/\n/g, '<br>')}<button class="clreplay" data-clreplay aria-label="Повторить вслух">${SAY_I}</button>` : '<span class="cldots"><i></i><i></i><i></i></span> Учитель готовится к уроку…'}</div></div>
+      ${verdict && l.fix ? `<div class="clfix ${verdict[0]}"><b>${verdict[1]}</b>${l.heard ? `<small>Ты сказал: «${esc(l.heard)}»</small>` : ''}<span>Правильно: <i>${esc(l.fix)}</i></span><button class="wpsay sm" data-clsayfix aria-label="Послушать">${SAY_I}</button></div>`
+        : verdict ? `<div class="clfix ${verdict[0]}"><b>${verdict[1]}</b>${l.heard ? `<small>Ты сказал: «${esc(l.heard)}»</small>` : ''}</div>` : ''}
+      ${t?.board_title || t?.board_points?.length ? `<div class="clboard"><span class="clbt">${svgI('<rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>')} Доска</span>
+        ${t.board_title ? `<h4>${esc(t.board_title)}</h4>` : ''}${(t.board_points || []).map(p => `<p>${esc(p)}</p>`).join('')}
+        ${(t.board_examples || []).map(e => `<div class="clex"><span>${esc(e.en)}</span><button class="wpsay sm" data-clsay="${esc(e.en)}" aria-label="Послушать">${SAY_I}</button><small>${esc(e.ru)}</small></div>`).join('')}</div>` : ''}
+      ${t?.task && !done ? `<div class="cltask"><span class="eyebrow">Твоё задание</span><p>${esc(t.task)}</p></div>` : ''}
+      ${done ? `<div class="card lres"><b class="big">Урок окончен</b><p>Отличная работа! Повтори правило с доски завтра — так оно закрепится.</p><div class="wbtns"><button class="btn" data-clclose>Готово</button><button class="btn line" data-clnew>Другая тема</button></div></div>` : ''}
+    </div>
+    ${t && !done ? `<div class="clans">
+      <div class="clquick"><button class="chip" data-clq="Я не понял, объясни, пожалуйста, по-другому и проще.">Не понял</button><button class="chip" data-clq="Дай, пожалуйста, ещё один пример.">Ещё пример</button><button class="chip" data-clq="Давай следующее задание.">Дальше</button></div>
+      <form class="tcomp clcomp" id="clform"><button type="button" class="clmic${clRec ? ' rec' : ''}" data-clmic aria-label="${clRec ? 'Остановить и отправить' : 'Ответить голосом'}">${clRec ? svgI('<rect x="7" y="7" width="10" height="10" rx="2"/>') : MIC_I}</button>
+        <textarea id="clin" rows="1" placeholder="${CL.busy ? 'Учитель думает…' : clRec ? 'Говори… потом ■' : 'Твой ответ…'}" ${CL.busy ? 'disabled' : ''}></textarea>
+        <button class="tsend" aria-label="Отправить" ${CL.busy ? 'disabled' : ''}>${svgI('<path d="M5 12h14M13 6l6 6-6 6"/>')}</button></form></div>` : ''}`;
+  const f = $('#clform');
+  if(f){ const tin = $('#clin');
+    tin.oninput = () => { tin.style.height = 'auto'; tin.style.height = Math.min(120, tin.scrollHeight) + 'px'; };
+    tin.onkeydown = e => { if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); f.requestSubmit(); } };
+    f.onsubmit = e => { e.preventDefault(); const v = tin.value.trim(); if(v && !CL.busy) classStep(v); }; }
+  box.querySelector('.clbody')?.scrollTo({top: 0});
+}
+async function classStep(answer, audio){
+  const cl = CL; if(!cl || cl.busy) return;
+  cl.busy = true; stopAudio(); cl.speaking = false; classRender();
+  const body = {topic: cl.topic, focus: cl.focus, history: cl.hist, lastTask: cl.turn?.task || ''};
+  if(audio) Object.assign(body, audio); else body.answer = answer;
+  let j = await Promise.race([api('class_turn', body).catch(() => ({})), sleep(40000).then(() => ({error: 'timeout'}))]);
+  if(CL !== cl) return;
+  cl.busy = false;
+  if(!j.turn){
+    notify(j.error === 'empty' ? 'Не расслышал — скажи ещё раз или напиши' : 'Учитель не ответил — попробуй ещё раз через минуту');
+    if(!cl.turn) cl.turn = {say: 'Не получилось начать урок. Нажми «Закончить» и попробуй ещё раз через минуту.', stage: 'done', progress: 0};
+    return classRender();
+  }
+  const said = audio ? j.heard : answer;
+  if(said) cl.hist.push({role: 'learner', text: said});
+  const t = j.turn;
+  cl.hist.push({role: 'teacher', text: JSON.stringify({say: t.say, task: t.task, stage: t.stage})});
+  cl.last = said ? {verdict: t.verdict, fix: t.fix, heard: audio ? said : ''} : null;
+  cl.turn = t; classRender(); classSpeak();
+  if(t.verdict === 'correct') sfx('happy'); else if(t.verdict === 'wrong') sfx('oops');
+}
+async function classSpeak(){
+  const cl = CL; if(!cl?.turn) return;
+  unlock(); cl.speaking = true; $('#class .clteacher')?.classList.add('talk');
+  await sayText(cl.turn.say, 'en').catch(() => {});
+  if(CL === cl){ cl.speaking = false; $('#class .clteacher')?.classList.remove('talk'); }
+}
+async function classMic(){
+  if(clRec){ clRec.stop(); return; }
+  stopAudio();
+  let stream; try{ stream = await navigator.mediaDevices.getUserMedia({audio: true}); }catch{ notify('Нет доступа к микрофону — можно написать ответ'); return; }
+  const mime = ['audio/webm;codecs=opus', 'audio/mp4', 'audio/webm', 'audio/ogg'].find(m => window.MediaRecorder?.isTypeSupported?.(m)) || '';
+  const rec = new MediaRecorder(stream, mime ? {mimeType: mime} : undefined), parts = [];
+  rec.ondataavailable = e => { if(e.data.size) parts.push(e.data); };
+  rec.onstop = async () => {
+    stream.getTracks().forEach(t => t.stop()); clearTimeout(rec.t); clRec = null;
+    const blob = new Blob(parts, {type: rec.mimeType || 'audio/webm'});
+    if(blob.size < 1500){ classRender(); return notify('Слишком коротко — скажи ещё раз'); }
+    const b64 = await new Promise(res => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1] || ''); r.readAsDataURL(blob); });
+    classStep('', {audio: b64, mime: blob.type});
+  };
+  rec.start(250); clRec = rec; rec.t = setTimeout(() => rec.state === 'recording' && rec.stop(), 120000);
+  classRender();
+}
+document.addEventListener('click', e => {
+  const t = e.target;
+  if(t.closest('[data-classgo]')){ unlock(); const inp = $('#classTopic'); const v = (inp?.value || '').trim() || t.closest('[data-classgo]').dataset.classgo; if(v) openClass(v); return; }
+  const ct = t.closest('[data-classtopic]'); if(ct){ unlock(); return openClass(ct.dataset.classtopic); }
+  if(t.closest('[data-lclass]') && LS){ unlock(); return openClass(LS.k.name, LS.k.f || (LS.k.id.startsWith('g-') ? GRAMMAR_FOCUS : '')); }
+  if(!t.closest('#class')) return;
+  if(t.closest('[data-clclose]')) return closeClass();
+  if(t.closest('[data-clnew]')){ closeClass(); return tab('learn'); }
+  if(t.closest('[data-clreplay]')) return classSpeak();
+  const s = t.closest('[data-clsay]'); if(s) return sayWord(s.dataset.clsay);
+  if(t.closest('[data-clsayfix]') && CL?.last?.fix) return sayWord(CL.last.fix);
+  if(t.closest('[data-clmic]')){ unlock(); return classMic(); }
+  const q = t.closest('[data-clq]'); if(q && !CL?.busy) return classStep(q.dataset.clq);
+});
 </script>
 </body>
 </html>
