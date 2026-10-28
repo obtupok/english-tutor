@@ -2605,7 +2605,7 @@ function showLearn(){
       <button class="tfake" data-tnewchat><span>Спроси Yomi что угодно…</span><i>${svgI('<path d="M5 12h14M13 6l6 6-6 6"/>')}</i></button>
     </div>
     <div class="classcard"><div class="cch"><span class="ic violet">${svgI('<path d="M22 9L12 4 2 9l10 5 10-5z"/><path d="M6 11v5c3 2.5 9 2.5 12 0v-5"/>')}</span><span class="t"><b>Урок с учителем</b><small>Голосом, один на один: объяснит тему, спросит, исправит ошибки</small></span></div>
-      <div class="ccin"><input class="inp" id="classTopic" placeholder="Какую тему разобрать?" autocomplete="off"><button class="btn" data-classgo="">Начать</button></div>
+      <div class="ccin"><input class="inp" id="classTopic" placeholder="Тема (или пусто — урок дня)" autocomplete="off" enterkeyhint="go"><button class="btn" data-classgo="">Начать</button></div>
       <div class="tqs">${CLASS_TOPICS.slice(0, 4).map(x => `<button class="chip" data-classtopic="${x}">${x}</button>`).join('')}</div></div>
     <div class="card course"><div class="ch"><span class="eyebrow">Курс · день ${c.day}${p ? ' · по твоему плану' : ''}</span><span class="cn">${ts.length ? `${n} из ${ts.length}` : 'отдых'}</span></div>
       <span class="bar"><i style="width:${ts.length ? n / ts.length * 100 : 100}%"></i></span>
@@ -3468,6 +3468,14 @@ function openClass(topic, focus = ''){
   if(!box){ box = document.createElement('div'); box.id = 'class'; box.className = 'intro classroom'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Урок с учителем'); document.body.append(box); }
   classRender(); classStep('');
 }
+// «Начать»: своя тема из поля; пустое поле — тема сегодняшнего урока из курса
+function classGo(){
+  const v = ($('#classTopic')?.value || '').trim();
+  if(v) return openClass(v);
+  const k = SKILLS.find(x => x.id === course().lesson) || nextLesson();
+  openClass(k.name, k.f || (k.id.startsWith('g-') ? GRAMMAR_FOCUS : ''));
+}
+document.addEventListener('keydown', e => { if(e.target?.id === 'classTopic' && e.key === 'Enter'){ e.preventDefault(); unlock(); classGo(); } });
 function closeClass(){ if(clRec) try{ clRec.stop(); }catch{} stopAudio(); CL = null; const b = $('#class'); if(!b) return; b.classList.add('out'); setTimeout(() => b.remove(), RM ? 0 : 250); }
 function classRender(){
   const box = $('#class'); if(!box || !CL) return;
@@ -3544,7 +3552,7 @@ async function classMic(){
 }
 document.addEventListener('click', e => {
   const t = e.target;
-  if(t.closest('[data-classgo]')){ unlock(); const inp = $('#classTopic'); const v = (inp?.value || '').trim() || t.closest('[data-classgo]').dataset.classgo; if(v) openClass(v); return; }
+  if(t.closest('[data-classgo]')){ unlock(); return classGo(); }
   const ct = t.closest('[data-classtopic]'); if(ct){ unlock(); return openClass(ct.dataset.classtopic); }
   if(t.closest('[data-lclass]') && LS){ unlock(); return openClass(LS.k.name, LS.k.f || (LS.k.id.startsWith('g-') ? GRAMMAR_FOCUS : '')); }
   if(!t.closest('#class')) return;
