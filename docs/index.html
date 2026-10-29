@@ -866,6 +866,28 @@ nav button{font-size:11px!important}
 .cgo{width:100%;min-height:52px;background:#5B4B9A;margin-bottom:10px;white-space:normal;line-height:1.25}
 .ccin .inp{min-height:44px}
 .tbadge{white-space:nowrap}.cgo{margin-bottom:4px}.ctopic{font-size:13px;color:var(--muted);margin:0 2px 12px;line-height:1.4}.ctopic b{color:var(--fg-2)}
+/* урок по плану */
+.clprep{align-items:center;text-align:center;justify-content:center}.clava.big{width:120px;height:120px;margin:10px auto 6px}.clava.big .buddy.mini{--bsize:110px!important}
+.clprepl{list-style:none;padding:0;margin:8px auto 10px;display:grid;gap:8px;text-align:left;max-width:300px}
+.clprepl li{display:flex;gap:10px;align-items:center;font-weight:600;color:var(--fg-2);opacity:0;animation:pop-in .5s var(--ease) forwards}
+.clprepl li::before{content:"";width:10px;height:10px;border-radius:50%;background:#5B4B9A;flex:none;animation:blink 1.2s infinite}
+.clprepl li:nth-child(1){animation-delay:.2s}.clprepl li:nth-child(2){animation-delay:2s}.clprepl li:nth-child(3){animation-delay:5s}.clprepl li:nth-child(4){animation-delay:10s}
+.clprogw{display:flex;flex-direction:column;gap:4px;margin-bottom:6px}.clprogw small{color:var(--muted);font-size:12px;font-weight:700}
+.clplanbtn{color:#5B4B9A}
+.clgoal{background:#EEEAF8;border-radius:14px;padding:10px 12px;font-size:14px;line-height:1.45}
+.clst{display:block;font-size:12px;font-weight:800;color:#5B4B9A;letter-spacing:.02em;margin-bottom:4px;text-transform:uppercase}
+.clava.sm{width:40px;height:40px}.clava.sm .buddy.mini{--bsize:36px!important}
+.clmex{margin-top:8px;padding-top:8px;border-top:1px dashed var(--border)}.clmex span{font-style:italic}.clmex small{display:block;color:var(--muted)}
+.clhint{margin:8px 0 0!important;font-weight:500!important;font-size:14px!important;color:var(--fg-2)}
+.clfsay{color:var(--fg)}
+.clnext{width:100%;min-height:52px;margin:6px 0 calc(12px + var(--safe-b));background:#5B4B9A}
+.clhw{background:var(--accent-bg);border-radius:12px;padding:10px 12px;margin:10px 0 12px;text-align:left}.clhw p{margin:4px 0 0;color:var(--fg)}
+.clplan{position:absolute;inset:0;z-index:5;background:rgba(22,23,27,.3);display:flex;align-items:flex-end}
+.clplin{width:100%;max-height:75%;overflow-y:auto;background:var(--card);border-radius:20px 20px 0 0;padding:16px 18px calc(18px + var(--safe-b))}
+.clplin b{font-size:17px}.clplin>p{color:var(--muted);font-size:14px;margin:4px 0 8px}
+.clplin ol{margin:0;padding-left:22px;display:grid;gap:8px}.clplin li{line-height:1.35}.clplin li small{display:block;color:var(--muted);font-size:11.5px;font-weight:700;text-transform:uppercase}
+.clplin li.ok{color:var(--muted);text-decoration:line-through}.clplin li.now{font-weight:800;color:#5B4B9A}
+.classroom{position:fixed}
 
 </style>
 </head>
@@ -3467,83 +3489,121 @@ $('#learnBox').addEventListener('click', e => {
 }
 
 
-/* ---------- «Урок с учителем»: живой урок один на один голосом ----------
-   Учитель (сервер class_turn) ведёт урок по шагам: разминка → объяснение маленькими порциями → задания → свободная практика → итог и домашка.
-   Говорит вслух (голос на устройстве, русский и английский), на «доске» — правило и примеры; ответ — голосом или текстом. */
+/* ---------- «Урок с учителем»: полноценный урок один на один голосом, строго по плану ----------
+   1) сервер составляет план урока (class_plan: цель, 11–14 шагов — разминка, объяснение частями с проверкой,
+      задания, разговор, итог, домашка; ключи к вопросам перепроверены);
+   2) урок идёт по шагам: учитель объясняет (голосом), на доске правило и примеры, вопрос;
+      ответ (голосом или текстом) сверяется с ключом (class_check): верно → дальше, ошибка → подсказка и вторая попытка,
+      вторая ошибка → разбор и дальше; «Не понял» / «Ещё пример» — тот же шаг иначе (class_more). */
 let CL = null, clRec = null;
 const CLASS_TOPICS = ['Present Perfect или Past Simple', 'Условные предложения (if)', 'Как отвечать на IELTS Speaking Part 1', 'Связки для эссе IELTS', 'Артикли a / an / the', 'Пассивный залог'];
-function openClass(topic, focus = ''){
-  if(!topic) return;
-  stopAudio();
-  CL = {topic, focus, hist: [], turn: null, busy: false, speaking: false, last: null};
-  let box = $('#class');
-  if(!box){ box = document.createElement('div'); box.id = 'class'; box.className = 'intro classroom'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Урок с учителем'); document.body.append(box); }
-  classRender(); classStep('');
-}
-// «Начать»: своя тема из поля; пустое поле — тема сегодняшнего урока из курса
+const CL_KIND = {warmup: 'Разминка', explain: 'Объяснение', check: 'Проверка', practice: 'Задание', speak: 'Разговор', summary: 'Итог'};
 function classGo(){
   const v = ($('#classTopic')?.value || '').trim();
   if(v) return openClass(v);
   const k = SKILLS.find(x => x.id === course().lesson) || nextLesson();
-  openClass(k.name, k.f || (k.id.startsWith('g-') ? GRAMMAR_FOCUS : ''));
+  openClass(k.name, k.f || (k.id.startsWith('g-') ? GRAMMAR_FOCUS : ''), k.id);
 }
 document.addEventListener('keydown', e => { if(e.target?.id === 'classTopic' && e.key === 'Enter'){ e.preventDefault(); unlock(); classGo(); } });
+async function openClass(topic, focus = '', skill = ''){
+  if(!topic) return;
+  stopAudio();
+  const cl = CL = {topic, focus, skill, plan: null, i: 0, attempt: 1, fb: null, more: null, busy: false, speaking: false, done: {}, board: null, hintOn: false};
+  let box = $('#class');
+  if(!box){ box = document.createElement('div'); box.id = 'class'; box.className = 'intro classroom'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Урок с учителем'); document.body.append(box); }
+  classRender();
+  const key = 'yomi_cplan_' + topic.toLowerCase().slice(0, 80);
+  let plan = store.get(key, null);
+  if(!plan?.steps?.length){
+    const j = await Promise.race([api('class_plan', {topic, focus}).catch(() => ({})), sleep(90000).then(() => ({}))]);
+    plan = j.plan;
+    if(plan?.steps?.length) store.set(key, plan);
+  }
+  if(CL !== cl) return;
+  if(!plan?.steps?.length){ cl.failed = true; return classRender(); }
+  cl.plan = plan; classStepShow();
+}
 function closeClass(){ if(clRec) try{ clRec.stop(); }catch{} stopAudio(); CL = null; const b = $('#class'); if(!b) return; b.classList.add('out'); setTimeout(() => b.remove(), RM ? 0 : 250); }
+const clStep = () => CL?.plan?.steps?.[CL.i];
+function classStepShow(){
+  const cl = CL, st = clStep(); if(!st) return;
+  cl.attempt = 1; cl.fb = null; cl.more = null; cl.hintOn = false;
+  if(st.board_points?.length || st.board_examples?.length) cl.board = {title: st.title, points: st.board_points || [], examples: st.board_examples || []};
+  classRender(); classSay(st.teach + (st.question && /[a-z]/i.test(st.question) && !st.teach.includes(st.question) ? ' ' + st.question : ''));
+}
+async function classSay(text){
+  const cl = CL; if(!cl || !text) return;
+  unlock(); cl.speaking = true; $('#class .clteacher')?.classList.add('talk');
+  await sayText(text, 'en').catch(() => {});
+  if(CL === cl){ cl.speaking = false; $('#class .clteacher')?.classList.remove('talk'); }
+}
 function classRender(){
   const box = $('#class'); if(!box || !CL) return;
-  const t = CL.turn, l = CL.last, done = t?.stage === 'done';
-  const verdict = l && l.verdict !== 'none' ? (l.verdict === 'correct' ? ['green', 'Верно'] : l.verdict === 'partly' ? ['orange', 'Почти'] : ['red', 'Есть ошибка']) : null;
-  box.innerHTML = `<div class="in-top clbar"><button class="in-skip pw-back" data-clclose>${svgI('<path d="M15 6l-6 6 6 6"/>')} Закончить</button><b class="cltopic">${esc(CL.topic)}</b><span></span></div>
-    <span class="bar clprog"><i style="width:${t?.progress || 2}%"></i></span>
+  const cl = CL, p = cl.plan, st = clStep(), n = p?.steps?.length || 0;
+  if(!p){
+    box.innerHTML = `<div class="in-top clbar"><button class="in-skip pw-back" data-clclose>${svgI('<path d="M15 6l-6 6 6 6"/>')} Закрыть</button><b class="cltopic">${esc(cl.topic)}</b><span></span></div>
+      <div class="in-body clbody clprep">${cl.failed ? `<div class="card lres"><p>Не получилось подготовить урок — попробуй ещё раз через минуту.</p><button class="btn" data-clretry>Попробовать ещё раз</button></div>`
+        : `<div class="clava big">${miniBunny(LOOK.char, LOOK.color, 'gradcap', 'scarf', 'round')}</div><h1>Учитель готовит урок</h1>
+        <ul class="clprepl"><li>Ставит цель урока</li><li>Делит тему на понятные части</li><li>Подбирает примеры и задания</li><li>Проверяет каждый ответ в ключах</li></ul><p class="in-lead">Это до 30 секунд — урок получится полноценным, как с живым учителем.</p>`}</div>`;
+    return;
+  }
+  const last = cl.i === n - 1, isQ = !!st.question?.trim(), fb = cl.fb, finished = cl.done[cl.i] || !isQ;
+  const vchip = fb ? (fb.verdict === 'correct' ? ['green', 'Верно'] : fb.verdict === 'partly' ? ['orange', 'Почти'] : ['red', 'Ошибка']) : null;
+  box.innerHTML = `<div class="in-top clbar"><button class="in-skip pw-back" data-clclose>${svgI('<path d="M15 6l-6 6 6 6"/>')} Выйти</button><b class="cltopic">${esc(p.title || cl.topic)}</b><button class="in-skip clplanbtn" data-clplan>План</button></div>
+    <div class="clprogw"><span class="bar clprog"><i style="width:${Math.round((cl.i + (finished ? 1 : 0)) / n * 100)}%"></i></span><small>Шаг ${cl.i + 1} из ${n} · ${CL_KIND[st.kind] || ''}</small></div>
     <div class="in-body clbody">
-      <div class="clteacher${CL.speaking ? ' talk' : ''}"><span class="clava">${miniBunny(LOOK.char, LOOK.color, 'gradcap', 'scarf', 'round')}</span>
-        <div class="clsay">${t ? `${esc(t.say).replace(/\n/g, '<br>')}<button class="clreplay" data-clreplay aria-label="Повторить вслух">${SAY_I}</button>` : '<span class="cldots"><i></i><i></i><i></i></span> Учитель готовится к уроку…'}</div></div>
-      ${verdict && l.fix ? `<div class="clfix ${verdict[0]}"><b>${verdict[1]}</b>${l.heard ? `<small>Ты сказал: «${esc(l.heard)}»</small>` : ''}<span>Правильно: <i>${esc(l.fix)}</i></span><button class="wpsay sm" data-clsayfix aria-label="Послушать">${SAY_I}</button></div>`
-        : verdict ? `<div class="clfix ${verdict[0]}"><b>${verdict[1]}</b>${l.heard ? `<small>Ты сказал: «${esc(l.heard)}»</small>` : ''}</div>` : ''}
-      ${t?.board_title || t?.board_points?.length ? `<div class="clboard"><span class="clbt">${svgI('<rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>')} Доска</span>
-        ${t.board_title ? `<h4>${esc(t.board_title)}</h4>` : ''}${(t.board_points || []).map(p => `<p>${esc(p)}</p>`).join('')}
-        ${(t.board_examples || []).map(e => `<div class="clex"><span>${esc(e.en)}</span><button class="wpsay sm" data-clsay="${esc(e.en)}" aria-label="Послушать">${SAY_I}</button><small>${esc(e.ru)}</small></div>`).join('')}</div>` : ''}
-      ${t?.task && !done ? `<div class="cltask"><span class="eyebrow">Твоё задание</span><p>${esc(t.task)}</p></div>` : ''}
-      ${done ? `<div class="card lres"><b class="big">Урок окончен</b><p>Отличная работа! Повтори правило с доски завтра — так оно закрепится.</p><div class="wbtns"><button class="btn" data-clclose>Готово</button><button class="btn line" data-clnew>Другая тема</button></div></div>` : ''}
+      ${cl.i === 0 && p.goal ? `<div class="clgoal"><b>Цель урока:</b> ${esc(p.goal)}</div>` : ''}
+      <div class="clteacher${cl.speaking ? ' talk' : ''}"><span class="clava">${miniBunny(LOOK.char, LOOK.color, 'gradcap', 'scarf', 'round')}</span>
+        <div class="clsay"><span class="clst">${esc(st.title)}</span>${esc(st.teach).replace(/\n/g, '<br>')}<button class="clreplay" data-clreplay aria-label="Повторить вслух">${SAY_I}</button></div></div>
+      ${cl.more ? `<div class="clteacher"><span class="clava sm">${miniBunny(LOOK.char, LOOK.color, 'gradcap')}</span><div class="clsay">${esc(cl.more.say)}${(cl.more.examples || []).map(e => `<div class="clmex"><span>${esc(e.en)}</span><button class="wpsay sm" data-clsay="${esc(e.en)}">${SAY_I}</button><small>${esc(e.ru)}</small></div>`).join('')}</div></div>` : ''}
+      ${cl.board ? `<div class="clboard"><span class="clbt">${svgI('<rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>')} Доска · ${esc(cl.board.title)}</span>
+        ${cl.board.points.map(x => `<p>${esc(x)}</p>`).join('')}
+        ${cl.board.examples.map(e => `<div class="clex"><span>${esc(e.en)}</span><button class="wpsay sm" data-clsay="${esc(e.en)}" aria-label="Послушать">${SAY_I}</button><small>${esc(e.ru)}</small></div>`).join('')}</div>` : ''}
+      ${isQ ? `<div class="cltask"><span class="eyebrow">${st.kind === 'warmup' || st.kind === 'speak' ? 'Ответь учителю' : 'Задание'}${cl.attempt > 1 && !cl.done[cl.i] ? ' · попытка 2' : ''}</span><p>${esc(st.question)}</p>
+        ${cl.hintOn && st.hint ? `<p class="clhint">💡 ${esc(st.hint)}</p>` : ''}</div>` : ''}
+      ${fb ? `<div class="clfix ${vchip[0]}"><b>${vchip[1]}</b>${fb.heard ? `<small>Ты ответил: «${esc(fb.heard)}»</small>` : ''}<span class="clfsay">${esc(fb.say)}</span>${fb.fix ? `<span>Правильно: <i>${esc(fb.fix)}</i> <button class="wpsay sm" data-clsay="${esc(fb.fix)}">${SAY_I}</button></span>` : ''}</div>` : ''}
+      ${last && finished ? `<div class="card lres clend"><b class="big">Урок пройден</b><p>${esc(p.goal || '')}</p>${p.homework ? `<div class="clhw"><span class="eyebrow">Домашнее задание</span><p>${esc(p.homework)}</p></div>` : ''}<div class="wbtns"><button class="btn" data-clfinish>Закончить урок</button></div></div>` : ''}
     </div>
-    ${t && !done ? `<div class="clans">
-      <div class="clquick"><button class="chip" data-clq="Я не понял, объясни, пожалуйста, по-другому и проще.">Не понял</button><button class="chip" data-clq="Дай, пожалуйста, ещё один пример.">Ещё пример</button><button class="chip" data-clq="Давай следующее задание.">Дальше</button></div>
-      <form class="tcomp clcomp" id="clform"><button type="button" class="clmic${clRec ? ' rec' : ''}" data-clmic aria-label="${clRec ? 'Остановить и отправить' : 'Ответить голосом'}">${clRec ? svgI('<rect x="7" y="7" width="10" height="10" rx="2"/>') : MIC_I}</button>
-        <textarea id="clin" rows="1" placeholder="${CL.busy ? 'Учитель думает…' : clRec ? 'Говори… потом ■' : 'Твой ответ…'}" ${CL.busy ? 'disabled' : ''}></textarea>
-        <button class="tsend" aria-label="Отправить" ${CL.busy ? 'disabled' : ''}>${svgI('<path d="M5 12h14M13 6l6 6-6 6"/>')}</button></form></div>` : ''}`;
+    <div class="clans">
+      ${isQ && !cl.done[cl.i] ? `<div class="clquick"><button class="chip" data-clmore="simpler">Не понял</button>${st.hint && !cl.hintOn ? '<button class="chip" data-clhint>Подсказка</button>' : ''}<button class="chip" data-clskip>Пропустить</button></div>
+        <form class="tcomp clcomp" id="clform"><button type="button" class="clmic${clRec ? ' rec' : ''}" data-clmic aria-label="${clRec ? 'Остановить и отправить' : 'Ответить голосом'}">${clRec ? svgI('<rect x="7" y="7" width="10" height="10" rx="2"/>') : MIC_I}</button>
+          <textarea id="clin" rows="1" placeholder="${cl.busy ? 'Учитель проверяет…' : clRec ? 'Говори… потом ■' : 'Твой ответ…'}" ${cl.busy ? 'disabled' : ''}></textarea>
+          <button class="tsend" aria-label="Отправить" ${cl.busy ? 'disabled' : ''}>${svgI('<path d="M5 12h14M13 6l6 6-6 6"/>')}</button></form>`
+      : !(last && finished) ? `<div class="clquick">${!isQ ? `<button class="chip" data-clmore="simpler">Не понял</button><button class="chip" data-clmore="example">Ещё пример</button>` : ''}</div><button class="btn clnext" data-clnext ${cl.busy ? 'disabled' : ''}>${isQ ? 'Дальше' : 'Понятно, дальше'} →</button>` : ''}
+    </div>`;
   const f = $('#clform');
   if(f){ const tin = $('#clin');
     tin.oninput = () => { tin.style.height = 'auto'; tin.style.height = Math.min(120, tin.scrollHeight) + 'px'; };
     tin.onkeydown = e => { if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); f.requestSubmit(); } };
-    f.onsubmit = e => { e.preventDefault(); const v = tin.value.trim(); if(v && !CL.busy) classStep(v); }; }
-  box.querySelector('.clbody')?.scrollTo({top: 0});
+    f.onsubmit = e => { e.preventDefault(); const v = tin.value.trim(); if(v && !cl.busy) classAnswer(v); }; }
+  const bd = box.querySelector('.clbody'); if(bd && (fb || cl.more)) bd.scrollTop = bd.scrollHeight;
 }
-async function classStep(answer, audio){
-  const cl = CL; if(!cl || cl.busy) return;
-  cl.busy = true; stopAudio(); cl.speaking = false; classRender();
-  const body = {topic: cl.topic, focus: cl.focus, history: cl.hist, lastTask: cl.turn?.task || ''};
+async function classAnswer(answer, audio){
+  const cl = CL, st = clStep(); if(!cl || cl.busy || !st) return;
+  cl.busy = true; stopAudio(); classRender();
+  const body = {topic: cl.plan.title || cl.topic, step: {kind: st.kind, title: st.title, question: st.question, expected: st.expected, accept: st.accept}, attempt: cl.attempt};
   if(audio) Object.assign(body, audio); else body.answer = answer;
-  let j = await Promise.race([api('class_turn', body).catch(() => ({})), sleep(40000).then(() => ({error: 'timeout'}))]);
+  const j = await Promise.race([api('class_check', body).catch(() => ({})), sleep(30000).then(() => ({}))]);
   if(CL !== cl) return;
   cl.busy = false;
-  if(!j.turn){
-    notify(j.error === 'empty' ? 'Не расслышал — скажи ещё раз или напиши' : 'Учитель не ответил — попробуй ещё раз через минуту');
-    if(!cl.turn) cl.turn = {say: 'Не получилось начать урок. Нажми «Закончить» и попробуй ещё раз через минуту.', stage: 'done', progress: 0};
-    return classRender();
-  }
-  const said = audio ? j.heard : answer;
-  if(said) cl.hist.push({role: 'learner', text: said});
-  const t = j.turn;
-  cl.hist.push({role: 'teacher', text: JSON.stringify({say: t.say, task: t.task, stage: t.stage})});
-  cl.last = said ? {verdict: t.verdict, fix: t.fix, heard: audio ? said : ''} : null;
-  cl.turn = t; classRender(); classSpeak();
-  if(t.verdict === 'correct') sfx('happy'); else if(t.verdict === 'wrong') sfx('oops');
+  if(!j.check){ notify(j.error === 'empty' ? 'Не расслышал — скажи ещё раз или напиши' : 'Учитель не ответил — отправь ещё раз'); return classRender(); }
+  const c = j.check; cl.fb = {...c, heard: audio ? j.heard : ''};
+  if(c.verdict === 'correct' || cl.attempt >= 2){ cl.done[cl.i] = true; if(c.verdict === 'correct') sfx('happy'); }
+  else { cl.attempt++; cl.hintOn = true; sfx('oops'); }
+  classRender(); classSay(c.say);
 }
-async function classSpeak(){
-  const cl = CL; if(!cl?.turn) return;
-  unlock(); cl.speaking = true; $('#class .clteacher')?.classList.add('talk');
-  await sayText(cl.turn.say, 'en').catch(() => {});
-  if(CL === cl){ cl.speaking = false; $('#class .clteacher')?.classList.remove('talk'); }
+function classNext(){
+  const cl = CL; if(!cl?.plan) return;
+  if(cl.i < cl.plan.steps.length - 1){ cl.i++; classStepShow(); $('#class .clbody')?.scrollTo({top: 0}); }
+}
+async function classMore(mode){
+  const cl = CL, st = clStep(); if(!cl || cl.busy || !st) return;
+  cl.busy = true; stopAudio(); classRender();
+  const j = await Promise.race([api('class_more', {topic: cl.plan.title || cl.topic, step: {title: st.title, teach: st.teach, question: st.question}, mode}).catch(() => ({})), sleep(30000).then(() => ({}))]);
+  if(CL !== cl) return;
+  cl.busy = false;
+  if(!j.say){ notify('Не получилось — попробуй ещё раз'); return classRender(); }
+  cl.more = j; classRender(); classSay(j.say);
 }
 async function classMic(){
   if(clRec){ clRec.stop(); return; }
@@ -3557,24 +3617,39 @@ async function classMic(){
     const blob = new Blob(parts, {type: rec.mimeType || 'audio/webm'});
     if(blob.size < 1500){ classRender(); return notify('Слишком коротко — скажи ещё раз'); }
     const b64 = await new Promise(res => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1] || ''); r.readAsDataURL(blob); });
-    classStep('', {audio: b64, mime: blob.type});
+    classAnswer('', {audio: b64, mime: blob.type});
   };
   rec.start(250); clRec = rec; rec.t = setTimeout(() => rec.state === 'recording' && rec.stop(), 120000);
   classRender();
+}
+function classPlanSheet(){
+  const cl = CL; if(!cl?.plan) return;
+  const box = $('#class'); let pl = box.querySelector('.clplan');
+  if(pl){ pl.remove(); return; }
+  box.insertAdjacentHTML('beforeend', `<div class="clplan" data-clplanclose><div class="clplin"><b>План урока</b>${cl.plan.goal ? `<p>${esc(cl.plan.goal)}</p>` : ''}<ol>${cl.plan.steps.map((s, i) => `<li class="${i < cl.i || cl.done[i] ? 'ok' : i === cl.i ? 'now' : ''}"><small>${CL_KIND[s.kind] || ''}</small>${esc(s.title)}</li>`).join('')}</ol></div></div>`);
 }
 document.addEventListener('click', e => {
   const t = e.target;
   if(t.closest('[data-classgo]')){ unlock(); return classGo(); }
   const ct = t.closest('[data-classtopic]'); if(ct){ unlock(); return openClass(ct.dataset.classtopic); }
-  if(t.closest('[data-lclass]') && LS){ unlock(); return openClass(LS.k.name, LS.k.f || (LS.k.id.startsWith('g-') ? GRAMMAR_FOCUS : '')); }
+  if(t.closest('[data-lclass]') && LS){ unlock(); return openClass(LS.k.name, LS.k.f || (LS.k.id.startsWith('g-') ? GRAMMAR_FOCUS : ''), LS.k.id); }
   if(!t.closest('#class')) return;
   if(t.closest('[data-clclose]')) return closeClass();
-  if(t.closest('[data-clnew]')){ closeClass(); return tab('learn'); }
-  if(t.closest('[data-clreplay]')) return classSpeak();
+  if(t.closest('[data-clplanclose]') && !t.closest('.clplin')) return classPlanSheet();
+  if(t.closest('[data-clplan]')) return classPlanSheet();
+  if(t.closest('[data-clretry]')){ const {topic, focus, skill} = CL; return openClass(topic, focus, skill); }
+  if(t.closest('[data-clreplay]')){ const st = clStep(); return classSay(st?.teach); }
   const s = t.closest('[data-clsay]'); if(s) return sayWord(s.dataset.clsay);
-  if(t.closest('[data-clsayfix]') && CL?.last?.fix) return sayWord(CL.last.fix);
   if(t.closest('[data-clmic]')){ unlock(); return classMic(); }
-  const q = t.closest('[data-clq]'); if(q && !CL?.busy) return classStep(q.dataset.clq);
+  const m = t.closest('[data-clmore]'); if(m) return classMore(m.dataset.clmore);
+  if(t.closest('[data-clhint]')){ CL.hintOn = true; return classRender(); }
+  if(t.closest('[data-clskip]')){ CL.done[CL.i] = true; CL.fb = {verdict: 'partly', say: 'Пропустили. Правильный ответ — ниже.', fix: clStep().expected || ''}; return classRender(); }
+  if(t.closest('[data-clnext]')) return classNext();
+  if(t.closest('[data-clfinish]')){
+    const cl = CL, qs = cl.plan.steps.map((x, i) => [x, i]).filter(([x]) => x.question && x.kind !== 'warmup');
+    if(cl.skill) api('lesson_done', {skill: cl.skill, score: qs.filter(([, i]) => cl.done[i]).length, total: qs.length, words: [], name: cl.plan.title}).then(j => { if(j.lessons) S.stats = {...(S.stats || {}), lessons: j.lessons}; }).catch(() => {});
+    notify('Урок пройден! Не забудь домашнее задание'); return closeClass();
+  }
 });
 </script>
 </body>
