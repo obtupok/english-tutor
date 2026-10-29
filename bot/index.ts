@@ -1477,6 +1477,73 @@ ${reply}` }] }),
       await admin.from('english_words').upsert({ key: word.toLowerCase(), word, translation, example: String(b.example || '').slice(0, 300) }, { onConflict: 'key', ignoreDuplicates: true });
       return json({ ok: true });
     }
+    // урок с учителем: сначала полный план урока (как у учителя), потом урок идёт строго по нему
+    case 'class_plan': {
+      const topic = String(b.topic || '').slice(0, 160), focus = String(b.focus || '').slice(0, 700);
+      if (!topic) return json({ error: 'bad' }, 400);
+      const EX = { type: 'array', items: { type: 'object', additionalProperties: false, required: ['en', 'ru'], properties: { en: { type: 'string' }, ru: { type: 'string' } } } };
+      const STEP = { type: 'object', additionalProperties: false, required: ['kind', 'title', 'teach', 'board_points', 'board_examples', 'question', 'expected', 'accept', 'hint'], properties: {
+        kind: { type: 'string', enum: ['warmup', 'explain', 'check', 'practice', 'speak', 'summary'] }, title: { type: 'string' }, teach: { type: 'string' },
+        board_points: { type: 'array', items: { type: 'string' } }, board_examples: EX,
+        question: { type: 'string' }, expected: { type: 'string' }, accept: { type: 'string' }, hint: { type: 'string' } } };
+      const P_SCHEMA = { type: 'object', additionalProperties: false, required: ['title', 'goal', 'steps', 'homework'], properties: {
+        title: { type: 'string' }, goal: { type: 'string' }, steps: { type: 'array', items: STEP }, homework: { type: 'string' } } };
+      const sys = `You are an expert English teacher who prepares a complete one-on-one lesson for a learner preparing for IELTS / the Digital SAT (English level about ${owner.level || 'B1'}). The lesson is taught by voice. All teacher speech, titles, goals, hints and acceptance criteria are in Russian (address the learner as "ты"); English examples, questions and expected answers are in English. Be accurate — double-check every rule, example and expected answer. Exam facts: Digital SAT = Reading and Writing (54 q, 64 min) + Math (44 q, 70 min, calculator allowed), 400–1600; IELTS bands 0–9 in 0.5 steps. Return JSON only.`;
+      const out = await askJsonGroq(sys, `Plan a full ~20-minute lesson on: "${topic}".${focus ? ` Key facts — follow them exactly: ${focus}.` : ''}
+"title": lesson title in Russian. "goal": what the learner will be able to do after the lesson (1 sentence).
+"steps": 11–14 steps in this order:
+1) warmup — "teach": greet, say what we learn today and why it matters for the exam (2–3 sentences); "question": one easy personal question in English; "expected": ""; "accept": "любой осмысленный ответ".
+2) 3–4 × explain — "teach": one clear piece of the topic in 3–6 spoken sentences (rule → when to use → 1–2 English examples inside the speech), like a good teacher talking; "board_points": 1–3 short lines for the board (Russian with English formulas); "board_examples": 1–3 en/ru pairs; "question": "" (no question).
+   Each explain step is followed by 1 × check — "teach": short lead-in (1 sentence); "question": a quick check that the learner understood exactly that piece (they must produce an answer — complete/transform/choose the form and say why); "expected": the correct answer; "accept": what counts as correct; "hint": a hint for a second try.
+3) 3–4 × practice — tasks from easier to harder: transform sentences, correct a mistake, make your own sentence, answer an exam-style question using the topic. Always "expected" (a model answer or key) and "accept" (criteria — allow any correct variant).
+4) 1–2 × speak — personal questions where the learner must use the topic in their own words; "expected": a model answer; "accept": criteria.
+5) summary — "teach": recap of the 2–3 key points and praise; "board_points": the key rules; "question": "".
+"homework": one concrete homework task in Russian (with English example if needed).
+Keep "board_points" and "board_examples" filled for explain and summary steps; for other steps they may repeat the current rule.`, P_SCHEMA, 'high', 14000);
+      if (!out?.steps?.length) return json({ error: 'failed' }, 502);
+      // второй взгляд: правила и ключи к вопросам — заново и строго; исправляем то, что неверно
+      const qs = out.steps.map((st: any, i: number) => ({ i, kind: st.kind, teach: st.teach, question: st.question, expected: st.expected })).filter((x: any) => x.kind !== 'warmup');
+      const V_SCHEMA = { type: 'object', additionalProperties: false, required: ['fixes'], properties: { fixes: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['i', 'teach', 'expected'], properties: { i: { type: 'integer' }, teach: { type: 'string' }, expected: { type: 'string' } } } } } };
+      const ver = await askJsonGroq(`You are a strict expert editor of English lessons. Return JSON only.`,
+        `Lesson topic: "${topic}".${focus ? ` Key facts: ${focus}.` : ''} Check every step below: is the explanation ("teach") correct, and is "expected" a correct answer to "question"? Return in "fixes" only the steps that need a correction, with the corrected "teach" (same language and style, Russian) and corrected "expected". If everything is correct, return an empty list.\n${JSON.stringify(qs)}`, V_SCHEMA, 'high', 10000);
+      for (const f of ver?.fixes || []) { const st = out.steps[f.i]; if (!st) continue; if (f.teach?.trim()) st.teach = f.teach; if (f.expected?.trim() && st.question) st.expected = f.expected; }
+      out.steps = out.steps.slice(0, 16);
+      return json({ plan: out });
+    }
+    // сверка ответа ученика с ключом шага: оценка, короткая реакция учителя, исправление
+    case 'class_check': {
+      const st = b.step || {}, attempt = Math.max(1, Number(b.attempt) || 1);
+      let answer = String(b.answer || '').slice(0, 2000), heard = '';
+      if (b.audio) {
+        const mime = String(b.mime || 'audio/webm'), ext = /mp4|m4a|aac/.test(mime) ? 'm4a' : /ogg/.test(mime) ? 'ogg' : /wav/.test(mime) ? 'wav' : 'webm';
+        answer = heard = await transcribe(new Blob([Uint8Array.from(atob(String(b.audio)), (c) => c.charCodeAt(0))], { type: mime }), 'answer.' + ext, 'en', String(st.question || ''));
+        if (!answer.trim()) return json({ error: 'empty', heard: '' }, 400);
+      }
+      const K_SCHEMA = { type: 'object', additionalProperties: false, required: ['verdict', 'say', 'fix'], properties: {
+        verdict: { type: 'string', enum: ['correct', 'partly', 'wrong'] }, say: { type: 'string' }, fix: { type: 'string' } } };
+      const out = await askJsonGroq(`You are a kind but precise English teacher checking one answer in a live one-on-one lesson. Speak Russian to the learner ("ты"); English only for quotes and corrections. Return JSON only.`,
+        `Lesson topic: "${String(b.topic || '').slice(0, 160)}". Step: ${String(st.title || '')} (${String(st.kind || '')}).
+Question: ${String(st.question || '').slice(0, 600)}
+Expected / model answer: ${String(st.expected || '').slice(0, 600)}
+What counts as correct: ${String(st.accept || 'правильный по смыслу и грамматике ответ').slice(0, 400)}
+Learner's answer${b.audio ? ' (speech transcript — ignore punctuation, capitals and small slips of speech)' : ''} (attempt ${attempt}): «${answer}»
+- "verdict": correct (meets the criteria; accept other correct variants, not only the model answer), partly (right idea but a language mistake), wrong.
+- "say": 1–3 short spoken sentences in Russian. Correct → praise specifically (what exactly was good). Partly/wrong → say exactly what is wrong and why${attempt >= 2 ? ', then give the correct answer' : ', then give a hint (not the full answer) and ask to try again'}.
+- "fix": the learner's answer corrected in English (keep their idea) when partly/wrong, else "".`, K_SCHEMA, 'medium', 3000);
+      if (!out?.say) return json({ error: 'failed', heard }, 502);
+      return json({ check: out, heard: heard || answer });
+    }
+    // «Не понял» / «Ещё пример»: тот же шаг другими словами
+    case 'class_more': {
+      const st = b.step || {}, mode = b.mode === 'example' ? 'example' : 'simpler';
+      const M_SCHEMA = { type: 'object', additionalProperties: false, required: ['say', 'examples'], properties: { say: { type: 'string' },
+        examples: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['en', 'ru'], properties: { en: { type: 'string' }, ru: { type: 'string' } } } } } };
+      const out = await askJsonGroq(`You are a patient English teacher in a live one-on-one lesson. Speak Russian ("ты"); English examples in English. Be accurate. Return JSON only.`,
+        `Lesson topic: "${String(b.topic || '').slice(0, 160)}". Current step: ${String(st.title || '')}. What was explained: ${String(st.teach || '').slice(0, 1200)}${st.question ? `\nCurrent question: ${String(st.question).slice(0, 400)}` : ''}
+${mode === 'simpler' ? 'The learner did not understand. Explain the same idea again in a different, simpler way (everyday analogy, step by step), 3–5 spoken sentences, and give 2 new very simple examples.' : 'Give 2–3 more clear examples for this idea with a one-sentence comment in Russian.'}
+"say": what you say aloud; "examples": the examples (en + ru).`, M_SCHEMA, 'medium', 3000);
+      return out?.say ? json(out) : json({ error: 'failed' }, 502);
+    }
     // урок с учителем: ход учителя (сайт хранит историю урока и присылает её целиком; ответ ученика — текстом или голосом)
     case 'class_turn': {
       const topic = String(b.topic || '').slice(0, 160), focus = String(b.focus || '').slice(0, 700);
