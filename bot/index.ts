@@ -1488,7 +1488,7 @@ ${reply}` }] }),
         question: { type: 'string' }, expected: { type: 'string' }, accept: { type: 'string' }, hint: { type: 'string' } } };
       const P_SCHEMA = { type: 'object', additionalProperties: false, required: ['title', 'goal', 'steps', 'homework'], properties: {
         title: { type: 'string' }, goal: { type: 'string' }, steps: { type: 'array', items: STEP }, homework: { type: 'string' } } };
-      const sys = `You are an expert English teacher who prepares a complete one-on-one lesson for a learner preparing for IELTS / the Digital SAT (English level about ${owner.level || 'B1'}). The lesson is taught by voice. All teacher speech, titles, goals, hints and acceptance criteria are in Russian (address the learner as "ты"); English examples, questions and expected answers are in English. Be accurate — double-check every rule, example and expected answer. Exam facts: Digital SAT = Reading and Writing (54 q, 64 min) + Math (44 q, 70 min, calculator allowed), 400–1600; IELTS bands 0–9 in 0.5 steps. Return JSON only.`;
+      const sys = `You are an expert English teacher who prepares a complete one-on-one lesson for a learner preparing for IELTS / the Digital SAT (English level about ${owner.level || 'B1'}). The lesson is taught by voice. All teacher speech, titles, goals, hints and acceptance criteria are in Russian (address the learner as "ты", gender-neutral: no «узнал(а)»-style forms — use present tense or «у тебя»); English examples, questions and expected answers are in English. Be accurate — double-check every rule, example and expected answer. Exam facts: Digital SAT = Reading and Writing (54 q, 64 min) + Math (44 q, 70 min, calculator allowed), 400–1600; IELTS bands 0–9 in 0.5 steps. Return JSON only.`;
       const out = await askJsonGroq(sys, `Plan a full ~20-minute lesson on: "${topic}".${focus ? ` Key facts — follow them exactly: ${focus}.` : ''}
 "title": lesson title in Russian. "goal": what the learner will be able to do after the lesson (1 sentence).
 "steps": 11–14 steps in this order:
@@ -1521,7 +1521,7 @@ Keep "board_points" and "board_examples" filled for explain and summary steps; f
       }
       const K_SCHEMA = { type: 'object', additionalProperties: false, required: ['verdict', 'say', 'fix'], properties: {
         verdict: { type: 'string', enum: ['correct', 'partly', 'wrong'] }, say: { type: 'string' }, fix: { type: 'string' } } };
-      const out = await askJsonGroq(`You are a kind but precise English teacher checking one answer in a live one-on-one lesson. Speak Russian to the learner ("ты"); English only for quotes and corrections. Return JSON only.`,
+      const out = await askJsonGroq(`You are a kind but precise English teacher checking one answer in a live one-on-one lesson. Speak Russian to the learner ("ты") in gender-neutral wording — never gendered past-tense forms like «заменила/заменил», say «у тебя получилось», «ты верно используешь» instead; English only for quotes and corrections. Return JSON only.`,
         `Lesson topic: "${String(b.topic || '').slice(0, 160)}". Step: ${String(st.title || '')} (${String(st.kind || '')}).
 Question: ${String(st.question || '').slice(0, 600)}
 Expected / model answer: ${String(st.expected || '').slice(0, 600)}
