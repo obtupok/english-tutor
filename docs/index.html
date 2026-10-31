@@ -3790,8 +3790,8 @@ function openProgress(){
   const lessons = Object.keys(x.lessons || {}).length, st = streak();
   const empty = !ie.length && !sat.length;
   xOpen(`<p class="eyebrow">YomiScore</p><h1>Мой прогресс</h1><p class="in-lead">Как растут баллы и сколько ты занимаешься.</p>
-    <div class="xstats"><div><b>${st}</b><span>${plural(st, 'день', 'дня', 'дней')} подряд</span></div><div><b>${days30}</b><span>дней с занятиями за месяц</span></div>
-      <div><b>${S.words || 0}</b><span>слов в карточках</span></div><div><b>${lessons}</b><span>уроков пройдено</span></div></div>
+    <div class="xstats"><div><b>${st}</b><span>${plural(st, 'день', 'дня', 'дней')} подряд</span></div><div><b>${days30}</b><span>${plural(days30, 'день', 'дня', 'дней')} с занятиями за месяц</span></div>
+      <div><b>${S.words || 0}</b><span>слов в карточках</span></div><div><b>${lessons}</b><span>${plural(lessons, 'урок пройден', 'урока пройдено', 'уроков пройдено')}</span></div></div>
     <div class="card xcard"><h3>Дни с занятиями по неделям</h3>${svgBars(weeks, weeks.map((_, k) => k === 7 ? 'эта' : `−${7 - k}`))}<p class="xnote">Сколько дней в неделю ты занимался(-ась). Лучше 5 дней по 30 минут, чем один день 3 часа.</p></div>
     ${ie.length ? `<div class="card xcard"><h3>IELTS · band</h3>${svgLines(ie, {min: Math.max(0, Math.floor(Math.min(...ie.flatMap(s => s.pts.map(p => p.v)), GOALS.ielts) - 1)), max: 9, goal: GOALS.ielts})}</div>` : ''}
     ${sat.length ? `<div class="card xcard"><h3>SAT · по секциям</h3>${svgLines(sat, {min: 200, max: 800, goal: GOALS.sat / 2})}<p class="xnote">Цель на секцию — половина общей цели (${GOALS.sat}).</p></div>` : ''}
