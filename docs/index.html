@@ -3370,10 +3370,12 @@ const teachPart = k => ({'ie-p1': '1', 'ie-p2': '2', 'ie-p3': '3'})[k.id] || '';
 const VERD = {great: ['green', 'Отлично'], good: ['green', 'Хорошо'], retry: ['orange', 'Давай ещё раз']};
 const MIC_I = svgI('<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>');
 let teachRec = null;
-function teachLoad(ls, avoid = []){
+function teachLoad(ls, avoid = [], again = true){
   const k = ls.k;
   return api('lesson_tasks', {exam: k.exam, name: k.name, focus: k.f || (k.id.startsWith('g-') ? GRAMMAR_FOCUS : ''), kind: teachKind(k), part: teachPart(k), n: 3, avoid})
-    .then(j => j.tasks || null).catch(() => null);
+    .then(j => j.tasks || null).catch(() => null)
+    // ИИ занят (лимит минуты) — один повтор через 4 с, чтобы человек не видел ошибку
+    .then(t => t || !again ? t : new Promise(r => setTimeout(r, 4000)).then(() => teachLoad(ls, avoid, false)));
 }
 function teachHtml(){
   const ls = LS, T = ls.teach, k = ls.k, kind = teachKind(k);
