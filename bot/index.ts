@@ -697,12 +697,14 @@ async function load(chat: number) {
 }
 // сохранение не стирает статистику, которую за это время записал другой запрос (план, уроки, экзамены): ключи из базы, которых нет у нас, остаются
 async function save(st: any) {
+  if (st.__dry) return;   // проверка без записи (тест): всё считается, но в статистику не попадает
   const { data: cur } = await admin.from('english_tutor').select('stats').eq('chat_id', st.chat_id).maybeSingle();
   st.stats = { ...(cur?.stats || {}), ...(st.stats || {}) };
   return admin.from('english_tutor').upsert({ ...st, history: st.history.slice(-HISTORY), updated_at: new Date().toISOString() });
 }
 // поменять только часть статистики в свежей строке (пока ИИ думал, другой запрос мог сохранить своё — не затираем это)
 async function patchStats(st: any, fn: (stats: any) => any) {
+  if (st.__dry) { st.stats = fn({ ...(st.stats || {}) }); return st.stats; }
   const fresh = await load(st.chat_id ?? OWNER);
   fresh.stats = fn({ ...(fresh.stats || {}) });
   await save(fresh);
@@ -1088,6 +1090,7 @@ async function web(req: Request) {
   const ok = (b.key && b.key === await webKey()) || (b.initData && await ownerInitData(String(b.initData)));
   if (!ok) return json({ error: 'auth' }, 401);
   const owner = await load(OWNER), voice = b.voice !== false;
+  if (b.dry === true) owner.__dry = true;
   // «Болтовня» (chat: 'talk') — отдельная строка состояния (chat_id = -OWNER) со своей историей; голос и статистика — общие
   const friend = b.chat === 'talk';
   const st = friend ? { ...(await load(-OWNER)), mode: 'friend' } : owner;
