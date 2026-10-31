@@ -344,8 +344,8 @@ const addMiss = (owner: any, keys: string[]) => keys.length ? patchStats(owner, 
   for (const k of keys) { const key = String(k).replace(/\s+/g, ' ').trim().slice(0, 90); if (key) m[key] = { n: (m[key]?.n || 0) + 1, at }; }
   return { ...x, miss: Object.fromEntries(Object.entries(m).sort((a: any, b: any) => b[1].at.localeCompare(a[1].at)).slice(0, 120)) };
 }) : null;
-// напоминание в Telegram: раз в час его вызывает расписание (pg_cron); пишет в выбранный час, если сегодня ещё не занимался
-const remindKey = async () => (await sha('english-tutor-remind:' + TOKEN)).slice(0, 32);
+// напоминание в Telegram: раз в час его вызывает расписание (pg_cron); пишет в выбранный час, если сегодня ещё не занимался.
+// Вызов без ключа безопасен: он может только отправить владельцу его же напоминание в выбранный час, не чаще раза в день.
 const WEEK_RU = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 async function remind(force = false) {
   const st = await load(OWNER), r = st.stats?.remind;
@@ -1837,7 +1837,6 @@ Group them into 3–7 recurring problems, most frequent first. "title": short na
       await patchStats(owner, (x) => ({ ...x, remind: r }));
       return json({ remind: r });
     }
-    case 'remind_key': return json({ key: await remindKey() });
     case 'mistakes': {
       const { data } = await admin.from('english_mistakes').select('*').order('at', { ascending: false }).limit(200);
       return json({ mistakes: data || [] });
@@ -1870,7 +1869,6 @@ Deno.serve(async (req) => {
   if (!TOKEN) return new Response(JSON.stringify({ error: 'TUTOR_BOT_TOKEN is not set' }), { status: 500 });
   if (req.method === 'GET' && u.searchParams.has('setup')) return new Response(JSON.stringify(await setup()), { headers: { 'Content-Type': 'application/json' } });
   if (u.searchParams.has('remind')) {
-    if (u.searchParams.get('remind') !== await remindKey()) return new Response('no', { status: 403 });
     return new Response(await remind().catch((e) => { console.error('remind', e); return 'error'; }));
   }
   if (req.method === 'POST' && u.searchParams.has('api')) {
