@@ -3942,7 +3942,7 @@ function listenHtml(){
       : `<button class="btn green xcheck" data-x="rcheck">${I.check} Проверить ответы</button>`}`;
 }
 async function openIListen(part = 0, onDone = null){
-  xOpen(xLoading('Готовлю запись и вопросы…', 'Сценарий, голоса и 10 вопросов — до 40 секунд'), 'IELTS Listening');
+  xOpen(xLoading('Готовлю запись и вопросы…', 'Сценарий, голоса и 10 вопросов — до минуты'), 'IELTS Listening');
   const j = await api('ielts_listening', {part}).catch(() => ({}));
   if(!$('#xp')) return;
   if(!j.test){ xBody(`<div class="card xcard"><p>Не получилось подготовить тест.</p><button class="btn" data-x="ilisten">Попробовать ещё раз</button></div>`); return; }
