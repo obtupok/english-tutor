@@ -332,6 +332,39 @@ function satScore(results: { ok: boolean; difficulty: string }[]) {
   const got = results.reduce((a, r) => a + (r.ok ? w[r.difficulty] || 1 : 0), 0), max = results.reduce((a, r) => a + (w[r.difficulty] || 1), 0) || 1;
   return Math.max(200, Math.min(800, Math.round((200 + 600 * Math.pow(got / max, 0.9)) / 10) * 10));
 }
+// IELTS Reading / Listening: сырой балл из 40 → band (официальные таблицы Academic Reading и Listening)
+const BAND_R = [[39, 9], [37, 8.5], [35, 8], [33, 7.5], [30, 7], [27, 6.5], [23, 6], [19, 5.5], [15, 5], [13, 4.5], [10, 4], [8, 3.5], [6, 3], [4, 2.5], [0, 2]];
+const BAND_L = [[39, 9], [37, 8.5], [35, 8], [32, 7.5], [30, 7], [26, 6.5], [23, 6], [18, 5.5], [16, 5], [13, 4.5], [11, 4], [8, 3.5], [6, 3], [4, 2.5], [0, 2]];
+const bandOf = (table: number[][], correct: number, total: number) => { const raw = Math.round(correct / Math.max(1, total) * 40); return (table.find(([min]) => raw >= min) || [0, 2])[1]; };
+// общий band IELTS: среднее четырёх частей, .25 округляется вверх до .5, .75 — до целого
+const ieltsOverall = (xs: number[]) => { const a = xs.reduce((s, x) => s + x, 0) / xs.length, f = a - Math.floor(a); return Math.floor(a) + (f < 0.25 ? 0 : f < 0.75 ? 0.5 : 1); };
+// счётчик ошибок по темам — для экрана «Где я ошибаюсь»
+const addMiss = (owner: any, keys: string[]) => keys.length ? patchStats(owner, (x) => {
+  const m = { ...(x.miss || {}) }, at = new Date().toISOString();
+  for (const k of keys) { const key = String(k).replace(/\s+/g, ' ').trim().slice(0, 90); if (key) m[key] = { n: (m[key]?.n || 0) + 1, at }; }
+  return { ...x, miss: Object.fromEntries(Object.entries(m).sort((a: any, b: any) => b[1].at.localeCompare(a[1].at)).slice(0, 120)) };
+}) : null;
+// напоминание в Telegram: раз в час его вызывает расписание (pg_cron); пишет в выбранный час, если сегодня ещё не занимался
+const remindKey = async () => (await sha('english-tutor-remind:' + TOKEN)).slice(0, 32);
+const WEEK_RU = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+async function remind(force = false) {
+  const st = await load(OWNER), r = st.stats?.remind;
+  if (!r?.on && !force) return 'off';
+  const shift = (Number(r?.tz) || 0) * 60000, local = new Date(Date.now() - shift), day = local.toISOString().slice(0, 10);
+  if (!force && (local.getUTCHours() !== Number(r.hour) || r.sent === day)) return 'not now';
+  const x = st.stats || {}, localDay = (at: string) => new Date(new Date(at).getTime() - shift).toISOString().slice(0, 10);
+  const ats = [...Object.values(x.lessons || {}).map((l: any) => l.at), ...['sat', 'writing', 'writing1', 'exams', 'reading', 'listening', 'mocks'].flatMap((k) => (x[k] || []).map((e: any) => e.at))].filter(Boolean);
+  if (!force && ats.some((a) => localDay(a) === day)) { await patchStats(st, (y) => ({ ...y, remind: { ...y.remind, sent: day } })); return 'studied'; }
+  const wd = WEEK_RU[(local.getUTCDay() + 6) % 7], plan = (x.studyPlan?.plan?.week || []).find((d: any) => d.day === wd);
+  const tasks = (plan?.tasks || []).filter((t: any) => t.type !== 'rest');
+  const { count: due } = await admin.from('english_words').select('id', { count: 'exact', head: true }).lte('due', new Date().toISOString());
+  const mins = tasks.reduce((a: number, t: any) => a + (Number(t.minutes) || 0), 0);
+  const lines = tasks.length ? tasks.slice(0, 5).map((t: any) => `• ${t.note}${t.minutes ? ` — ${t.minutes} мин` : ''}`).join('\n') : '• урок дня в «Учёбе» — 15 мин';
+  const text = `${plan && !tasks.length ? 'Сегодня по плану отдых, но пара минут с карточками не помешает.' : `Сегодня ещё не занимался(-ась). По плану${mins ? ` ${mins} мин` : ''}:`}\n${lines}${due ? `\n• повторить карточки: ${due}` : ''}`;
+  await tg('sendMessage', { chat_id: OWNER, text, reply_markup: { inline_keyboard: [[{ text: 'Начать', web_app: { url: SITE } }]] } });
+  if (!force) await patchStats(st, (y) => ({ ...y, remind: { ...y.remind, sent: day } }));
+  return 'sent';
+}
 // разнообразие вопросов: каждый раз — случайные темы из большого списка и список недавно заданных вопросов, которые нельзя повторять
 const THEMES = ['hometown and neighbourhoods', 'work and careers', 'school and university life', 'friendship', 'family traditions', 'food and cooking', 'health and fitness',
   'sport', 'music', 'films and TV', 'books and reading', 'art and museums', 'photography', 'fashion and clothes', 'shopping and money', 'advertising', 'technology and gadgets',
@@ -1204,6 +1237,7 @@ async function web(req: Request) {
       const rec = { section, at: new Date().toISOString(), correct: results.filter((r) => r.ok).length, total: results.length, score: satScore(results), weak };
       owner.stats = { ...(owner.stats || {}), sat: [...(owner.stats?.sat || []), rec].slice(-60) };
       await save(owner);
+      await addMiss(owner, results.filter((r) => !r.ok && r.skill).map((r) => `SAT ${section === 'math' ? 'Math' : 'R&W'} · ${r.skill}`));
       return json({ result: rec, sat: owner.stats.sat });
     }
     // подписка «YomiRead + YomiScore»: счёт создают функции YomiRead (оплата себе по Telegram ID, без входа на сайт)
@@ -1308,6 +1342,7 @@ Questions: ${JSON.stringify(out.check.map((q: any) => ({ question: q.question, c
 - "better": the learner's own answer rewritten at band 7–8 level, keeping their ideas.
 - "tip": one concrete thing to do in the next try (Russian).`, F_SCHEMA, 'high');
       if (!fb) return json({ error: 'failed', heard: answer }, 502);
+      if (fb.verdict !== 'great') await addMiss(owner, [`${kind === 'writing' ? 'Writing' : kind === 'grammar' ? 'Грамматика' : 'Speaking'} · ${name}`]);
       return json({ heard: answer, feedback: fb });
     }
     case 'lesson_done': {
@@ -1525,6 +1560,7 @@ Learner's answer${b.audio ? ' (speech transcript — ignore punctuation, capital
 - "say": 1–3 short spoken sentences in Russian. Correct → praise specifically (what exactly was good). Partly/wrong → say exactly what is wrong and why${attempt >= 2 ? ', then give the correct answer' : ', then give a hint (not the full answer) and ask to try again'}.
 - "fix": the learner's answer corrected in English (keep their idea) when partly/wrong, else "".`, K_SCHEMA, 'medium', 3000);
       if (!out?.say) return json({ error: 'failed', heard }, 502);
+      if (out.verdict !== 'correct' && attempt === 1) await addMiss(owner, [`Урок · ${String(b.topic || '').slice(0, 70)}`]);
       return json({ check: out, heard: heard || answer });
     }
     // «Не понял» / «Ещё пример»: тот же шаг другими словами
@@ -1637,6 +1673,171 @@ Write "comment", "summary", "strengths", "improve" and "feedback" in Russian: sh
       await save(owner);
       return json({ result: last, exams: owner.stats.exams, game: gameView(owner) });
     }
+    // IELTS Academic Reading: текст с абзацами A–G и 12 вопросов трёх типов; второй проход решает их заново — спорные вопросы убираем
+    case 'ielts_reading': {
+      const recent = (owner.stats?.reading || []).slice(-8).map((r: any) => r.title).filter(Boolean).join('; ');
+      const subject = pickThemes(SAT_TOPICS, 1)[0];
+      const Q = { type: 'object', additionalProperties: false, required: ['type', 'q', 'choices', 'answer', 'accept', 'explain'], properties: {
+        type: { type: 'string', enum: ['tfng', 'mcq', 'gap'] }, q: { type: 'string' }, choices: { type: 'array', items: { type: 'string' } },
+        answer: { type: 'string' }, accept: { type: 'array', items: { type: 'string' } }, explain: { type: 'string' } } };
+      const R_SCHEMA = { type: 'object', additionalProperties: false, required: ['title', 'paragraphs', 'questions'], properties: {
+        title: { type: 'string' }, paragraphs: { type: 'array', items: { type: 'string' } }, questions: { type: 'array', items: Q } } };
+      const out = await askJsonGroq(`You write original IELTS Academic Reading tests that match the real exam's style and difficulty (band 5–8 range). Return JSON only.`,
+        `Write one Academic Reading passage on a topic from ${subject}${recent ? ` (not about: ${recent})` : ''}: an engaging, factual, article-style text of 650–800 words in 6–7 paragraphs ("paragraphs": plain text, without letters — the app labels them A, B, C…). "title": the article title.
+Then exactly 12 questions in this order:
+- 5 × "tfng": a statement; "answer": "TRUE", "FALSE" or "NOT GIVEN" (use all three; NOT GIVEN = the passage says nothing about it). "choices": [].
+- 3 × "mcq": a question with 4 "choices" (full option texts, no letters); "answer": the exact text of the correct choice.
+- 4 × "gap": a sentence completion with "____" for the gap — the answer is NO MORE THAN TWO WORDS taken exactly from the passage; "answer": those words; "accept": other acceptable spellings or forms (may be empty). "choices": [].
+Questions follow the order of information in the passage. Every answer must be clearly supported (or, for NOT GIVEN, clearly absent). "explain": in Russian, 1–2 sentences — which paragraph (by letter) proves the answer and why.`, R_SCHEMA, 'medium', 14000);
+      if (!out?.paragraphs?.length || !out?.questions?.length) return json({ error: 'failed' }, 502);
+      out.questions = out.questions.filter((q: any) => q.q && q.answer && (q.type !== 'mcq' || q.choices?.length >= 3));
+      // проверка: другой проход отвечает на вопросы только по тексту; где ответ не совпал — вопрос убираем
+      const text = out.paragraphs.map((t: string, i: number) => `${'ABCDEFGH'[i] || i + 1}. ${t}`).join('\n');
+      const A_SCHEMA = { type: 'object', additionalProperties: false, required: ['answers'], properties: { answers: { type: 'array', items: { type: 'string' } } } };
+      const ver = await askJsonGroq(`You are a careful IELTS Reading candidate. Answer strictly from the passage. Return JSON only.`,
+        `Passage:\n${text}\n\nQuestions (answer in order; for tfng answer TRUE / FALSE / NOT GIVEN; for mcq give the exact choice text; for gap give no more than two words from the passage):\n${out.questions.map((q: any, i: number) => `${i + 1}. [${q.type}] ${q.q}${q.choices?.length ? ' Choices: ' + q.choices.join(' | ') : ''}`).join('\n')}`, A_SCHEMA, 'medium', 8000);
+      const norm = (x: string) => String(x || '').toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
+      if (ver?.answers?.length === out.questions.length) {
+        const kept = out.questions.filter((q: any, i: number) => [q.answer, ...(q.accept || [])].some((a: string) => norm(a) === norm(ver.answers[i])));
+        if (kept.length >= 8) out.questions = kept;
+      }
+      return json({ test: out });
+    }
+    // IELTS Listening: сценарий (диалог или монолог) с голосами + 10 вопросов; ответы звучат в тексте по порядку
+    case 'ielts_listening': {
+      const part = [1, 2, 3, 4].includes(Number(b.part)) ? Number(b.part) : 1 + Math.floor(Math.random() * 4);
+      const theme = pickThemes(part >= 3 ? SAT_TOPICS : THEMES, 1)[0];
+      const how = ({ 1: 'Part 1: a phone or face-to-face conversation between two people in an everyday social context (booking, enquiry, registration), 2 speakers. Questions: 7 form/note completion gaps (names spelled out letter by letter, numbers, dates, prices, addresses) + 3 multiple choice.',
+        2: 'Part 2: a monologue in an everyday social context (a tour guide, a radio announcement, a talk about local facilities), 1 speaker. Questions: 5 multiple choice + 5 note completion gaps.',
+        3: 'Part 3: a discussion between 2–3 university students (and possibly a tutor) about an assignment or research project, 2–3 speakers. Questions: 6 multiple choice + 4 sentence completion gaps.',
+        4: 'Part 4: an academic lecture by one speaker on a university subject. Questions: 10 note completion gaps (ONE WORD ONLY).' } as Record<number, string>)[part];
+      const LQ = { type: 'object', additionalProperties: false, required: ['type', 'q', 'choices', 'answer', 'accept', 'explain'], properties: {
+        type: { type: 'string', enum: ['mcq', 'gap'] }, q: { type: 'string' }, choices: { type: 'array', items: { type: 'string' } },
+        answer: { type: 'string' }, accept: { type: 'array', items: { type: 'string' } }, explain: { type: 'string' } } };
+      const L_SCHEMA = { type: 'object', additionalProperties: false, required: ['title', 'context', 'speakers', 'lines', 'questions'], properties: {
+        title: { type: 'string' }, context: { type: 'string' },
+        speakers: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['name', 'gender', 'accent'], properties: { name: { type: 'string' }, gender: { type: 'string', enum: ['female', 'male'] }, accent: { type: 'string', enum: ['british', 'american'] } } } },
+        lines: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['s', 'text'], properties: { s: { type: 'integer' }, text: { type: 'string' } } } },
+        questions: { type: 'array', items: LQ } } };
+      const out = await askJsonGroq(`You write original IELTS Listening tests that match the real exam (style, speed of ideas, distractors). Return JSON only.`,
+        `${how} Topic area: ${theme}.
+"title": short English title; "context": one Russian sentence describing the situation (like the exam's introduction). "speakers": the speakers (index 0, 1, 2 in "lines.s").
+"lines": the full script, 450–650 words in total, natural spoken English with realistic distractors (a speaker corrects themselves, mentions a wrong option first). Split into turns/paragraphs of 1–4 sentences.
+"questions": exactly 10, in the order the answers are heard. Gap: a short note/sentence with "____"; "answer": the exact word(s) or number heard (NO MORE THAN TWO WORDS AND/OR A NUMBER); "accept": other acceptable forms (e.g. "15" and "fifteen"). Mcq: 3 "choices" (full texts), "answer": the exact correct choice text. "explain": in Russian, quote the moment in the script that gives the answer.`, L_SCHEMA, 'medium', 14000);
+      if (!out?.lines?.length || !out?.questions?.length) return json({ error: 'failed' }, 502);
+      out.questions = out.questions.filter((q: any) => q.q && q.answer && (q.type !== 'mcq' || q.choices?.length >= 3)).slice(0, 10);
+      out.lines = out.lines.filter((l: any) => l.text?.trim()).map((l: any) => ({ s: Math.max(0, Math.min((out.speakers?.length || 1) - 1, l.s | 0)), text: l.text }));
+      const script = out.lines.map((l: any) => `${out.speakers?.[l.s]?.name || 'Speaker'}: ${l.text}`).join('\n');
+      const A_SCHEMA = { type: 'object', additionalProperties: false, required: ['answers'], properties: { answers: { type: 'array', items: { type: 'string' } } } };
+      const ver = await askJsonGroq(`You are a careful IELTS Listening candidate reading the transcript. Answer strictly from it. Return JSON only.`,
+        `Transcript:\n${script}\n\nQuestions (in order; mcq — the exact choice text; gap — no more than two words and/or a number):\n${out.questions.map((q: any, i: number) => `${i + 1}. [${q.type}] ${q.q}${q.choices?.length ? ' Choices: ' + q.choices.join(' | ') : ''}`).join('\n')}`, A_SCHEMA, 'low', 6000);
+      const norm = (x: string) => String(x || '').toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
+      if (ver?.answers?.length === out.questions.length) {
+        const kept = out.questions.filter((q: any, i: number) => [q.answer, ...(q.accept || [])].some((a: string) => norm(a) === norm(ver.answers[i])));
+        if (kept.length >= 7) out.questions = kept;
+      }
+      return json({ test: { ...out, part } });
+    }
+    // итог Reading / Listening: band по официальной шкале, история, ошибки по типам вопросов
+    case 'rl_done': {
+      const kind = b.kind === 'listening' ? 'listening' : 'reading';
+      const total = Math.max(1, Math.min(40, Number(b.total) | 0)), correct = Math.max(0, Math.min(total, Number(b.correct) | 0));
+      const rec = { at: new Date().toISOString(), title: String(b.title || '').slice(0, 120), correct, total, band: bandOf(kind === 'listening' ? BAND_L : BAND_R, correct, total), part: Number(b.part) || undefined };
+      const wrong = (Array.isArray(b.wrong) ? b.wrong : []).slice(0, 20).map((w: any) => `IELTS ${kind === 'listening' ? 'Listening' : 'Reading'} · ${String(w).slice(0, 40)}`);
+      await patchStats(owner, (x) => ({ ...x, [kind]: [...(x[kind] || []), rec].slice(-40) }));
+      await addMiss(owner, wrong);
+      return json({ result: rec, list: owner.stats[kind] });
+    }
+    // IELTS Academic Writing Task 1: данные для графика (рисует приложение) + задание
+    case 'task1_prompt': {
+      const recent = (owner.stats?.writing1 || []).slice(-6).map((w: any) => w.prompt).join(' | ');
+      const kind = pickThemes(['bar', 'line', 'pie', 'table'], 1)[0];
+      const C_SCHEMA = { type: 'object', additionalProperties: false, required: ['chart', 'title', 'unit', 'labels', 'series', 'prompt'], properties: {
+        chart: { type: 'string', enum: ['bar', 'line', 'pie', 'table'] }, title: { type: 'string' }, unit: { type: 'string' },
+        labels: { type: 'array', items: { type: 'string' } },
+        series: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['name', 'values'], properties: { name: { type: 'string' }, values: { type: 'array', items: { type: 'number' } } } } },
+        prompt: { type: 'string' } } };
+      const out = await askJsonGroq(`You write original IELTS Academic Writing Task 1 tasks with realistic data. Return JSON only.`,
+        `Make one Task 1 with a "${kind}" chart about ${pickThemes(THEMES, 1)[0]}${recent ? ` (different from: ${recent})` : ''}.
+${kind === 'pie' ? 'Pie: 1–2 series (e.g. two years), 4–6 labels (categories), values are percentages summing to 100 in each series.' : kind === 'line' ? 'Line: labels are 5–8 time points (years), 2–4 series with clear trends (rises, falls, a crossing point).' : kind === 'bar' ? 'Bar: 4–6 labels (countries, groups or years), 2–3 series with clear comparisons.' : 'Table: 4–6 labels (rows), 3–4 series (columns) with contrasts.'}
+"values" length must equal "labels" length in every series. "unit": e.g. "%", "million tonnes", "$ billion". "title": the chart title. "prompt": the official-style task text: "The ${kind === 'table' ? 'table' : kind === 'pie' ? 'pie charts' : kind === 'line' ? 'graph' : 'bar chart'} below shows … Summarise the information by selecting and reporting the main features, and make comparisons where relevant. Write at least 150 words."`, C_SCHEMA, 'low', 5000);
+      if (!out?.labels?.length || !out?.series?.length) return json({ error: 'failed' }, 502);
+      out.series = out.series.filter((x: any) => x.values?.length === out.labels.length).slice(0, 4);
+      return out.series.length ? json({ task: out }) : json({ error: 'failed' }, 502);
+    }
+    case 'task1_check': {
+      const essay = String(b.essay || '').slice(0, 4000).trim(), task = b.task || {};
+      if (essay.split(/\s+/).length < 30) return json({ error: 'short' }, 400);
+      const data = JSON.stringify({ chart: task.chart, title: task.title, unit: task.unit, labels: task.labels, series: task.series }).slice(0, 3000);
+      const res = await askJsonGroq(`You are a certified IELTS Writing examiner. Grade an IELTS Academic Writing Task 1 report on the 4 official criteria, named exactly: "Task Achievement", "Coherence and Cohesion", "Lexical Resource", "Grammatical Range and Accuracy". Each is a band 0–9 in steps of 0.5; "overall" is their average rounded down to the nearest 0.5 (under 150 words loses Task Achievement points; no clear overview caps Task Achievement at 5; wrong figures lower it). Check every number in the report against the data. Write "comment", "summary", "strengths", "improve" and "note" in Russian, short and concrete, quoting the report. "fixes": the 5–8 most useful corrections (original fragment → better English). "better": a model overview plus one detail paragraph at about band 8, in English. Return JSON only.`,
+        `Task:\n${String(task.prompt || '').slice(0, 800)}\nData: ${data}\n\nReport (${essay.split(/\s+/).length} words):\n${essay}`, WRITING_SCHEMA);
+      if (!res) return json({ error: 'failed' }, 502);
+      const rec = { at: new Date().toISOString(), prompt: String(task.title || '').slice(0, 200), overall: res.overall, words: essay.split(/\s+/).length };
+      await patchStats(owner, (x) => ({ ...x, writing1: [...(x.writing1 || []), rec].slice(-40) }));
+      const low = (res.criteria || []).filter((c: any) => c.score < (res.overall || 0)).map((c: any) => `Writing Task 1 · ${c.name}`);
+      await addMiss(owner, low);
+      return json({ result: res, writing1: owner.stats.writing1 });
+    }
+    // «Где я ошибаюсь»: счётчики ошибок из всех заданий + исправления из разговоров → группы с примерами и уроком под каждую
+    case 'mistake_report': {
+      const skills = (Array.isArray(b.skills) ? b.skills : []).filter((k: any) => /^[a-z0-9-]{2,20}$/.test(String(k?.id || ''))).slice(0, 90).map((k: any) => ({ id: String(k.id), name: String(k.name || '').slice(0, 80) }));
+      const miss = Object.entries(owner.stats?.miss || {}).sort((a: any, b: any) => b[1].n - a[1].n).slice(0, 50).map(([k, v]: any) => `${k} — ${v.n}`);
+      const { data: talk } = await admin.from('english_mistakes').select('original,fixed,notes').order('at', { ascending: false }).limit(50);
+      if (!miss.length && !talk?.length) return json({ report: null });
+      const G_SCHEMA = { type: 'object', additionalProperties: false, required: ['summary', 'groups'], properties: { summary: { type: 'string' }, groups: { type: 'array', items: {
+        type: 'object', additionalProperties: false, required: ['title', 'area', 'count', 'why', 'examples', 'skill', 'topic'], properties: {
+          title: { type: 'string' }, area: { type: 'string', enum: ['grammar', 'vocabulary', 'speaking', 'writing', 'reading', 'listening', 'sat_rw', 'sat_math'] },
+          count: { type: 'integer' }, why: { type: 'string' },
+          examples: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['wrong', 'right'], properties: { wrong: { type: 'string' }, right: { type: 'string' } } } },
+          skill: { type: 'string', enum: ['', ...skills.map((k: any) => k.id)] }, topic: { type: 'string' } } } } } };
+      const out = await askJsonGroq(`You are an experienced IELTS / SAT teacher analysing one learner's mistakes. Write in Russian (English only in examples). Return JSON only.`,
+        `Mistake counters from tasks (topic — times):\n${miss.join('\n') || '—'}\n\nCorrections from conversations (original → fixed; notes):\n${(talk || []).map((m: any) => `${m.original} → ${m.fixed}${m.notes?.length ? ' (' + [].concat(m.notes).join('; ') + ')' : ''}`).join('\n').slice(0, 6000) || '—'}
+Group them into 3–7 recurring problems, most frequent first. "title": short name in Russian (e.g. «Артикли a / the», «SAT: проценты»). "count": how many times it showed up (sum the counters and corrections that belong to it). "why": 1–2 sentences — what exactly goes wrong and the rule. "examples": up to 3 real examples from the data (wrong → right; for SAT/Reading counters without text examples use an empty list). "skill": the best matching lesson id from this list or "": ${skills.map((k: any) => `${k.id} (${k.name})`).join(', ')}. "topic": a short English lesson topic for a teacher lesson on exactly this problem. "summary": one sentence — the main thing to fix first.`, G_SCHEMA, 'medium', 8000);
+      if (!out?.groups) return json({ error: 'failed' }, 502);
+      const report = { ...out, at: new Date().toISOString() };
+      await patchStats(owner, (x) => ({ ...x, mistakeReport: report }));
+      return json({ report });
+    }
+    // пробный экзамен целиком: SAT (по секциям, адаптивный 2-й модуль) или IELTS (4 части → общий band)
+    case 'mock_done': {
+      const at = new Date().toISOString(), minutes = Math.max(0, Math.min(600, Number(b.minutes) | 0));
+      if (b.kind === 'sat') {
+        const sec: any = {}, recs: any[] = [];
+        for (const k of ['rw', 'math']) {
+          const m = b[k]; if (!m) continue;
+          const results = (Array.isArray(m.results) ? m.results : []).slice(0, 60).map((r: any) => ({ ok: !!r.ok, difficulty: String(r.difficulty || 'medium'), skill: String(r.skill || '').slice(0, 60) }));
+          if (!results.length) continue;
+          // лёгкий второй модуль на настоящем SAT ограничивает балл секции
+          let score = satScore(results); if (!m.hard) score = Math.min(score, 610);
+          const bySkill: Record<string, [number, number]> = {};
+          for (const r of results) { const v = bySkill[r.skill] ||= [0, 0]; v[1]++; if (r.ok) v[0]++; }
+          const weak = Object.entries(bySkill).filter(([, [ok, all]]) => ok / all < 0.6).map(([kk]) => kk);
+          sec[k] = { score, correct: results.filter((r: any) => r.ok).length, total: results.length, hard: !!m.hard, weak };
+          recs.push({ section: k, at, correct: sec[k].correct, total: sec[k].total, score, weak, mock: true });
+          await addMiss(owner, results.filter((r: any) => !r.ok && r.skill).map((r: any) => `SAT ${k === 'math' ? 'Math' : 'R&W'} · ${r.skill}`));
+        }
+        if (!recs.length) return json({ error: 'bad' }, 400);
+        const total = (sec.rw?.score || 0) + (sec.math?.score || 0);
+        const mock = { kind: 'sat', at, minutes, sections: sec, total: sec.rw && sec.math ? total : null };
+        await patchStats(owner, (x) => ({ ...x, sat: [...(x.sat || []), ...recs].slice(-60), mocks: [...(x.mocks || []), mock].slice(-30) }));
+        return json({ mock, stats: owner.stats });
+      }
+      const parts: any = {};
+      for (const k of ['listening', 'reading', 'writing', 'speaking']) { const v = Number(b[k]); if (v >= 0 && v <= 9) parts[k] = Math.round(v * 2) / 2; }
+      const vals = Object.values(parts) as number[];
+      if (!vals.length) return json({ error: 'bad' }, 400);
+      const mock = { kind: 'ielts', at, minutes, parts, overall: vals.length === 4 ? ieltsOverall(vals) : null };
+      await patchStats(owner, (x) => ({ ...x, mocks: [...(x.mocks || []), mock].slice(-30) }));
+      return json({ mock, stats: owner.stats });
+    }
+    // напоминания в Telegram: включить/выключить, час; test — прислать пример сейчас
+    case 'remind_set': {
+      if (b.test) return json({ ok: true, sent: await remind(true) });
+      const r = { on: !!b.on, hour: Math.max(0, Math.min(23, Number(b.hour) | 0)), tz: Math.max(-840, Math.min(840, Number(b.tz) | 0)), sent: owner.stats?.remind?.sent || '' };
+      await patchStats(owner, (x) => ({ ...x, remind: r }));
+      return json({ remind: r });
+    }
+    case 'remind_key': return json({ key: await remindKey() });
     case 'mistakes': {
       const { data } = await admin.from('english_mistakes').select('*').order('at', { ascending: false }).limit(200);
       return json({ mistakes: data || [] });
@@ -1668,6 +1869,10 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
   if (!TOKEN) return new Response(JSON.stringify({ error: 'TUTOR_BOT_TOKEN is not set' }), { status: 500 });
   if (req.method === 'GET' && u.searchParams.has('setup')) return new Response(JSON.stringify(await setup()), { headers: { 'Content-Type': 'application/json' } });
+  if (u.searchParams.has('remind')) {
+    if (u.searchParams.get('remind') !== await remindKey()) return new Response('no', { status: 403 });
+    return new Response(await remind().catch((e) => { console.error('remind', e); return 'error'; }));
+  }
   if (req.method === 'POST' && u.searchParams.has('api')) {
     try { return await web(req); } catch (e) { console.error(e); return json({ error: 'failed' }, 500); }
   }

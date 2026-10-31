@@ -889,6 +889,70 @@ nav button{font-size:11px!important}
 .clplin li.ok{color:var(--muted);text-decoration:line-through}.clplin li.now{font-weight:800;color:#5B4B9A}
 .classroom{position:fixed}
 
+
+/* ---------- Экзамен и прогресс (more.js) ---------- */
+.xp .in-top{display:flex;justify-content:space-between;align-items:center;position:sticky;top:calc(-14px - var(--safe-t));z-index:2;background:var(--bg);margin:0 -20px;padding:4px 20px 8px}
+.xtimer{font-weight:800;font-variant-numeric:tabular-nums;color:var(--fg-2);font-size:15px}.xtimer.low{color:#DC2626}
+.xp h1{margin:2px 0 6px;font-size:28px;letter-spacing:-.02em}.xp .xh{font-size:23px;line-height:1.2}.xof{font-size:16px;color:var(--muted);font-weight:600}
+.xload{display:grid;justify-items:center;gap:8px;text-align:center;padding:70px 10px}.xload b{font-size:18px}.xload small{color:var(--muted);max-width:300px;line-height:1.45}
+.xspin{width:34px;height:34px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--accent);animation:xspin .9s linear infinite}@keyframes xspin{to{transform:rotate(360deg)}}
+.xnote{color:var(--muted);font-size:13px;line-height:1.45;margin:8px 0 0}
+.xcard,.xmock,.xmis,.xsum,.xtask,.xpass,.xplay,.xres{margin-top:12px}.xcard h3{margin:0 0 8px;font-size:16px}
+.xchart{width:100%;height:auto;display:block;overflow:visible}.xchart text{font-size:10px;fill:var(--muted);font-family:inherit}
+.xchart .xg{stroke:var(--border);stroke-width:1}.xchart .xgoal{stroke:var(--accent);stroke-width:1.2;stroke-dasharray:4 4}.xchart .xgt{fill:var(--ptext);font-weight:700}
+.xleg{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px;font-size:13px;color:var(--fg-2)}.xleg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.xstats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}.xstats div{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:12px 14px;box-shadow:var(--clay-sm)}
+.xstats b{display:block;font-size:26px;font-weight:800;letter-spacing:-.02em}.xstats span{font-size:13px;color:var(--muted)}
+.xbtns{display:flex;gap:10px;margin-top:14px}.xbtns .btn{flex:1}.xbtns.sm{margin-top:12px;flex-wrap:wrap}.xbtns.sm .btn{flex:0 1 auto}
+.xbtns .btn svg,.xmock svg{width:18px;height:18px}
+.xsum{display:flex;gap:10px;align-items:flex-start;background:var(--fg);color:#fff;border:0}.xsum svg{width:20px;height:20px;flex:none;color:#FFB48C;margin-top:2px}.xsum p{margin:0;line-height:1.45;font-weight:600}
+.xmh{display:flex;gap:12px;align-items:center}.xmh b{display:block;font-size:16px}.xmh small{color:var(--muted);font-size:13px}
+.xmn{width:30px;height:30px;border-radius:10px;background:var(--accent-bg);color:var(--ptext);display:grid;place-items:center;font-weight:800;flex:none}
+.xwhy{margin:10px 0 0;color:var(--fg-2);line-height:1.5}
+.xex{margin-top:8px;padding:8px 12px;border-radius:12px;background:var(--muted-bg);display:grid;gap:2px;font-size:14px}.xex s{color:#B42318}.xex span{color:var(--green);font-weight:600}
+.xraw{margin-top:12px}.xrr{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-top:1px solid var(--border);font-size:14px;color:var(--fg-2)}
+.xjump{position:sticky;top:30px;z-index:1;display:flex;gap:8px;margin:12px 0 0;padding:6px 0;background:var(--bg)}
+.xjump a{flex:1;text-align:center;padding:8px;border-radius:12px;background:var(--card);border:1px solid var(--border);color:var(--fg);font-weight:700;font-size:14px;text-decoration:none}
+.xpass p{margin:0 0 12px;line-height:1.65;font-size:16px}.xpass p:last-child{margin:0}
+.xpl{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:7px;background:var(--fg);color:#fff;font-size:12px;margin-right:8px;vertical-align:1px}
+.xinst{margin:18px 0 6px;font-size:14px;color:var(--fg-2);line-height:1.45}
+.xq{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:12px 14px;margin-top:8px;box-shadow:var(--clay-sm)}
+.xqh{display:flex;gap:10px;align-items:flex-start}.xqh p{margin:0;line-height:1.45;flex:1;font-weight:600}
+.xqn,.xqm{width:24px;height:24px;border-radius:8px;display:grid;place-items:center;font-size:12px;font-weight:800;flex:none;background:var(--muted-bg);color:var(--fg-2)}
+.xqm svg{width:14px;height:14px}.xqm.ok{background:var(--green);color:#fff}.xqm.bad{background:#DC2626;color:#fff}
+.xopts{display:grid;gap:6px;margin-top:10px}.xopts.row{grid-template-columns:repeat(3,1fr)}
+.xopt{display:flex;gap:8px;align-items:center;text-align:left;padding:10px 12px;border-radius:12px;border:1px solid var(--border-2);background:var(--card);color:var(--fg);font:inherit;font-size:14px;cursor:pointer}
+.xopts.row .xopt{justify-content:center;font-weight:700;font-size:13px;padding:10px 4px}
+.xopt b{width:22px;height:22px;border-radius:7px;border:1px solid var(--border-2);display:grid;place-items:center;font-size:12px;flex:none}
+.xopt.on{border-color:var(--fg);background:var(--fg);color:#fff}.xopt.on b{border-color:#fff}
+.xopt.ok{background:var(--green-bg);border-color:#9BD3AE;color:var(--fg)}.xopt.bad{background:#FBECEA;border-color:#EBB0A8;color:var(--fg)}
+.xgap{margin-top:10px}.xgap.ok{border-color:#9BD3AE!important;background:var(--green-bg)}.xgap.bad{border-color:#EBB0A8!important;background:#FBECEA}
+.xexp{margin-top:10px;padding:10px 12px;border-radius:12px;font-size:14px;line-height:1.45;color:var(--fg-2)}.xexp b{display:block;color:var(--fg);margin-bottom:2px}
+.xexp.ok{background:var(--green-bg)}.xexp.bad{background:#FBECEA}
+.xcheck{width:100%;margin-top:16px}
+.xplay{display:flex;gap:14px;align-items:center}.xplay>div{flex:1;min-width:0}.xplay b{display:block}.xplay small{display:block;color:var(--muted);font-size:13px;margin:2px 0 8px}
+.xpbtn{width:56px;height:56px;border-radius:50%;border:0;background:var(--fg);color:#fff;display:grid;place-items:center;flex:none;cursor:pointer}.xpbtn svg{width:24px;height:24px}.xpbtn:disabled{opacity:.45}
+.xprompt{margin:0 0 12px;line-height:1.5;font-weight:600}
+.xtab{overflow-x:auto}.xtab table{border-collapse:collapse;width:100%;font-size:13px}.xtab th,.xtab td{padding:7px 8px;border-bottom:1px solid var(--border);text-align:right}.xtab th:first-child{text-align:left}.xtab thead th{color:var(--muted);font-weight:700}.xtab small{color:var(--muted)}
+.xpies{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}.xpies figure{margin:0;text-align:center;flex:1 1 140px}.xpies figcaption{font-weight:700;margin:4px 0}
+.xpies ul{list-style:none;margin:0;padding:0;text-align:left;font-size:13px;color:var(--fg-2)}.xpies li i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:6px}
+.xp textarea.essay{margin-top:12px}
+.xmock.cont{display:flex;gap:12px;align-items:center;width:100%;text-align:left;font:inherit;color:inherit;background:var(--accent-bg);border:1px solid #F3C9AE;cursor:pointer}.xmock.cont b{display:block}.xmock.cont small{color:var(--fg-2)}
+.xmh2{display:flex;gap:12px;align-items:flex-start}.xmh2>svg{width:24px!important;height:24px!important;flex:none;margin-top:2px}.xmh2 b{display:block;font-size:17px}.xmh2 small{display:block;color:var(--fg-2);line-height:1.45;margin-top:2px}
+.xsteps{display:grid;gap:6px;margin-top:12px}
+.xstep{display:flex;gap:12px;align-items:center;padding:10px 12px;border-radius:14px;border:1px solid var(--border);background:var(--bg);font:inherit;color:inherit;text-align:left;cursor:pointer}
+.xstep .cdot{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--card);border:1px solid var(--border-2);font-weight:800;font-size:13px;flex:none}.xstep .cdot svg{width:15px;height:15px}
+.xstep.ok .cdot{background:var(--green);border-color:var(--green);color:#fff}.xstep .t{flex:1}.xstep .t b{display:block}.xstep .t small{color:var(--muted)}.xstep>svg{width:18px;height:18px;color:var(--muted)}
+.xfinal{margin:12px 0;padding:14px;border-radius:16px;background:var(--fg);color:#fff;display:grid;justify-items:center}.xfinal span{font-size:13px;opacity:.75}.xfinal b{font-size:40px;font-weight:800}.xfinal small{opacity:.75}
+.xsath{display:flex;justify-content:space-between;align-items:center;font-size:15px}.xsath span{color:var(--muted);font-weight:700}
+.xdots{display:flex;flex-wrap:wrap;gap:5px;margin:10px 0 14px}.xdots button{width:28px;height:28px;border-radius:8px;border:1px solid var(--border-2);background:var(--card);font:inherit;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer}
+.xdots button.ok{background:var(--muted-bg);color:var(--fg)}.xdots button.cur{border-color:var(--fg);background:var(--fg);color:#fff}
+.choice.on{border-color:var(--fg)!important;background:var(--muted-bg)}.choice.on .l{background:var(--fg);color:#fff;border-color:var(--fg)}
+.xrem span small{display:block;font-size:12px;color:var(--muted);font-weight:500}.xrem select{width:auto;min-width:96px;margin:0}
+.xlrow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.xlb{display:flex;gap:10px;align-items:center;text-align:left;font:inherit;color:inherit;cursor:pointer;padding:12px}.xlb svg{width:22px;height:22px;flex:none;color:var(--accent)}.xlb b{display:block;font-size:14px}.xlb small{color:var(--muted);font-size:12px}
+@media (prefers-reduced-motion:reduce){.xspin{animation-duration:2.4s}}
+
 </style>
 </head>
 <body>
@@ -3653,6 +3717,538 @@ document.addEventListener('click', e => {
     notify('Урок пройден! Не забудь домашнее задание'); return closeClass();
   }
 });
+
+
+/* ---------- Экзамен целиком: прогресс, «где я ошибаюсь», пробный экзамен, IELTS Reading / Listening / Writing Task 1, напоминания ----------
+   Всё открывается отдельной страницей поверх приложения (#xp), как политика и репетитор. */
+const XC = ['#E8692F', '#15803D', '#2563EB', '#7C3AED', '#DB2777', '#0891B2'];
+const XBACK = svgI('<path d="M15 6l-6 6 6 6"/>');
+const xn = s => String(s || '').toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
+let XCLOSE = null;   // что сделать при уходе со страницы (остановить звук, таймер)
+function xOpen(html, label = 'YomiScore'){
+  let box = $('#xp');
+  if(!box){ box = document.createElement('div'); box.id = 'xp'; box.className = 'intro xp'; box.setAttribute('role', 'dialog'); document.body.append(box); box.onclick = xClick; box.oninput = xInput; }
+  box.setAttribute('aria-label', label);
+  box.innerHTML = `<div class="in-top"><button class="in-skip pw-back" data-xclose>${XBACK} Назад</button><span class="xtimer" id="xTimer"></span></div><div class="in-body">${html}</div>`;
+  box.scrollTop = 0;
+  if(!RM) box.querySelectorAll('.in-body > *').forEach((el, k) => { el.style.setProperty('--i', Math.min(k, 8)); el.classList.add('pop'); });
+  return box;
+}
+function xBody(html){ const b = $('#xp .in-body'); if(b) b.innerHTML = html; }
+function xShow(html, label){ if($('#xp')){ xBody(html); $('#xp').scrollTop = 0; } else xOpen(html, label); }
+function xClose(){ XCLOSE?.(); XCLOSE = null; clearInterval(xTick.iv); const b = $('#xp'); if(!b) return; b.classList.add('out'); setTimeout(() => b.remove(), RM ? 0 : 260); tab(curTab); }
+function xLoading(title, sub){ return `<div class="xload"><span class="xspin"></span><b>${title}</b><small>${sub}</small></div>`; }
+// таймер в шапке: обратный отсчёт; по нулю — onEnd
+function xTick(sec, onEnd){
+  clearInterval(xTick.iv); const end = Date.now() + sec * 1000;
+  const draw = () => { const t = $('#xTimer'); if(!t){ clearInterval(xTick.iv); return; } const left = Math.max(0, Math.round((end - Date.now()) / 1000));
+    t.textContent = fmt(left); t.classList.toggle('low', left < 120); if(!left){ clearInterval(xTick.iv); onEnd?.(); } };
+  draw(); xTick.iv = setInterval(draw, 1000);
+}
+const roundHalf = v => Math.round(v * 2) / 2;
+
+/* ===== графики ===== */
+function svgLines(series, {min, max, goal, fmtY = v => v, h = 180}){
+  const all = series.flatMap(s => s.pts); if(!all.length) return '';
+  const w = 340, L = 36, R = 12, T = 12, B = 24, ts = all.map(p => +new Date(p.at)), t0 = Math.min(...ts), t1 = Math.max(...ts);
+  const X = t => L + (t1 === t0 ? (w - L - R) / 2 : (t - t0) / (t1 - t0) * (w - L - R)), Y = v => T + (1 - (v - min) / (max - min)) * (h - T - B);
+  const ticks = Array.from({length: 5}, (_, k) => min + (max - min) * k / 4);
+  return `<svg class="xchart" viewBox="0 0 ${w} ${h}" role="img">
+    ${ticks.map(v => `<line x1="${L}" x2="${w - R}" y1="${Y(v)}" y2="${Y(v)}" class="xg"/><text x="${L - 6}" y="${Y(v) + 3}" text-anchor="end">${fmtY(Math.round(v * 10) / 10)}</text>`).join('')}
+    ${goal != null ? `<line x1="${L}" x2="${w - R}" y1="${Y(goal)}" y2="${Y(goal)}" class="xgoal"/><text x="${w - R}" y="${Y(goal) - 4}" text-anchor="end" class="xgt">цель ${fmtY(goal)}</text>` : ''}
+    ${series.map((s, k) => { const pts = s.pts.slice().sort((a, b) => a.at.localeCompare(b.at)), c = s.color || XC[k % XC.length];
+      return `<polyline fill="none" stroke="${c}" stroke-width="2.2" stroke-linejoin="round" points="${pts.map(p => `${X(+new Date(p.at)).toFixed(1)},${Y(p.v).toFixed(1)}`).join(' ')}"/>${pts.map(p => `<circle cx="${X(+new Date(p.at)).toFixed(1)}" cy="${Y(p.v).toFixed(1)}" r="3" fill="${c}"><title>${s.name}: ${fmtY(p.v)} · ${dateRu(p.at)}</title></circle>`).join('')}`; }).join('')}
+    <text x="${L}" y="${h - 6}">${dateRu(new Date(t0).toISOString())}</text>${t1 !== t0 ? `<text x="${w - R}" y="${h - 6}" text-anchor="end">${dateRu(new Date(t1).toISOString())}</text>` : ''}
+  </svg><div class="xleg">${series.map((s, k) => `<span><i style="background:${s.color || XC[k % XC.length]}"></i>${s.name}</span>`).join('')}</div>`;
+}
+function svgBars(vals, labels, h = 120){
+  const w = 340, L = 8, R = 8, T = 14, B = 20, max = Math.max(1, ...vals), bw = (w - L - R) / vals.length;
+  return `<svg class="xchart" viewBox="0 0 ${w} ${h}" role="img">${vals.map((v, k) => { const bh = v / max * (h - T - B), x = L + k * bw + bw * .18, y = h - B - bh;
+    return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${(bw * .64).toFixed(1)}" height="${Math.max(bh, v ? 2 : 0).toFixed(1)}" rx="4" fill="${k === vals.length - 1 ? '#E8692F' : '#16171B'}" opacity="${k === vals.length - 1 ? 1 : .8}"/>${v ? `<text x="${(x + bw * .32).toFixed(1)}" y="${(y - 4).toFixed(1)}" text-anchor="middle">${v}</text>` : ''}<text x="${(x + bw * .32).toFixed(1)}" y="${h - 6}" text-anchor="middle">${labels[k]}</text>`; }).join('')}</svg>`;
+}
+
+/* ===== 1. Мой прогресс ===== */
+function actDates(){
+  const x = S.stats || {};
+  return [...Object.values(x.lessons || {}).map(l => l.at), ...['sat', 'writing', 'writing1', 'exams', 'reading', 'listening', 'mocks'].flatMap(k => (x[k] || []).map(e => e.at)),
+    ...Object.keys(x.days || {}).map(d => d + 'T12:00:00Z')].filter(Boolean);
+}
+function openProgress(){
+  const x = S.stats || {}, pts = (list, f = e => e.overall) => (list || []).filter(e => e?.at && f(e) != null).map(e => ({at: e.at, v: f(e)}));
+  const ie = [
+    {name: 'Speaking', pts: pts((x.exams || []).filter(e => e.kind === 'ielts'))},
+    {name: 'Writing T2', pts: pts(x.writing)}, {name: 'Writing T1', pts: pts(x.writing1)},
+    {name: 'Reading', pts: pts(x.reading, e => e.band)}, {name: 'Listening', pts: pts(x.listening, e => e.band)},
+    {name: 'Пробный IELTS', pts: pts((x.mocks || []).filter(m => m.kind === 'ielts'))},
+  ].filter(s => s.pts.length);
+  const satMocks = (x.mocks || []).filter(m => m.kind === 'sat' && m.total);
+  const sat = [{name: 'R&W', pts: pts((x.sat || []).filter(r => r.section === 'rw'), r => r.score)}, {name: 'Math', pts: pts((x.sat || []).filter(r => r.section === 'math'), r => r.score)}].filter(s => s.pts.length);
+  // активность по неделям (последние 8)
+  const ds = actDates().map(a => +new Date(a)), now = Date.now(), wk = 7 * 864e5;
+  const weeks = Array.from({length: 8}, (_, k) => { const a = now - (8 - k) * wk, b = a + wk; return new Set(ds.filter(t => t >= a && t < b).map(t => new Date(t).toDateString())).size; });
+  const days30 = new Set(ds.filter(t => t > now - 30 * 864e5).map(t => new Date(t).toDateString())).size;
+  const lessons = Object.keys(x.lessons || {}).length, st = streak();
+  const empty = !ie.length && !sat.length;
+  xOpen(`<p class="eyebrow">YomiScore</p><h1>Мой прогресс</h1><p class="in-lead">Как растут баллы и сколько ты занимаешься.</p>
+    <div class="xstats"><div><b>${st}</b><span>${plural(st, 'день', 'дня', 'дней')} подряд</span></div><div><b>${days30}</b><span>дней с занятиями за месяц</span></div>
+      <div><b>${S.words || 0}</b><span>слов в карточках</span></div><div><b>${lessons}</b><span>уроков пройдено</span></div></div>
+    <div class="card xcard"><h3>Дни с занятиями по неделям</h3>${svgBars(weeks, weeks.map((_, k) => k === 7 ? 'эта' : `−${7 - k}`))}<p class="xnote">Сколько дней в неделю ты занимался(-ась). Лучше 5 дней по 30 минут, чем один день 3 часа.</p></div>
+    ${ie.length ? `<div class="card xcard"><h3>IELTS · band</h3>${svgLines(ie, {min: Math.max(0, Math.floor(Math.min(...ie.flatMap(s => s.pts.map(p => p.v)), GOALS.ielts) - 1)), max: 9, goal: GOALS.ielts})}</div>` : ''}
+    ${sat.length ? `<div class="card xcard"><h3>SAT · по секциям</h3>${svgLines(sat, {min: 200, max: 800, goal: GOALS.sat / 2})}<p class="xnote">Цель на секцию — половина общей цели (${GOALS.sat}).</p></div>` : ''}
+    ${satMocks.length ? `<div class="card xcard"><h3>Пробный SAT · общий балл</h3>${svgLines([{name: 'Всего', pts: satMocks.map(m => ({at: m.at, v: m.total}))}], {min: 400, max: 1600, goal: GOALS.sat})}</div>` : ''}
+    ${empty ? `<div class="card xcard"><h3>Пока мало данных</h3><p class="xnote">Пройди пару тестов — Speaking, Writing, SAT или Reading — и здесь появятся графики.</p></div>` : ''}
+    <div class="xbtns"><button class="btn" data-x="mistakes">${I.target} Где я ошибаюсь</button><button class="btn line" data-x="mock">${I.cap} Пробный экзамен</button></div>`, 'Мой прогресс');
+}
+
+/* ===== 2. Где я ошибаюсь ===== */
+const AREA = {grammar: 'Грамматика', vocabulary: 'Лексика', speaking: 'Speaking', writing: 'Writing', reading: 'Reading', listening: 'Listening', sat_rw: 'SAT R&W', sat_math: 'SAT Math'};
+function mistakesHtml(r){
+  const miss = Object.entries(S.stats?.miss || {}).sort((a, b) => b[1].n - a[1].n).slice(0, 12);
+  return `<p class="eyebrow">Разбор ошибок</p><h1>Где я ошибаюсь</h1><p class="in-lead">Yomi собирает ошибки из всех заданий и разговоров и находит, что повторяется.</p>
+    ${r ? `<div class="card xsum">${I.spark}<p>${esc(r.summary)}</p></div>
+      ${(r.groups || []).map((g, k) => `<div class="card xmis">
+        <div class="xmh"><span class="xmn">${k + 1}</span><div><b>${esc(g.title)}</b><small>${AREA[g.area] || ''}${g.count ? ` · ${g.count} ${plural(g.count, 'раз', 'раза', 'раз')}` : ''}</small></div></div>
+        <p class="xwhy">${esc(g.why)}</p>
+        ${(g.examples || []).map(e => `<div class="xex"><s>${esc(e.wrong)}</s><span>${esc(e.right)}</span></div>`).join('')}
+        <div class="xbtns sm"><button class="btn sm" data-xclass="${k}">${svgI('<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>')} Урок по этой ошибке</button>${g.skill && SKILLS.find(s => s.id === g.skill) ? `<button class="btn sm line" data-xls="${g.skill}">Урок в «Учёбе»</button>` : ''}</div>
+      </div>`).join('')}
+      <p class="xnote">Разбор от ${dateRu(r.at)}.</p>` : `<div class="card xcard"><p class="xnote">Ошибок пока мало — пройди несколько заданий или поговори с Yomi, и здесь появится разбор.</p></div>`}
+    <button class="btn line" data-x="mreload" style="width:100%">${svgI('<path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5"/>')} Обновить разбор</button>
+    ${miss.length ? `<details class="rev xraw"><summary>Счётчики по заданиям</summary>${miss.map(([k, v]) => `<div class="xrr"><span>${esc(k)}</span><b>${v.n}</b></div>`).join('')}</details>` : ''}`;
+}
+async function openMistakes(reload = false){
+  const cached = S.stats?.mistakeReport, fresh = cached && Date.now() - new Date(cached.at) < 864e5;
+  if(cached && !reload){ xOpen(mistakesHtml(cached), 'Где я ошибаюсь'); if(fresh) return; }
+  else xOpen(xLoading('Ищу, что повторяется…', 'Yomi разбирает ошибки из заданий и разговоров — до 30 секунд'), 'Где я ошибаюсь');
+  const j = await api('mistake_report', {skills: SKILLS.map(k => ({id: k.id, name: k.name}))}).catch(() => ({}));
+  if(!$('#xp')) return;
+  if(j.report !== undefined){ S.stats = {...S.stats, mistakeReport: j.report}; xBody(mistakesHtml(j.report)); return; }
+  if(!cached){ xBody(mistakesHtml(null)); notify('Не получилось сделать разбор — попробуй ещё раз'); }
+}
+
+/* ===== 3–4. IELTS Reading и Listening: общий вид вопросов ===== */
+let RT = null;   // текущий тест Reading / Listening
+const QTYPE = {tfng: 'True / False / Not Given', mcq: 'Выбор ответа', gap: 'Заполнение пропусков'};
+function qHtml(q, i){
+  const a = RT.ans[i], done = RT.done, ok = done && RT.res[i];
+  const mark = done ? `<span class="xqm ${ok ? 'ok' : 'bad'}">${ok ? I.check : I.x}</span>` : `<span class="xqn">${i + 1}</span>`;
+  let body = '';
+  if(q.type === 'gap') body = `<input class="inp xgap${done ? (ok ? ' ok' : ' bad') : ''}" data-xgap="${i}" value="${esc(a || '')}" placeholder="ответ" autocomplete="off" autocapitalize="off" spellcheck="false" ${done ? 'disabled' : ''}>`;
+  else { const opts = q.type === 'tfng' ? ['TRUE', 'FALSE', 'NOT GIVEN'] : q.choices;
+    body = `<div class="xopts${q.type === 'tfng' ? ' row' : ''}">${opts.map((o, k) => { const right = done && xn(o) === xn(q.answer), mine = a === o;
+      return `<button class="xopt${mine ? ' on' : ''}${right ? ' ok' : done && mine ? ' bad' : ''}" data-xa="${i}" data-xv="${esc(o)}" ${done ? 'disabled' : ''}>${q.type === 'mcq' ? `<b>${'ABCD'[k]}</b>` : ''}<span>${esc(o)}</span></button>`; }).join('')}</div>`; }
+  return `<div class="xq" id="xq${i}"><div class="xqh">${mark}<p>${esc(q.q)}</p></div>${body}
+    ${done ? `<div class="xexp ${ok ? 'ok' : 'bad'}">${ok ? '' : `<b>Ответ: ${esc(q.answer)}</b>`}${esc(q.explain || '')}</div>` : ''}</div>`;
+}
+function qsHtml(){
+  let out = '', last = '';
+  RT.test.questions.forEach((q, i) => {
+    if(q.type !== last){ last = q.type;
+      out += `<p class="xinst">${q.type === 'tfng' ? 'Соответствуют ли утверждения тексту? <b>TRUE</b> — да, <b>FALSE</b> — противоречат, <b>NOT GIVEN</b> — в тексте об этом нет.' : q.type === 'mcq' ? 'Выбери правильный вариант.' : `Впиши <b>не больше двух слов${RT.kind === 'listening' ? ' и/или число' : ' из текста'}</b>.`}</p>`; }
+    out += qHtml(q, i);
+  });
+  return out;
+}
+function rtCheck(){
+  const qs = RT.test.questions;
+  RT.res = qs.map((q, i) => { const a = RT.ans[i]; if(!a) return false; return [q.answer, ...(q.accept || [])].some(x => xn(x) === xn(a)); });
+  RT.done = true; XCLOSE?.(); clearInterval(xTick.iv);
+  const correct = RT.res.filter(Boolean).length, wrong = qs.filter((q, i) => !RT.res[i]).map(q => QTYPE[q.type]);
+  sfx(correct / qs.length >= .7 ? 'happy' : 'oops');
+  api('rl_done', {kind: RT.kind, correct, total: qs.length, title: RT.test.title, part: RT.test.part, wrong}).then(j => {
+    if(j.list) S.stats = {...S.stats, [RT.kind]: j.list};
+    RT.band = j.result?.band; rtDraw(); RT.onDone?.(RT.band, correct, qs.length);
+  }).catch(() => rtDraw());
+  rtDraw();
+}
+function rtResult(){
+  const n = RT.test.questions.length, c = RT.res.filter(Boolean).length;
+  return `<div class="card xres"><div class="score"><div class="ring" style="--p:${(RT.band || 0) / 9 * 100}"><div><b>${RT.band ?? '…'}</b><small>band</small></div></div>
+    <div class="crit"><div><span>Верно</span><b>${c}/${n}</b><span class="bar green"><i style="width:${c / n * 100}%"></i></span></div>
+    <p class="xnote" style="margin:0">Band примерный: доля верных ответов, пересчитанная по официальной шкале ${RT.kind === 'listening' ? 'Listening' : 'Academic Reading'} (из 40).</p></div></div>
+    ${RT.onDone ? '<button class="btn" data-x="mock" style="width:100%;margin-top:12px">Дальше: к пробному экзамену</button>' : `<div class="xbtns"><button class="btn line" data-x="${RT.kind === 'listening' ? 'ilisten' : 'iread'}">Новый тест</button><button class="btn line" data-x="mistakes">Где я ошибаюсь</button></div>`}</div>`;
+}
+
+/* Reading */
+async function openIRead(onDone = null){
+  xOpen(xLoading('Готовлю текст и вопросы…', 'Academic Reading: статья и 12 вопросов. Yomi решает их второй раз для проверки — до 40 секунд'), 'IELTS Reading');
+  const j = await api('ielts_reading').catch(() => ({}));
+  if(!$('#xp')) return;
+  if(!j.test){ xBody(`<div class="card xcard"><p>Не получилось подготовить тест.</p><button class="btn" data-x="iread">Попробовать ещё раз</button></div>`); return; }
+  RT = {kind: 'reading', test: j.test, ans: [], done: false, res: [], onDone};
+  rtDraw(); xTick(20 * 60, () => { if(RT && !RT.done){ notify('Время вышло — проверяю'); rtCheck(); } });
+}
+function rtDraw(){
+  if(!RT) return;
+  const t = RT.test, isL = RT.kind === 'listening';
+  const answered = RT.ans.filter(Boolean).length;
+  const html = isL ? listenHtml() : `<p class="eyebrow">IELTS Academic Reading · 20 минут</p><h1 class="xh">${esc(t.title)}</h1>
+    ${RT.done ? rtResult() : ''}
+    <div class="xjump"><a href="#xpass">Текст</a><a href="#xqs">Вопросы · ${answered}/${t.questions.length}</a></div>
+    <div class="card xpass" id="xpass">${t.paragraphs.map((p, i) => `<p><b class="xpl">${'ABCDEFGH'[i] || i + 1}</b>${esc(p)}</p>`).join('')}</div>
+    <div id="xqs">${qsHtml()}</div>
+    ${RT.done ? '' : `<button class="btn green xcheck" data-x="rcheck">${I.check} Проверить ответы</button>`}`;
+  const box = $('#xp .in-body'), y = $('#xp')?.scrollTop || 0; if(!box) return;
+  box.innerHTML = html; $('#xp').scrollTop = RT.done && !rtDraw.shown ? 0 : y; rtDraw.shown = RT.done;
+}
+
+/* Listening: голоса на устройстве (Piper), разные для каждого говорящего; если не вышло — голос сервера */
+let lGen = 0;
+const L_VOICES = {female: {british: ['en_GB-jenny_dioco-medium', 'en_GB-alba-medium'], american: ['en_US-amy-medium', 'en_US-kristin-medium']},
+  male: {british: ['en_GB-alan-medium', 'en_US-joe-medium'], american: ['en_US-ryan-medium', 'en_US-joe-medium']}};
+function lVoices(speakers){
+  const used = new Set();
+  return (speakers || []).map(sp => { const set = L_VOICES[sp.gender === 'male' ? 'male' : 'female'][sp.accent === 'british' ? 'british' : 'american'];
+    const v = set.find(x => !used.has(x)) || set[0]; used.add(v); return v; });
+}
+async function lSynth(i){
+  const L = RT, line = L.test.lines[i]; if(!line) return null;
+  L.cache ||= {}; if(L.cache[i]) return L.cache[i];
+  L.cache[i] = (async () => {
+    if(!LV.off && window.WebAssembly){ try{ return await piperSay(L.voices[line.s] || L.voices[0], line.text); }catch(e){ console.warn('piper', e); } }
+    const j = await api('tts', {text: line.text, lang: 'en'}).catch(() => ({}));
+    return j.audio ? new Blob([Uint8Array.from(atob(j.audio), c => c.charCodeAt(0))], {type: j.mime || 'audio/mpeg'}) : null;
+  })();
+  return L.cache[i];
+}
+async function lPlay(){
+  const L = RT; if(!L || L.playing) return;
+  L.playing = true; L.pos = 0; const my = ++lGen; stopAudio(); rtDraw();
+  let next = lSynth(0);
+  for(; L.pos < L.test.lines.length; L.pos++){
+    if(!L.pos){ const st = $('#xlst'); if(st) st.textContent = 'Загружаю голоса… первый раз до минуты'; }
+    const blob = await next; if(my !== lGen) return;
+    if(L.pos + 1 < L.test.lines.length) next = lSynth(L.pos + 1);   // следующую реплику готовим, пока звучит эта
+    lNow(); if(blob) await playBlob(blob); if(my !== lGen) return;
+    await sleep(L.test.lines[L.pos + 1]?.s !== L.test.lines[L.pos].s ? 450 : 200);
+  }
+  L.playing = false; L.heard = true; rtDraw();
+}
+function lNow(){
+  const L = RT, line = L.test.lines[L.pos], sp = L.test.speakers?.[line?.s];
+  const st = $('#xlst'); if(st) st.textContent = `Говорит: ${sp?.name || 'Speaker'} · ${L.pos + 1}/${L.test.lines.length}`;
+  const bar = $('#xlbar'); if(bar) bar.style.width = `${(L.pos + 1) / L.test.lines.length * 100}%`;
+}
+function listenHtml(){
+  const L = RT, t = L.test;
+  return `<p class="eyebrow">IELTS Listening · Part ${t.part}</p><h1 class="xh">${esc(t.title)}</h1><p class="in-lead">${esc(t.context)}</p>
+    ${L.done ? rtResult() : ''}
+    <div class="card xplay">
+      <button class="xpbtn" data-x="lplay" ${L.playing || (L.heard && !L.done) ? 'disabled' : ''} aria-label="Слушать">${L.playing ? svgI('<path d="M3 12h2M7 8v8M11 5v14M15 8v8M19 11v2"/>') : I.play}</button>
+      <div><b>${L.playing ? 'Идёт запись' : L.done ? 'Послушать ещё раз' : L.heard ? 'Запись закончилась' : 'Запись звучит один раз'}</b><small id="xlst">${L.playing ? '' : L.done ? 'Теперь можно переслушать и сверить с текстом' : L.heard ? 'Допиши ответы и нажми «Проверить»' : 'Как на экзамене: сначала прочитай вопросы, потом включай'}</small>
+      <span class="bar"><i id="xlbar" style="width:${L.heard || L.done ? 100 : 0}%"></i></span></div></div>
+    <div id="xqs">${qsHtml()}</div>
+    ${L.done ? `<details class="rev"><summary>Текст записи</summary>${t.lines.map(l => `<p><b>${esc(t.speakers?.[l.s]?.name || '')}:</b> ${esc(l.text)}</p>`).join('')}</details>`
+      : `<button class="btn green xcheck" data-x="rcheck">${I.check} Проверить ответы</button>`}`;
+}
+async function openIListen(part = 0, onDone = null){
+  xOpen(xLoading('Готовлю запись и вопросы…', 'Сценарий, голоса и 10 вопросов — до 40 секунд'), 'IELTS Listening');
+  const j = await api('ielts_listening', {part}).catch(() => ({}));
+  if(!$('#xp')) return;
+  if(!j.test){ xBody(`<div class="card xcard"><p>Не получилось подготовить тест.</p><button class="btn" data-x="ilisten">Попробовать ещё раз</button></div>`); return; }
+  RT = {kind: 'listening', test: j.test, ans: [], done: false, res: [], onDone, voices: lVoices(j.test.speakers)};
+  XCLOSE = () => { lGen++; stopAudio(); if(RT) RT.playing = false; };
+  rtDraw();
+  lSynth(0); lSynth(1);   // голоса начинают загружаться, пока человек читает вопросы
+}
+
+/* ===== 5. IELTS Writing Task 1 (и Task 2 внутри пробного экзамена) ===== */
+function t1Chart(t){
+  const all = t.series.flatMap(s => s.values), u = esc(t.unit || '');
+  if(t.chart === 'table') return `<div class="xtab"><table><thead><tr><th></th>${t.series.map(s => `<th>${esc(s.name)}</th>`).join('')}</tr></thead><tbody>${t.labels.map((l, k) => `<tr><th>${esc(l)}</th>${t.series.map(s => `<td>${s.values[k]}</td>`).join('')}</tr>`).join('')}</tbody></table><small>${u}</small></div>`;
+  if(t.chart === 'pie') return `<div class="xpies">${t.series.map(s => { const sum = s.values.reduce((a, b) => a + b, 0) || 1; let a0 = -Math.PI / 2;
+    const arcs = s.values.map((v, k) => { const a1 = a0 + v / sum * Math.PI * 2, large = a1 - a0 > Math.PI ? 1 : 0, p = `M60 60 L${(60 + 54 * Math.cos(a0)).toFixed(1)} ${(60 + 54 * Math.sin(a0)).toFixed(1)} A54 54 0 ${large} 1 ${(60 + 54 * Math.cos(a1)).toFixed(1)} ${(60 + 54 * Math.sin(a1)).toFixed(1)}Z`; a0 = a1; return `<path d="${p}" fill="${XC[k % XC.length]}" stroke="#fff" stroke-width="1.5"><title>${esc(t.labels[k])}: ${v}${u}</title></path>`; }).join('');
+    return `<figure><svg viewBox="0 0 120 120" width="140" height="140">${arcs}</svg><figcaption>${esc(s.name)}</figcaption><ul>${t.labels.map((l, k) => `<li><i style="background:${XC[k % XC.length]}"></i>${esc(l)} — ${s.values[k]}${u === '%' ? '%' : ''}</li>`).join('')}</ul></figure>`; }).join('')}</div>`;
+  const w = 340, h = 200, L = 40, R = 10, T = 12, B = 34, max = Math.max(...all) * 1.1 || 1, min = t.chart === 'line' ? Math.min(0, ...all) : 0;
+  const Y = v => T + (1 - (v - min) / (max - min)) * (h - T - B), n = t.labels.length, step = (w - L - R) / n;
+  const ticks = Array.from({length: 5}, (_, k) => min + (max - min) * k / 4), nice = v => Math.abs(v) >= 100 ? Math.round(v) : Math.round(v * 10) / 10;
+  let marks = '';
+  if(t.chart === 'bar'){ const g = t.series.length, bw = step * .7 / g;
+    marks = t.labels.map((_, k) => t.series.map((s, j) => { const x = L + k * step + step * .15 + j * bw, y = Y(s.values[k]); return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${(bw - 1).toFixed(1)}" height="${(Y(min) - y).toFixed(1)}" fill="${XC[j % XC.length]}"><title>${esc(s.name)} · ${esc(t.labels[k])}: ${s.values[k]}</title></rect>`; }).join('')).join(''); }
+  else marks = t.series.map((s, j) => `<polyline fill="none" stroke="${XC[j % XC.length]}" stroke-width="2.2" points="${s.values.map((v, k) => `${(L + k * step + step / 2).toFixed(1)},${Y(v).toFixed(1)}`).join(' ')}"/>${s.values.map((v, k) => `<circle cx="${(L + k * step + step / 2).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="2.6" fill="${XC[j % XC.length]}"><title>${esc(s.name)} · ${esc(t.labels[k])}: ${v}</title></circle>`).join('')}`).join('');
+  return `<svg class="xchart" viewBox="0 0 ${w} ${h}" role="img">${ticks.map(v => `<line x1="${L}" x2="${w - R}" y1="${Y(v)}" y2="${Y(v)}" class="xg"/><text x="${L - 5}" y="${Y(v) + 3}" text-anchor="end">${nice(v)}</text>`).join('')}${marks}
+    ${t.labels.map((l, k) => `<text x="${(L + k * step + step / 2).toFixed(1)}" y="${h - B + 13}" text-anchor="middle">${esc(String(l).slice(0, 11))}</text>`).join('')}<text x="4" y="10">${u}</text></svg>
+    <div class="xleg">${t.series.map((s, j) => `<span><i style="background:${XC[j % XC.length]}"></i>${esc(s.name)}</span>`).join('')}</div>`;
+}
+let WT = null;   // текущее письменное задание: {kind: 't1'|'t2', key, task, prompt, essay, started, onDone}
+function wtKey(kind, mock){ return 'yomi_' + (mock ? 'm' : '') + kind; }
+async function openWrite(kind = 't1', onDone = null){
+  const key = wtKey(kind, !!onDone), saved = store.get(key, null);
+  WT = {kind, key, onDone, ...(saved || {essay: '', started: 0})};
+  if(!(kind === 't1' ? WT.task : WT.prompt)) return wtNew();
+  wtDraw();
+}
+async function wtNew(){
+  xOpen(xLoading('Подбираю задание…', WT.kind === 't1' ? 'Task 1: график или таблица с данными' : 'Task 2: тема эссе'), 'IELTS Writing');
+  const j = await api(WT.kind === 't1' ? 'task1_prompt' : 'writing_prompt').catch(() => ({}));
+  if(!$('#xp')) return;
+  if(WT.kind === 't1' ? !j.task : !j.prompt){ xBody(`<div class="card xcard"><p>Не получилось подобрать задание.</p><button class="btn" data-x="wnew">Ещё раз</button></div>`); return; }
+  Object.assign(WT, WT.kind === 't1' ? {task: j.task} : {prompt: j.prompt}, {essay: '', started: 0, result: null}); wtSave(); wtDraw();
+}
+function wtSave(){ const {kind, key, onDone, result, ...rest} = WT; store.set(WT.key, rest); }
+function wtDraw(){
+  const t1 = WT.kind === 't1', min = t1 ? 150 : 250, words = WT.essay.trim() ? WT.essay.trim().split(/\s+/).length : 0;
+  const box = $('#xp') ? null : xOpen('', 'IELTS Writing');
+  xBody(`<p class="eyebrow">IELTS Writing ${t1 ? 'Task 1 · 20 минут · от 150 слов' : 'Task 2 · 40 минут · от 250 слов'}</p><h1 class="xh">${t1 ? esc(WT.task.title) : 'Эссе'}</h1>
+    <div class="card xtask">${t1 ? `<p class="xprompt">${esc(WT.task.prompt)}</p>${t1Chart(WT.task)}` : `<p class="xprompt">${esc(WT.prompt)}</p>`}</div>
+    ${WT.onDone ? '' : `<button class="btn line sm" data-x="wnew">${I.spark} Другое задание</button>`}
+    <textarea class="essay" id="xEssay" placeholder="${t1 ? 'The chart shows…' : 'Start your essay here…'}" spellcheck="false">${esc(WT.essay)}</textarea>
+    <div class="wc"><span id="xwc" class="${words >= min ? 'okc' : ''}">${words} / ${min} слов</span><span>${t1 ? 'Обзор (overview) главных тенденций обязателен' : ''}</span></div>
+    <button class="btn green xcheck" data-x="wcheck">${I.check} Проверить</button>
+    <div id="xwres"></div>`);
+  const sec = t1 ? 20 * 60 : 40 * 60;
+  if(WT.started) xTick(Math.max(0, sec - Math.floor((Date.now() - WT.started) / 1000))); else $('#xTimer').textContent = t1 ? '20:00' : '40:00';
+  if(WT.result) wtResult(WT.result);
+}
+async function wtCheck(){
+  const essay = WT.essay.trim();
+  if(essay.split(/\s+/).length < 30){ notify(`Напиши хотя бы 30 слов — лучше ${WT.kind === 't1' ? 150 : 250}`); return; }
+  const btn = $('[data-x="wcheck"]'); btn.disabled = true; btn.textContent = 'Проверяю как экзаменатор…';
+  const j = WT.kind === 't1' ? await api('task1_check', {task: WT.task, essay}).catch(() => ({})) : await api('writing_check', {prompt: WT.prompt, essay}).catch(() => ({}));
+  btn.disabled = false; btn.innerHTML = `${I.check} Проверить`;
+  if(!j.result){ notify('Не получилось проверить — попробуй ещё раз'); return; }
+  if(j.writing1) S.stats = {...S.stats, writing1: j.writing1}; if(j.writing) S.stats = {...S.stats, writing: j.writing};
+  WT.result = j.result; clearInterval(xTick.iv); sfx('happy'); wtResult(j.result);
+  WT.onDone?.(j.result.overall);
+}
+function wtResult(r){
+  $('#xwres').innerHTML = `<div class="sec-h"><h3>Результат</h3></div>
+    <div class="card"><div class="score"><div class="ring" style="--p:${r.overall / 9 * 100}"><div><b>${r.overall}</b><small>band</small></div></div><div class="crit">${critRows(r.criteria, 9)}</div></div><p class="lead" style="margin:12px 0 0">${esc(r.summary)}</p></div>
+    ${(r.criteria || []).map(c => `<div class="card"><h3>${esc(c.name)} · ${c.score}</h3><p style="margin:6px 0 0;color:var(--fg-2)">${esc(c.comment)}</p></div>`).join('')}
+    <div class="card"><h3>Получилось</h3><ul class="list">${(r.strengths || []).map(x => `<li>${esc(x)}</li>`).join('')}</ul><h3 style="margin-top:12px">Что подтянуть</h3><ul class="list">${(r.improve || []).map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>
+    <div class="card"><h3>Исправления</h3>${(r.fixes || []).map(f => `<div class="fix"><s>${esc(f.original)}</s><p>${esc(f.better)}</p><small>${esc(f.note)}</small></div>`).join('')}</div>
+    <div class="card"><h3>Как это звучит на band 8</h3><p style="margin:8px 0 0;white-space:pre-wrap;color:var(--fg-2)">${esc(r.better)}</p></div>
+    ${WT.onDone ? '<button class="btn" data-x="mock" style="width:100%">Дальше: к пробному экзамену</button>' : `<button class="btn line" data-x="wnew" style="width:100%">Новое задание</button>`}`;
+  $('#xwres').scrollIntoView({behavior: RM ? 'auto' : 'smooth', block: 'start'});
+}
+
+/* ===== 6. Пробный экзамен ===== */
+function openMock(){
+  const mi = store.get('yomi_mock_ie', null), ms = MS;
+  xOpen(`<p class="eyebrow">Экзаменный день</p><h1>Пробный экзамен</h1><p class="in-lead">Целиком, с таймерами и без подсказок по ходу — честная оценка, где ты сейчас.</p>
+    ${ms && !ms.fin ? `<button class="card xmock cont" data-x="msat">${I.calc}<span><b>Продолжить пробный SAT</b><small>${SEC[ms.secs[ms.si]]} · модуль ${ms.mod}</small></span></button>` : ''}
+    <div class="card xmock"><div class="xmh2">${I.calc}<div><b>Digital SAT</b><small>Reading & Writing → Math. Второй модуль каждой секции подстраивается: справился с первым — он сложнее (и выше потолок балла).</small></div></div>
+      <div class="xbtns"><button class="btn" data-msat="short">Сжатый · ≈ 60 мин</button><button class="btn line" data-msat="full">Полный · 2 ч 14 мин</button></div>
+      <p class="xnote">Сжатый: по 12 вопросов R&W и 10 Math в модуле. Полный — как на экзамене: 27 + 27 и 22 + 22 вопроса.</p></div>
+    <div class="card xmock"><div class="xmh2">${I.cap}<div><b>IELTS Academic</b><small>Listening → Reading → Writing Task 1 и 2 → Speaking. Каждую часть можно пройти в любой день — результаты копятся.</small></div></div>
+      ${mi ? mockIeltsSteps(mi) : `<button class="btn" data-x="mie" style="width:100%">Начать IELTS</button>`}
+      <p class="xnote">Здесь Listening — одна часть из четырёх, Reading — один текст из трёх, поэтому band примерный.</p></div>
+    ${(S.stats?.mocks || []).length ? `<div class="sec-h"><h3>Прошлые пробные</h3></div><div class="hist">${S.stats.mocks.slice().reverse().slice(0, 6).map(m => `<div class="hrow"><span class="ic ${m.kind === 'sat' ? 'sky' : 'violet'}">${m.kind === 'sat' ? I.calc : I.cap}</span><span><b>${m.kind === 'sat' ? 'SAT' : 'IELTS'}</b><small>${m.kind === 'sat' ? Object.entries(m.sections || {}).map(([k, v]) => `${k === 'rw' ? 'R&W' : 'Math'} ${v.score}`).join(' · ') : Object.entries(m.parts || {}).map(([k, v]) => `${k[0].toUpperCase()} ${v}`).join(' · ')} · ${dateRu(m.at)}</small></span><em>${m.kind === 'sat' ? m.total ?? '—' : m.overall ?? '—'}</em></div>`).join('')}</div>` : ''}`, 'Пробный экзамен');
+}
+const IE_STEPS = [['listening', 'Listening', 'одна часть · 10 вопросов'], ['reading', 'Reading', 'текст · 12 вопросов · 20 мин'], ['w1', 'Writing Task 1', 'график · 20 мин'], ['w2', 'Writing Task 2', 'эссе · 40 мин'], ['speaking', 'Speaking', '3 части · ≈ 14 мин']];
+function mockIeltsSteps(mi){
+  const b = mi.bands || {}, done = IE_STEPS.every(([k]) => b[k] != null);
+  const wr = b.w1 != null && b.w2 != null ? roundHalf((b.w1 + 2 * b.w2) / 3) : null;   // Task 2 весит вдвое больше Task 1
+  return `<div class="xsteps">${IE_STEPS.map(([k, n, sub], i) => `<button class="xstep${b[k] != null ? ' ok' : ''}" data-mie="${k}"><span class="cdot">${b[k] != null ? I.check : i + 1}</span><span class="t"><b>${n}</b><small>${b[k] != null ? `band ${b[k]}` : sub}</small></span>${I.chev}</button>`).join('')}</div>
+    ${done ? `<div class="xfinal"><span>Общий band</span><b>${mi.overall ?? '…'}</b><small>L ${b.listening} · R ${b.reading} · W ${wr} · S ${b.speaking}</small></div><button class="btn line" data-x="mienew" style="width:100%">Новый пробный IELTS</button>` : ''}`;
+}
+function mieSave(mi){ store.set('yomi_mock_ie', mi); }
+async function mieStep(k){
+  const mi = store.get('yomi_mock_ie', null) || {t0: new Date().toISOString(), bands: {}};
+  mieSave(mi);
+  const set = async v => { const m = store.get('yomi_mock_ie', mi); m.bands = {...m.bands, [k]: v}; mieSave(m); await mieFinish(m); };
+  if(k === 'listening') return openIListen(0, set);
+  if(k === 'reading') return openIRead(set);
+  if(k === 'w1') return openWrite('t1', set);
+  if(k === 'w2') return openWrite('t2', set);
+  if(k === 'speaking'){
+    const before = (S.stats?.exams || []).length;
+    const b = $('#xp'); if(b) b.remove(); XCLOSE = null;
+    await runExam('ielts', 0);
+    const e = (S.stats?.exams || []).slice(-1)[0];
+    if((S.stats?.exams || []).length > before && e?.overall != null){ await set(e.overall); notify(`Speaking ${e.overall} засчитан в пробный экзамен`); openMock(); }
+  }
+}
+async function mieFinish(m){
+  const b = m.bands || {};
+  if(!IE_STEPS.every(([k]) => b[k] != null) || m.overall != null) return;
+  const writing = roundHalf((b.w1 + 2 * b.w2) / 3);
+  const j = await api('mock_done', {kind: 'ielts', listening: b.listening, reading: b.reading, writing, speaking: b.speaking}).catch(() => ({}));
+  if(j.mock){ m.overall = j.mock.overall; mieSave(m); if(j.stats) S.stats = j.stats; sfx('happy'); }
+}
+
+/* SAT: модули с таймером, без объяснений по ходу; второй модуль строится, пока решаешь первый */
+let MS = store.get('yomi_mock_sat', null);
+const MS_SIZE = {short: {rw: [12, 14], math: [10, 16]}, full: {rw: [27, 32], math: [22, 35]}};   // [вопросов, минут] на модуль
+async function msFetch(section, n, level){
+  const out = [];
+  while(out.length < n){
+    const k = Math.min(15, n - out.length);
+    const j = await api('sat_set', {section, n: k, level}).catch(() => ({}));
+    if(!j.items?.length){ if(out.length) break; await sleep(4000); const r = await api('sat_set', {section, n: k, level}).catch(() => ({})); if(!r.items?.length) break; out.push(...r.items); continue; }
+    out.push(...j.items);
+  }
+  return out;
+}
+const msPending = {}, msLevel = {};
+function msPre(key, section, n, level){ if(!msPending[key]){ msLevel[key] = level; msPending[key] = msFetch(section, n, level); } return msPending[key]; }
+function msSave(){ store.set('yomi_mock_sat', MS); }
+async function msStart(size){
+  MS = {size, secs: ['rw', 'math'], si: 0, mod: 1, items: [], ans: [], i: 0, res: {rw: {m1: [], m2: [], hard: false}, math: {m1: [], m2: [], hard: false}}, t0: Date.now(), fin: false};
+  msSave(); msModule();
+}
+async function msModule(){
+  const sec = MS.secs[MS.si], [n, min] = MS_SIZE[MS.size][sec];
+  xOpen(xLoading(`${SEC[sec]} · модуль ${MS.mod}`, `Готовлю ${n} ${plural(n, 'вопрос', 'вопроса', 'вопросов')} — до минуты. Таймер начнётся, когда всё будет готово.`), 'Пробный SAT');
+  const level = MS.mod === 1 ? 'mixed' : MS.res[sec].hard ? 'hard' : 'medium';
+  const items = await msPre(`${sec}${MS.mod}`, sec, n, level);
+  if(!$('#xp')) return;
+  if(!items.length){ delete msPending[`${sec}${MS.mod}`]; xBody(`<div class="card xcard"><p>Не получилось собрать модуль — ИИ сейчас занят.</p><button class="btn" data-x="msat">Попробовать ещё раз</button></div>`); return; }
+  MS.items = items; MS.ans = Array(items.length).fill(null); MS.i = 0; MS.end = Date.now() + min * 60000; msSave();
+  // следующий модуль другой секции начинаем готовить сразу
+  if(MS.mod === 2 && MS.si === 0) msPre('math1', 'math', MS_SIZE[MS.size].math[0], 'mixed');
+  msDraw();
+}
+function msDraw(){
+  const sec = MS.secs[MS.si], it = MS.items[MS.i], a = MS.ans[MS.i];
+  xShow(`<div class="xsath"><b>${SEC[sec]} · модуль ${MS.mod}</b><span>${MS.i + 1}/${MS.items.length}</span></div>
+    <div class="xdots">${MS.items.map((_, k) => `<button class="${k === MS.i ? 'cur' : ''}${MS.ans[k] != null ? ' ok' : ''}" data-msgo="${k}" aria-label="Вопрос ${k + 1}">${k + 1}</button>`).join('')}</div>
+    ${it.passage ? `<div class="passage">${esc(it.passage)}</div>` : ''}
+    <p class="question">${esc(it.question)}</p>
+    <div class="choices">${it.choices.map((c, k) => `<button class="choice${a === k ? ' on' : ''}" data-msch="${k}"><span class="l">${'ABCD'[k]}</span><span>${esc(c)}</span></button>`).join('')}</div>
+    <div class="xbtns"><button class="btn line" data-msprev ${MS.i ? '' : 'disabled'}>Назад</button>${MS.i + 1 < MS.items.length ? '<button class="btn" data-msnext>Дальше</button>' : '<button class="btn green" data-msend>Сдать модуль</button>'}</div>`, 'Пробный SAT');
+  XCLOSE = () => msSave();
+  xTick(Math.max(0, Math.round((MS.end - Date.now()) / 1000)), () => { notify('Время модуля вышло'); msEnd(); });
+  // на 60 % первого модуля решаем, каким будет второй, и начинаем его готовить
+  if(MS.mod === 1 && MS.ans.filter(x => x != null).length >= Math.ceil(MS.items.length * .6)){
+    const done = MS.items.map((q, k) => MS.ans[k] == null ? null : MS.ans[k] === q.answer).filter(x => x != null), hard = done.filter(Boolean).length / done.length >= .6;
+    if(!msPending[`${sec}2`]){ MS.res[sec].hard = hard; msPre(`${sec}2`, sec, MS_SIZE[MS.size][sec][0], hard ? 'hard' : 'medium'); }
+  }
+}
+async function msEnd(){
+  const sec = MS.secs[MS.si];
+  MS.res[sec]['m' + MS.mod] = MS.items.map((q, k) => ({ok: MS.ans[k] === q.answer, difficulty: q.difficulty, skill: q.skill, q: q.question.slice(0, 120), passage: (q.passage || '').slice(0, 600), choices: q.choices, answer: q.answer, pick: MS.ans[k], explanation: q.explanation}));
+  if(MS.mod === 1){
+    const r = MS.res[sec].m1; MS.res[sec].hard = r.filter(x => x.ok).length / r.length >= .6;
+    // второй модуль готовили по 60 % ответов; если итог первого модуля другой — собираем заново
+    const want = MS.res[sec].hard ? 'hard' : 'medium';
+    if(msLevel[`${sec}2`] && msLevel[`${sec}2`] !== want) delete msPending[`${sec}2`];
+    msPre(`${sec}2`, sec, MS_SIZE[MS.size][sec][0], want);
+    MS.mod = 2; MS.items = []; msSave(); return msModule();
+  }
+  if(MS.si === 0){ MS.si = 1; MS.mod = 1; MS.items = []; msSave(); clearInterval(xTick.iv);
+    xOpen(`<p class="eyebrow">Перерыв</p><h1>Reading & Writing готово</h1><p class="in-lead">На настоящем SAT между секциями 10 минут перерыва. Выпей воды и разомнись — Math уже готовится.</p>
+      <button class="btn" data-x="msat" style="width:100%">Начать Math</button>`, 'Перерыв'); return; }
+  MS.fin = true; msSave(); clearInterval(xTick.iv);
+  xOpen(xLoading('Считаю баллы…', 'Обе секции и итог из 1600'), 'Пробный SAT');
+  const strip = r => [...r.m1, ...r.m2].map(({ok, difficulty, skill}) => ({ok, difficulty, skill}));
+  const j = await api('mock_done', {kind: 'sat', minutes: Math.round((Date.now() - MS.t0) / 60000), rw: {results: strip(MS.res.rw), hard: MS.res.rw.hard}, math: {results: strip(MS.res.math), hard: MS.res.math.hard}}).catch(() => ({}));
+  if(j.stats) S.stats = j.stats;
+  msResult(j.mock);
+}
+function msResult(m){
+  const all = ['rw', 'math'].flatMap(k => [...MS.res[k].m1, ...MS.res[k].m2].map(x => ({...x, sec: k}))), wrong = all.filter(x => !x.ok);
+  sfx('happy');
+  xOpen(`<p class="eyebrow">Пробный SAT · ${MS.size === 'full' ? 'полный' : 'сжатый'}</p><h1>${m?.total ?? '—'} <small class="xof">из 1600</small></h1>
+    <div class="card"><div class="crit">${['rw', 'math'].map(k => { const s = m?.sections?.[k]; return s ? `<div><span>${SEC[k]}</span><b>${s.score}</b><span class="bar ${k === 'math' ? 'green' : ''}"><i style="width:${(s.score - 200) / 6}%"></i></span></div><p class="xnote" style="margin:-2px 0 6px">${s.correct}/${s.total} верно · второй модуль ${s.hard ? 'сложный' : 'попроще (потолок ≈ 610)'}</p>` : ''; }).join('')}
+      <div><span>Цель</span><b>${GOALS.sat}</b><span class="bar"><i style="width:${(GOALS.sat - 400) / 12}%"></i></span></div></div>
+      <p class="xnote">Оценка примерная: по доле верных ответов с учётом сложности и уровня второго модуля.</p></div>
+    ${wrong.length ? `<div class="sec-h"><h3>Ошибки · ${wrong.length}</h3></div>${wrong.map(x => `<details class="rev"><summary><span class="dot" style="background:#DC2626"></span>${SEC[x.sec]} · ${esc(x.skill || '')}: ${esc(x.q.slice(0, 70))}…</summary>${x.passage ? `<p class="xnote">${esc(x.passage)}</p>` : ''}<p>${esc(x.q)}</p><p>Твой ответ: <b>${x.pick != null ? 'ABCD'[x.pick] + ' — ' + esc(x.choices[x.pick]) : 'нет ответа'}</b><br>Верно: <b>${'ABCD'[x.answer]} — ${esc(x.choices[x.answer])}</b></p><p>${esc(x.explanation || '')}</p></details>`).join('')}` : ''}
+    <div class="xbtns"><button class="btn" data-x="mistakes">Где я ошибаюсь</button><button class="btn line" data-x="progress">Мой прогресс</button></div>`, 'Пробный SAT');
+}
+
+/* ===== 7. Напоминания в Telegram (в настройках) ===== */
+const _openSettingsX = openSettings;
+openSettings = function(){
+  _openSettingsX();
+  const r = S.stats?.remind || {}, row = document.querySelector('#sheetIn [data-privacy]')?.closest('.setrow'); if(!row) return;
+  row.insertAdjacentHTML('beforebegin', `<div class="setrow xrem"><span>Напоминания в Telegram<small>если в этот час ты ещё не занимался(-ась)</small></span>
+    <select class="inp" id="remH" aria-label="Время напоминания"><option value="off">Выкл</option>${Array.from({length: 16}, (_, k) => k + 7).map(h => `<option value="${h}" ${r.on && +r.hour === h ? 'selected' : ''}>${String(h).padStart(2, '0')}:00</option>`).join('')}</select></div>
+    ${r.on ? '<div class="setrow"><span>Как выглядит напоминание</span><button class="btn sm line" id="remT">Прислать пример</button></div>' : ''}`);
+  $('#remH').onchange = async e => {
+    const v = e.target.value, j = await api('remind_set', {on: v !== 'off', hour: v === 'off' ? (r.hour ?? 19) : +v, tz: new Date().getTimezoneOffset()}).catch(() => ({}));
+    if(!j.remind){ notify('Не получилось сохранить'); return; }
+    S.stats = {...S.stats, remind: j.remind}; notify(j.remind.on ? `Напомню в ${String(j.remind.hour).padStart(2, '0')}:00, если не позанимаешься` : 'Напоминания выключены'); openSettings();
+  };
+  const t = $('#remT'); if(t) t.onclick = async e => { e.stopPropagation(); const j = await api('remind_set', {test: true}).catch(() => ({})); notify(j.sent === 'sent' ? 'Отправил пример в Telegram' : 'Не получилось отправить'); };
+};
+
+/* ===== вход на экраны: плитки на главной, в IELTS, SAT и «Учёбе» ===== */
+const I_CHART = svgI('<path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>');
+const I_HEAD = svgI('<path d="M3 14v-2a9 9 0 0 1 18 0v2"/><rect x="2" y="14" width="5" height="7" rx="2"/><rect x="17" y="14" width="5" height="7" rx="2"/>');
+const _showHomeX = showHome;
+showHome = function(){
+  _showHomeX();
+  const tiles = $('#homeBox .tiles'); if(!tiles) return;
+  tiles.insertAdjacentHTML('afterend', `<div class="sec-h"><h3>Экзамен и прогресс</h3></div><div class="tiles">
+    ${tileHtml('data-x="mock"', 'violet', I.cap, 'Пробный экзамен', 'SAT или IELTS целиком, с таймером и итоговым баллом')}
+    ${tileHtml('data-x="progress"', 'green', I_CHART, 'Мой прогресс', 'Графики баллов и дни занятий')}
+    ${tileHtml('data-x="mistakes"', 'orange', I.target, 'Где я ошибаюсь', 'Что повторяется и урок под каждую ошибку')}</div>`);
+};
+const _showIeltsX = showIelts;
+showIelts = function(){
+  _showIeltsX();
+  const box = $('#ieltsBox'), x = S.stats || {}, lastB = k => (x[k] || []).slice(-1)[0]?.band ?? '—';
+  box.querySelector('.crit')?.lastElementChild?.insertAdjacentHTML('beforebegin', `<div><span>Reading</span><b>${lastB('reading')}</b><span class="bar"><i style="width:${(+lastB('reading') || 0) / 9 * 100}%"></i></span></div><div><span>Listening</span><b>${lastB('listening')}</b><span class="bar"><i style="width:${(+lastB('listening') || 0) / 9 * 100}%"></i></span></div>`);
+  const secs = [...box.querySelectorAll('.sec-h')];
+  secs[0]?.insertAdjacentHTML('beforebegin', `<div class="tiles" style="margin-top:14px">${tileHtml('data-x="mock"', 'violet', I.cap, 'Пробный IELTS целиком', 'Listening, Reading, Writing и Speaking → общий band')}</div>`);
+  const rd = secs.find(s => s.textContent.trim() === 'Reading');
+  rd?.nextElementSibling?.insertAdjacentHTML('afterbegin', tileHtml('data-x="iread"', 'green', I.book, 'Academic Reading — тест', 'Статья и 12 вопросов: True/False/Not Given, выбор, пропуски · 20 мин'));
+  rd?.insertAdjacentHTML('beforebegin', `<div class="sec-h"><h3>Listening</h3></div><div class="tiles">
+    ${[[1, 'Part 1 — разговор', 'Бронь, анкета: имена, числа, даты'], [2, 'Part 2 — монолог', 'Экскурсия, объявление'], [3, 'Part 3 — обсуждение', 'Студенты обсуждают проект'], [4, 'Part 4 — лекция', 'Академическая тема, конспект']]
+      .map(([p, t, s]) => tileHtml(`data-x="ilisten" data-part="${p}"`, ['sky', 'indigo', 'orange', 'pink'][p - 1], I_HEAD, t, s + ' · 10 вопросов')).join('')}</div>`);
+  const wr = secs.find(s => s.textContent.trim() === 'Writing');
+  wr?.nextElementSibling?.insertAdjacentHTML('afterbegin', tileHtml('data-x="task1"', 'sky', I_CHART, 'Task 1 — график', 'Опиши диаграмму или таблицу: 150 слов, 20 минут, band'));
+};
+const _showSatX = showSat;
+showSat = function(){
+  _showSatX();
+  const t = [...$('#satBox').querySelectorAll('.sec-h')].find(s => s.textContent.trim() === 'Практика')?.nextElementSibling;
+  t?.insertAdjacentHTML('afterbegin', tileHtml('data-x="mock"', 'violet', I.cap, 'Пробный SAT целиком', 'Две секции, адаптивный второй модуль, итог из 1600'));
+};
+const _showLearnX = showLearn;
+showLearn = function(){
+  _showLearnX();
+  const c = $('#learnBox .card.course'); if(!c) return;
+  c.insertAdjacentHTML('afterend', `<div class="xlrow"><button class="card xlb" data-x="mistakes">${I.target}<span><b>Где я ошибаюсь</b><small>Повторяющиеся ошибки</small></span></button><button class="card xlb" data-x="progress">${I_CHART}<span><b>Мой прогресс</b><small>Графики баллов</small></span></button></div>`);
+};
+
+/* ===== клики ===== */
+function xGo(k, el){
+  if(k === 'progress') return openProgress();
+  if(k === 'mistakes') return openMistakes();
+  if(k === 'mreload') return openMistakes(true);
+  if(k === 'mock') return openMock();
+  if(k === 'iread') return openIRead();
+  if(k === 'ilisten') return openIListen(+(el?.dataset.part || 0));
+  if(k === 'task1') return openWrite('t1');
+  if(k === 'msat') return MS && !MS.fin ? (MS.items?.length && MS.end > Date.now() ? msDraw() : msModule()) : openMock();
+  if(k === 'mie'){ mieSave({t0: new Date().toISOString(), bands: {}}); return openMock(); }
+  if(k === 'mienew') return askYes('Начать новый пробный IELTS? Текущие результаты останутся в истории.', 'Начать').then(y => { if(y){ mieSave({t0: new Date().toISOString(), bands: {}}); store.set(wtKey('t1', true), null); store.set(wtKey('t2', true), null); openMock(); } });
+}
+document.addEventListener('click', e => {
+  const x = e.target.closest('[data-x]'); if(!x || x.closest('#xp')) return;
+  e.stopPropagation(); unlock(); xGo(x.dataset.x, x);
+}, true);
+function xClick(e){
+  const t = e.target;
+  if(t.closest('[data-xclose]')) return xClose();
+  const x = t.closest('[data-x]'), k = x?.dataset.x;
+  if(k === 'rcheck'){ const left = RT.test.questions.length - RT.ans.filter(Boolean).length; return (left ? askYes(`Без ответа ${left} ${plural(left, 'вопрос', 'вопроса', 'вопросов')}. Проверить?`, 'Проверить') : Promise.resolve(true)).then(y => { if(y) rtCheck(); }); }
+  if(k === 'lplay') return lPlay();
+  if(k === 'wcheck') return wtCheck();
+  if(k === 'wnew') return wtNew();
+  if(k === 'mock' || k === 'progress' || k === 'mistakes' || k === 'mreload' || k === 'iread' || k === 'ilisten' || k === 'msat' || k === 'mie' || k === 'mienew'){ XCLOSE?.(); XCLOSE = null; clearInterval(xTick.iv); return xGo(k, x); }
+  const a = t.closest('[data-xa]'); if(a && RT && !RT.done){ RT.ans[+a.dataset.xa] = a.dataset.xv; const q = $('#xq' + a.dataset.xa); if(q) q.outerHTML = qHtml(RT.test.questions[+a.dataset.xa], +a.dataset.xa); const j = $('.xjump a[href="#xqs"]'); if(j) j.textContent = `Вопросы · ${RT.ans.filter(Boolean).length}/${RT.test.questions.length}`; return; }
+  const ms = t.closest('[data-msat]'); if(ms) return (MS && !MS.fin ? askYes('Начать заново? Текущий пробный SAT пропадёт.', 'Начать') : Promise.resolve(true)).then(y => { if(y){ Object.keys(msPending).forEach(k => delete msPending[k]); msStart(ms.dataset.msat); } });
+  const mie = t.closest('[data-mie]'); if(mie) return mieStep(mie.dataset.mie);
+  const ch = t.closest('[data-msch]'); if(ch){ MS.ans[MS.i] = +ch.dataset.msch; msSave(); return msDraw(); }
+  if(t.closest('[data-msnext]')){ MS.i++; return msDraw(); }
+  if(t.closest('[data-msprev]')){ MS.i--; return msDraw(); }
+  const go = t.closest('[data-msgo]'); if(go){ MS.i = +go.dataset.msgo; return msDraw(); }
+  if(t.closest('[data-msend]')){ const left = MS.ans.filter(x => x == null).length; return (left ? askYes(`Без ответа ${left} ${plural(left, 'вопрос', 'вопроса', 'вопросов')}. Сдать модуль?`, 'Сдать') : Promise.resolve(true)).then(y => { if(y) msEnd(); }); }
+  const xc = t.closest('[data-xclass]'); if(xc){ const g = S.stats?.mistakeReport?.groups?.[+xc.dataset.xclass]; if(g){ xClose(); tab('learn'); openClass(g.topic || g.title, g.why); } return; }
+  const xl = t.closest('[data-xls]'); if(xl){ xClose(); tab('learn'); return openLesson(xl.dataset.xls); }
+  const jump = t.closest('.xjump a'); if(jump){ e.preventDefault(); $(jump.getAttribute('href'))?.scrollIntoView({behavior: RM ? 'auto' : 'smooth'}); }
+}
+function xInput(e){
+  const g = e.target.closest('[data-xgap]'); if(g && RT && !RT.done){ RT.ans[+g.dataset.xgap] = g.value.trim(); return; }
+  if(e.target.id === 'xEssay' && WT){
+    WT.essay = e.target.value; if(!WT.started && WT.essay.trim()){ WT.started = Date.now(); xTick(WT.kind === 't1' ? 20 * 60 : 40 * 60); } wtSave();
+    const n = WT.essay.trim() ? WT.essay.trim().split(/\s+/).length : 0, min = WT.kind === 't1' ? 150 : 250, w = $('#xwc');
+    if(w){ w.textContent = `${n} / ${min} слов`; w.classList.toggle('okc', n >= min); }
+  }
+}
 </script>
 </body>
 </html>
