@@ -212,7 +212,7 @@ async function askClaude(st: any, text: string) {
   return null;
 }
 // без ключа Claude — бесплатно через Groq (тот же ключ, что для голоса); ответ по той же JSON-схеме в строгом режиме
-const GROQ_MODEL = 'openai/gpt-oss-120b', GROQ_BACKUP = 'llama-3.3-70b-versatile';
+const GROQ_MODEL = 'openai/gpt-oss-120b';
 // запасная модель с тем же форматом ответов и своим лимитом: на неё переходим, когда основная упёрлась в лимит (429)
 const GROQ_LIGHT = 'openai/gpt-oss-20b';
 const normT = (t: string) => String(t || '').toLowerCase().replace(/[^a-z0-9а-яё' ]+/gi, ' ').replace(/\s+/g, ' ').trim();
@@ -222,16 +222,12 @@ function isEcho(out: any, text: string) {
 }
 async function askGroq(system: string, msgs: { role: string; content: string }[]) {
   for (let attempt = 0; attempt < 3; attempt++) {
-    const backup = attempt === 2;   // третья попытка — другая модель (JSON по описанию схемы)
+    const backup = attempt === 2;   // третья попытка — лёгкая модель (у неё свой лимит)
     const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: { Authorization: 'Bearer ' + env('GROQ_API_KEY'), 'Content-Type': 'application/json' },
-      body: JSON.stringify(backup ? {
-        model: GROQ_BACKUP, temperature: 0.6, max_tokens: 1200,
-        messages: [{ role: 'system', content: system + '\n\nAnswer ONLY with one JSON object matching this JSON schema: ' + JSON.stringify(SCHEMA) }, ...msgs],
-        response_format: { type: 'json_object' },
-      } : {
-        model: GROQ_MODEL, reasoning_effort: 'low', temperature: 0.7, max_completion_tokens: 4000,
+      body: JSON.stringify({
+        model: backup ? GROQ_LIGHT : GROQ_MODEL, reasoning_effort: 'low', temperature: 0.7, max_completion_tokens: 4000,
         messages: [{ role: 'system', content: system }, ...msgs],
         response_format: { type: 'json_schema', json_schema: { name: 'tutor_reply', strict: true, schema: SCHEMA } },
       }),
@@ -241,7 +237,7 @@ async function askGroq(system: string, msgs: { role: string; content: string }[]
       const out = JSON.parse(j?.choices?.[0]?.message?.content || '');
       if (out?.reply) { out.words = Array.isArray(out.words) ? out.words : []; out.correction = out.correction?.fixed ? out.correction : null; out.emotion = MOODS[out.emotion] ? out.emotion : 'kind'; return out; }
     } catch { /* ниже */ }
-    console.error('groq', backup ? GROQ_BACKUP : GROQ_MODEL, r.status, JSON.stringify(j).slice(0, 400));
+    console.error('groq', backup ? GROQ_LIGHT : GROQ_MODEL, r.status, JSON.stringify(j).slice(0, 400));
   }
   return null;
 }
@@ -353,29 +349,27 @@ const pickThemes = (list: string[], n: number) => [...list].sort(() => Math.rand
 const shortQ = (q: string) => String(q || '').replace(/\s+/g, ' ').slice(0, 90);
 
 async function askJsonGroq(system: string, user: string, schema: any, effort = 'medium', maxTokens = 16000, model = GROQ_MODEL) {
-  for (let attempt = 0; attempt < 4; attempt++) {
+  const limited: Record<string, number> = {};   // модель → когда снова можно (мс)
+  for (let attempt = 0; attempt < 6; attempt++) {
     const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: { Authorization: 'Bearer ' + env('GROQ_API_KEY'), 'Content-Type': 'application/json' },
-      // llama (третья ступень) не умеет строгую схему — даём схему текстом и режим json_object
-      body: JSON.stringify(model === GROQ_BACKUP ? {
-        model, max_tokens: Math.min(maxTokens, 8000), temperature: 0.4,
-        messages: [{ role: 'system', content: `${system}\nReply with one JSON object that matches this JSON schema exactly: ${JSON.stringify(schema)}` }, { role: 'user', content: user }],
-        response_format: { type: 'json_object' },
-      } : {
+      body: JSON.stringify({
         model, reasoning_effort: effort, max_completion_tokens: maxTokens,
         messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
         response_format: { type: 'json_schema', json_schema: { name: 'exam', strict: true, schema } },
       }),
     });
-    // перегрузка (лимит запросов в минуту) — ждём, сколько просит Groq (не дольше 8 с), и пробуем снова
+    // лимит (токены в минуту / в день): переходим на другую модель; если обе в лимите — ждём ту, что освободится раньше (до 25 с)
     if (r.status === 429) {
       const ra = Number(r.headers.get('retry-after')) || 2;
       console.error('exam 429', model, 'retry-after', ra, (await r.text().catch(() => '')).slice(0, 200));
-      if (model === GROQ_MODEL) { model = GROQ_LIGHT; continue; }   // основная модель в лимите — сразу запасная
-      if (model === GROQ_LIGHT) { model = GROQ_BACKUP; continue; }  // и она в лимите — третья, со своим лимитом
-      if (ra > 10) break;                                          // все в лимите надолго — не держим человека
-      await new Promise((res) => setTimeout(res, ra * 1000)); continue;
+      limited[model] = Date.now() + ra * 1000;
+      const other = model === GROQ_MODEL ? GROQ_LIGHT : GROQ_MODEL;
+      if ((limited[other] || 0) <= Date.now()) { model = other; continue; }
+      const next = limited[model] < limited[other] ? model : other, wait = limited[next] - Date.now();
+      if (wait > 25000) break;                                     // обе в лимите надолго — не держим человека
+      model = next; await new Promise((res) => setTimeout(res, Math.max(0, wait) + 300)); continue;
     }
     const j = await r.json().catch(() => ({}));
     try { return JSON.parse(j?.choices?.[0]?.message?.content || ''); } catch { console.error('exam', r.status, JSON.stringify(j).slice(0, 300)); }
@@ -1306,7 +1300,7 @@ Questions: ${JSON.stringify(out.check.map((q: any) => ({ question: q.question, c
         verdict: { type: 'string', enum: ['great', 'good', 'retry'] }, praise: { type: 'string' },
         issues: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['wrong', 'right', 'why'], properties: { wrong: { type: 'string' }, right: { type: 'string' }, why: { type: 'string' } } } },
         better: { type: 'string' }, tip: { type: 'string' } } };
-      const fb = await askJsonGroq(`You are a warm but demanding IELTS teacher giving feedback to one learner on one answer. Write "praise", every "why" and "tip" in Russian, addressing the learner as "ты"; only quotes, corrections and the improved answer are in English. Be accurate — check every correction twice; do not invent mistakes; if the answer is good, say so. Return JSON only.`,
+      const fb = await askJsonGroq(`You are a warm but demanding IELTS teacher giving feedback to one learner on one answer. Write "praise", every "why" and "tip" in Russian, addressing the learner as "ты" in gender-neutral wording (the gender is unknown: say "у тебя получилось", "ты использовал(а)", never only masculine or feminine past-tense forms); only quotes, corrections and the improved answer are in English. Be accurate — check every correction twice; do not invent mistakes; if the answer is good, say so. Return JSON only.`,
         `Lesson skill: "${name}" (${kind}${part ? `, IELTS Speaking Part ${part} — judge length and depth for this part: Part 1 answers are 2–4 sentences, Part 2 about 2 minutes, Part 3 developed opinions` : ''}).${focus ? ` Key facts: ${focus}.` : ''}\nTask: ${task.prompt}\nWhat to apply: ${task.hint}\nLearner's answer${b.audio ? ' (transcribed from speech — ignore punctuation and filler words)' : ''}: «${answer}»\n
 - "verdict": great (uses the lesson skill well, no real errors), good (works, small issues), retry (misses the skill or has errors that matter — ask to try again).
 - "praise": 1–2 sentences on what is good (specific).
@@ -1434,7 +1428,7 @@ Learner profile: ${profile}`;
           method: 'POST', headers: { Authorization: 'Bearer ' + env('GROQ_API_KEY'), 'Content-Type': 'application/json' },
           body: JSON.stringify({ model: tmodel, reasoning_effort: 'high', max_completion_tokens: 12000, messages: [{ role: 'system', content: system }, ...msgs] }),
         });
-        if (r.status === 429) { if (tmodel !== GROQ_LIGHT) { tmodel = GROQ_LIGHT; continue; } const wait = Number(r.headers.get('retry-after')) || 2; if (wait > 10) break; await new Promise((res) => setTimeout(res, wait * 1000)); continue; }
+        if (r.status === 429) { if (tmodel !== GROQ_LIGHT) { tmodel = GROQ_LIGHT; continue; } const wait = Number(r.headers.get('retry-after')) || 2; if (wait > 25) break; await new Promise((res) => setTimeout(res, wait * 1000)); continue; }
         const j = await r.json().catch(() => ({}));
         reply = String(j?.choices?.[0]?.message?.content || '').trim();
         if (!reply) console.error('tutor', r.status, JSON.stringify(j).slice(0, 300));
