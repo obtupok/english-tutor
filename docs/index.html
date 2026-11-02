@@ -970,6 +970,8 @@ nav button{font-size:11px!important}
 .tnext{display:flex;flex-wrap:wrap;gap:8px;padding-left:40px}.tnext .chip{min-height:38px}
 .tnext .chip[data-tans]{background:var(--fg);color:#fff;border-color:var(--fg)}
 .terr{background:#FBECEA!important;border-color:#EBB0A8!important}.terr p{margin:0 0 10px!important}
+/* «Недавно» и «История»: значок — квадрат 40×40, не тянется вместе с текстом (.hrow span{flex:1} задевал и его) */
+.hrow > .ic{flex:none!important;width:40px;height:40px;display:grid;place-items:center}
 
 </style>
 </head>
