@@ -3106,23 +3106,25 @@ async function kokoroSay(voice, text){
 }
 // кусок текста → голос: латиница — английский голос питомца, кириллица — русский (только Piper)
 function synth(part, char){
-  const ru = /[а-яё]/i.test(part) && !/[a-z]{3}/i.test(part);
+  const ru = (part.match(/[а-яё]/gi) || []).length >= (part.match(/[a-z]/gi) || []).length;
   if(ru) return piperSay(MALE.has(char) ? PIPER_RU_M : PIPER_RU_F, part);
   return engineNow() === 'kokoro' ? kokoroSay(enVoice(char), part) : piperSay(enVoice(char), part);
 }
-// режем на предложения и отдельно — русские и английские куски, чтобы каждый звучал своим голосом и речь начиналась сразу
+// режем на предложения и отдельно — русские и английские куски, чтобы каждый звучал своим голосом и речь начиналась сразу.
+// Границу ищем по буквам, а не по словам: в «IELTS‑экзамену» английская часть уходит английскому голосу, русская — русскому
+// (иначе английский голос получал кириллицу и читал её по буквам)
 function splitSpeech(text){
   const out = [];
   for(const sent of String(text).replace(/\s+/g, ' ').match(/[^.!?…]+[.!?…]*["»)]?\s*/g) || [text]){
     let cur = '', lang = '';
-    for(const w of sent.trim().split(' ')){
-      const l = /[а-яё]/i.test(w) ? 'ru' : /[a-z]/i.test(w) ? 'en' : lang;   // слова без букв (числа, тире) — к текущему куску
-      if(cur && l && lang && l !== lang){ out.push(cur); cur = ''; }
-      cur += (cur ? ' ' : '') + w; lang = l || lang;
+    for(const ch of sent.trim()){
+      const l = /[а-яё]/i.test(ch) ? 'ru' : /[a-z]/i.test(ch) ? 'en' : '';   // цифры, пробелы, тире — к текущему куску
+      if(l && lang && l !== lang && /[a-zа-яё]/i.test(cur)){ out.push(cur.replace(/[‑-]$/, '').trim()); cur = ''; }
+      cur += ch; if(l) lang = l;
     }
     if(cur.trim()) out.push(cur.trim());
   }
-  return out;
+  return out.filter(p => /[a-zа-яё0-9]/i.test(p));
 }
 function playBlob(blob){
   return new Promise(res => {
@@ -3600,7 +3602,8 @@ function classStepShow(){
 async function classSay(text){
   const cl = CL; if(!cl || !text) return;
   unlock(); cl.speaking = true; $('#class .clteacher')?.classList.add('talk');
-  await sayText(text, 'en').catch(() => {});
+  const ru = (text.match(/[а-яё]/gi) || []).length > (text.match(/[a-z]/gi) || []).length;   // учитель говорит по-русски — так и передаём голосу
+  await sayText(text, ru ? 'ru' : 'en').catch(() => {});
   if(CL === cl){ cl.speaking = false; $('#class .clteacher')?.classList.remove('talk'); }
 }
 function classRender(){
