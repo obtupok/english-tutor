@@ -952,6 +952,24 @@ nav button{font-size:11px!important}
 .xlrow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
 .xlb{display:flex;gap:10px;align-items:center;text-align:left;font:inherit;color:inherit;cursor:pointer;padding:12px}.xlb svg{width:22px;height:22px;flex:none;color:var(--accent)}.xlb b{display:block;font-size:14px}.xlb small{color:var(--muted);font-size:12px}
 @media (prefers-reduced-motion:reduce){.xspin{animation-duration:2.4s}}
+/* репетитор: учитель с лицом, задание карточкой, следующий шаг кнопками */
+.tbar{justify-content:flex-start;gap:4px;border-bottom:1px solid var(--border);padding-bottom:10px;margin-bottom:4px}
+.tbar .pw-back{min-width:40px;padding:0 6px}
+.thd{display:flex;align-items:center;gap:10px;min-width:0}.thd .t{display:flex;flex-direction:column;min-width:0}
+.thd b{font-size:16px}.thd small{color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.thd .tava{width:42px;height:42px}.thd .tava .buddy.mini{--bsize:38px!important}
+.tmsg.a{flex-direction:row;align-items:flex-start;gap:8px;max-width:96%}
+.tav{width:32px;height:32px;flex:none;border-radius:50%;background:var(--green-bg);display:grid;place-items:center;overflow:hidden}
+.tav .buddy.mini{--bsize:30px!important;width:auto;filter:none}
+.tcol{display:flex;flex-direction:column;min-width:0}
+.tmsg.a .tbub{border-bottom-left-radius:6px}
+.tgreet ol{margin:2px 0 8px}.tgreet p:last-child{color:var(--muted);font-size:14px}
+.ttask{margin:10px 0 4px;padding:12px 14px;border-radius:14px;background:var(--green-bg);border:1px solid #9BD3AE}
+.ttask h4{display:flex;align-items:center;gap:6px;margin:0 0 6px!important;color:var(--green)}.ttask h4 svg{width:18px;height:18px}
+.ttask p:last-child{margin:0}
+.tnext{display:flex;flex-wrap:wrap;gap:8px;padding-left:40px}.tnext .chip{min-height:38px}
+.tnext .chip[data-tans]{background:var(--fg);color:#fff;border-color:var(--fg)}
+.terr{background:#FBECEA!important;border-color:#EBB0A8!important}.terr p{margin:0 0 10px!important}
 
 </style>
 </head>
@@ -3237,19 +3255,21 @@ const tsave = () => { TCH = TCH.slice(0, 30); TCH.forEach(c => { c.msgs = c.msgs
 const TUTOR_STARTS = ['Хочу разобраться с Present Perfect', 'Как писать эссе IELTS Task 2 на 7+', 'Объясни линейные уравнения для SAT', 'Как отвечать на Part 2 и не молчать', 'Какие связки использовать в Speaking', 'С чего начать подготовку к SAT'];
 // markdown → html: экранируем, потом **жирный**, `код`, заголовки, списки, абзацы
 function tmd(text){
-  const lines = esc(text).split('\n'); let html = '', list = '';
+  const lines = esc(text).split('\n'); let html = '', list = '', task = false;
   const inline = s => s.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/(^|[^*])\*(?!\s)(.+?)\*/g, '$1<i>$2</i>').replace(/`([^`]+)`/g, '<code>$1</code>');
   const close = () => { if(list){ html += `</${list}>`; list = ''; } };
   for(const raw of lines){
     const l = raw.trimEnd();
     if(/^\s*-{3,}\s*$/.test(l)){ close(); continue; }
     let m;
-    if((m = l.match(/^#{1,4}\s+(.*)/))){ close(); html += `<h4>${inline(m[1])}</h4>`; continue; }
+    // «Проверь себя», «Упражнение», «Задание» — отдельной карточкой-заданием, как в учебнике
+    if((m = l.match(/^#{1,4}\s+(.*)/))){ close(); if(task){ html += '</div>'; task = false; }
+      if(/провер|упражн|задани|практи|попробуй|твоя очередь/i.test(m[1])){ html += `<div class="ttask"><h4>${I.target} ${inline(m[1])}</h4>`; task = true; } else html += `<h4>${inline(m[1])}</h4>`; continue; }
     if((m = l.match(/^\s*[-•]\s+(.*)/))){ if(list !== 'ul'){ close(); html += '<ul>'; list = 'ul'; } html += `<li>${inline(m[1])}</li>`; continue; }
     if((m = l.match(/^\s*\d+[.)]\s+(.*)/))){ if(list !== 'ol'){ close(); html += '<ol>'; list = 'ol'; } html += `<li>${inline(m[1])}</li>`; continue; }
     close(); if(l.trim()) html += `<p>${inline(l)}</p>`;
   }
-  close(); return html;
+  close(); if(task) html += '</div>'; return html;
 }
 // кнопки из ответа: только настоящие уроки и практики приложения
 function tactions(text){
@@ -3353,30 +3373,54 @@ addEventListener('resize', () => $('#wpop')?.classList.remove('on'));
 function tutorChat(id){
   tcur = id; const c = TCH.find(x => x.id === id); if(!c) return tutorList();
   const box = tutorBox();
-  box.innerHTML = `<div class="in-top tbar"><button class="in-skip pw-back" data-tlist>${svgI('<path d="M15 6l-6 6 6 6"/>')} Чаты</button><b class="ttitle">${esc(c.title || 'Новый чат')}</b><span></span></div>
-    <div class="tmsgs" id="tmsgs">${c.msgs.length ? '' : `<div class="tempty"><p>Напиши, что хочешь выучить или что непонятно.</p><div class="tstarts">${TUTOR_STARTS.slice(0, 4).map(t => `<button class="chip" data-tstart="${esc(t)}">${esc(t)}</button>`).join('')}</div></div>`}
-      ${c.msgs.map(m => tmsgHtml(m)).join('')}${tbusy ? '<div class="tmsg a"><div class="tbub typing"><i></i><i></i><i></i><span>Yomi думает и перепроверяет ответ…</span></div></div>' : ''}</div>
-    <form class="tcomp" id="tcomp"><textarea id="tin" rows="1" placeholder="Спроси Yomi…" aria-label="Сообщение"></textarea><button class="tsend" aria-label="Отправить">${svgI('<path d="M5 12h14M13 6l6 6-6 6"/>')}</button></form>`;
-  const ms = $('#tmsgs'); ms.querySelectorAll('.tmsg.a .tbub').forEach(tspeak); ms.scrollTop = ms.scrollHeight;
+  const ava = miniBunny(LOOK.char, LOOK.color, 'gradcap'), last = c.msgs[c.msgs.length - 1];
+  box.innerHTML = `<div class="in-top tbar"><button class="in-skip pw-back" data-tlist aria-label="Все чаты">${svgI('<path d="M15 6l-6 6 6 6"/>')}</button>
+      <div class="thd"><span class="tava">${ava}<i class="tonl"></i></span><span class="t"><b>Yomi · репетитор</b><small>${esc(c.title || 'IELTS, SAT и английский')}</small></span></div></div>
+    <div class="tmsgs" id="tmsgs">${c.msgs.length ? '' : tgreet(ava)}
+      ${c.msgs.map(m => tmsgHtml(m, ava)).join('')}
+      ${tbusy ? `<div class="tmsg a"><span class="tav">${ava}</span><div class="tbub typing"><i></i><i></i><i></i><span>Yomi пишет ответ и сверяет правила — обычно 10–20 секунд</span></div></div>`
+        : last?.role === 'assistant' && !last.err ? `<div class="tnext">${TUTOR_NEXT.map(([t, q]) => `<button class="chip" ${q ? `data-tstart="${esc(q)}"` : 'data-tans'}>${esc(t)}</button>`).join('')}</div>` : ''}</div>
+    <form class="tcomp" id="tcomp"><textarea id="tin" rows="1" placeholder="${last?.role === 'assistant' && !last.err ? 'Ответь Yomi или задай вопрос…' : 'Спроси Yomi…'}" aria-label="Сообщение"></textarea><button class="tsend" aria-label="Отправить">${svgI('<path d="M5 12h14M13 6l6 6-6 6"/>')}</button></form>`;
+  const ms = $('#tmsgs'); ms.querySelectorAll('.tmsg.a .tbub:not(.typing):not(.tgreet):not(.terr)').forEach(tspeak); ms.scrollTop = ms.scrollHeight;
   const tin = $('#tin'); tin.oninput = () => { tin.style.height = 'auto'; tin.style.height = Math.min(140, tin.scrollHeight) + 'px'; };
   tin.onkeydown = e => { if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); $('#tcomp').requestSubmit(); } };
   $('#tcomp').onsubmit = e => { e.preventDefault(); const t = tin.value.trim(); if(t && !tbusy){ tin.value = ''; tutorSend(t); } };
 }
-function tmsgHtml(m){
+// после ответа — следующий шаг урока: проще, примеры, упражнение или «отвечу на задание»
+const TUTOR_NEXT = [['Отвечу на задание', ''], ['Объясни проще', 'Объясни проще, как будто мне 12 лет, и дай один яркий пример.'], ['Ещё примеры', 'Дай ещё 5 примеров с переводом и одну типичную ошибку.'], ['Дай упражнение', 'Дай мне упражнение из 5 пунктов по этой теме. Ответы не показывай — я напишу свои, а ты проверишь.']];
+// первое сообщение учителя в новом чате: кто он, как учит, что знает о тебе
+function tgreet(ava){
+  const sp = S.stats?.studyPlan?.answers, goal = sp ? [sp.ielts?.target ? `IELTS ${sp.ielts.target}` : '', sp.sat?.target ? `SAT ${sp.sat.target}` : ''].filter(Boolean).join(' и ') : '';
+  return `<div class="tmsg a"><span class="tav">${ava}</span><div class="tbub tgreet">
+      <p>Привет! Я Yomi, твой репетитор. ${S.level ? `Твой уровень сейчас — <b>${esc(String(S.level).slice(0, 2))}</b>` : 'Буду подстраиваться под твой уровень'}${goal ? `, цель — <b>${esc(goal)}</b>` : ''}.</p>
+      <p>Как мы будем заниматься:</p>
+      <ol><li>Объясню правило или метод простыми словами</li><li>Покажу примеры и частые ошибки</li><li>Дам короткое задание — ты отвечаешь, я проверяю</li></ol>
+      <p>Нажми на любое английское слово в моих ответах — покажу перевод и произношение.</p></div></div>
+    <div class="tnext">${TUTOR_STARTS.slice(0, 4).map(t => `<button class="chip" data-tstart="${esc(t)}">${esc(t)}</button>`).join('')}</div>`;
+}
+function tmsgHtml(m, ava){
   if(m.role === 'user') return `<div class="tmsg u">${m.ctx ? `<div class="tctx">${esc(m.ctx.label)}</div>` : ''}<div class="tbub">${esc(m.text).replace(/\n/g, '<br>')}</div></div>`;
-  return `<div class="tmsg a"><div class="tbub">${tmd(tclean(m.text))}</div>${tactions(m.text) ? `<div class="tacts">${tactions(m.text)}</div>` : ''}</div>`;
+  if(m.err) return `<div class="tmsg a"><span class="tav">${ava}</span><div class="tbub terr"><p>Связь с сервером прервалась, и ответ не дошёл. Твой вопрос сохранён.</p><button class="btn sm" data-tretry>${svgI('<path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/>')} Отправить ещё раз</button></div></div>`;
+  return `<div class="tmsg a"><span class="tav">${ava}</span><div class="tcol"><div class="tbub">${tmd(tclean(m.text))}</div>${tactions(m.text) ? `<div class="tacts">${tactions(m.text)}</div>` : ''}</div></div>`;
 }
 async function tutorSend(text, ctx){
   let c = TCH.find(x => x.id === tcur);
   if(!c){ c = {id: Date.now().toString(36), title: '', at: new Date().toISOString(), msgs: []}; TCH.unshift(c); tcur = c.id; }
+  c.msgs = c.msgs.filter(m => !m.err);
   c.msgs.push({role: 'user', text, ctx}); c.at = new Date().toISOString();
   if(!c.title) c.title = (ctx ? ctx.label + ' · ' : '') + text.replace(/\s+/g, ' ').slice(0, 50);
   TCH = [c, ...TCH.filter(x => x.id !== c.id)]; tsave();
+  return tutorAsk(c);
+}
+// запрос к серверу; при сбое — ещё одна попытка через 3 секунды, потом сообщение с кнопкой «Отправить ещё раз»
+async function tutorAsk(c){
   tbusy = true; tutorChat(c.id);
-  const msgs = c.msgs.slice(-16).map(m => ({role: m.role, text: m.ctx ? `${m.ctx.body}\n\n${m.text}` : m.text}));
-  const j = await api('tutor', {messages: msgs, skills: SKILLS.map(k => ({id: k.id, name: k.name}))}).catch(() => ({}));
+  const msgs = c.msgs.filter(m => !m.err).slice(-16).map(m => ({role: m.role, text: m.ctx ? `${m.ctx.body}\n\n${m.text}` : m.text}));
+  const ask = () => api('tutor', {messages: msgs, skills: SKILLS.map(k => ({id: k.id, name: k.name}))}).catch(() => ({}));
+  let j = await ask();
+  if(!j.reply){ await sleep(3000); j = await ask(); }
   tbusy = false;
-  c.msgs.push({role: 'assistant', text: j.reply || 'Не получилось ответить — попробуй отправить ещё раз через минуту.'}); tsave();
+  c.msgs.push(j.reply ? {role: 'assistant', text: j.reply} : {role: 'assistant', err: true, text: ''}); tsave();
   if($('#tutor') && tcur === c.id) tutorChat(c.id);
 }
 // «Спросить Yomi» из задания: новый чат или текущий
@@ -3394,6 +3438,8 @@ document.addEventListener('click', e => {
   const st = t.closest('[data-tstart]'), op = t.closest('[data-topen]'), del = t.closest('[data-tdel]'), les = t.closest('[data-tles]'), act = t.closest('[data-tact]');
   if(t.closest('[data-tclose]')) return closeTutor();
   if(t.closest('[data-tlist]')) return tutorList();
+  if(t.closest('[data-tretry]') && !tbusy){ const c = TCH.find(x => x.id === tcur); if(c){ c.msgs = c.msgs.filter(m => !m.err); return tutorAsk(c); } }
+  if(t.closest('[data-tans]')){ const tin = $('#tin'); tin?.focus(); return; }
   if(t.closest('[data-tnew]')){ tcur = null; const id = Date.now().toString(36); TCH.unshift({id, title: '', at: new Date().toISOString(), msgs: []}); tsave(); return tutorChat(id); }
   if(st){ if(!tcur){ tcur = null; } return tutorSend(st.dataset.tstart); }
   if(op) return tutorChat(op.dataset.topen);
