@@ -1706,7 +1706,9 @@ const MOOD_LOOK = {cool: {glasses: 'sun'}, proud: {hat: 'crown'}, excited: {hat:
   determined: {hat: 'cap'}, funny: {glasses: 'star'}, sly: {glasses: 'monocle'}, surprised: {hat: 'twinbows'}};
 function applyLook(poof){
   const b = $('#buddy'); if(!b) return;
-  const l = {wear: 'scarf', hat: 'none', glasses: 'none', ...LOOK, ...modeLook, ...moodLook}, key = [l.char, l.color, l.wear, l.hat, l.glasses].join('|');
+  // маленькие Yomi на уже открытых карточках (репетитор, урок) — тоже в новый окрас; в выборе персонажа свои звери
+  document.querySelectorAll('.buddy.mini').forEach(m => { m.dataset.color = LOOK.color; if(!m.closest('.pets')) m.dataset.char = LOOK.char; });
+  const l ={wear: 'scarf', hat: 'none', glasses: 'none', ...LOOK, ...modeLook, ...moodLook}, key = [l.char, l.color, l.wear, l.hat, l.glasses].join('|');
   if(b.dataset.lookKey === key) return;
   Object.assign(b.dataset, {char: l.char, color: l.color, wear: l.wear, hat: l.hat, glasses: l.glasses, lookKey: key});
   if(poof) react('t-poof', 500);
