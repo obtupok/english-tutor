@@ -3167,7 +3167,26 @@ async function sayLocal(text, char, my){
   return true;
 }
 // заменяем озвучку: сначала голос на устройстве; пока модель впервые качается — серверный голос, если он есть
-const sayTextServer = sayText;
+const langOf = p => (p.match(/[а-яё]/gi) || []).length >= (p.match(/[a-z]/gi) || []).length ? 'ru' : 'en';
+const sayTextCore = sayText;
+// серверный голос тоже получает русское и английское по отдельности, каждое со своим языком
+// (раньше уходил весь текст с одним lang — английский голос сервера читал кириллицу по буквам)
+// stopTok растёт, только когда озвучку останавливает кто-то снаружи (sayTextCore сам вызывает stopAudio в начале — это не считаем)
+let stopTok = 0, coreStarting = false;
+{ const _stop = stopAudio; stopAudio = function(){ if(!coreStarting) stopTok++; _stop(); }; }
+async function sayTextServer(text, lang, speaker, char){
+  const runs = [];
+  for(const p of splitSpeech(text)){ const l = langOf(p), r = runs[runs.length - 1]; if(r && r.l === l) r.t += ' ' + p; else runs.push({l, t: p}); }
+  if(!runs.length) return false;
+  const tok = stopTok; let ok = false;
+  for(let i = 0; i < runs.length; i++){
+    coreStarting = true; const pr = sayTextCore(runs[i].t, runs[i].l, speaker, char); coreStarting = false;
+    ok = await pr;
+    if(tok !== stopTok) return true;   // остановили посреди — дальше не говорим
+    if(!ok) return i > 0;
+  }
+  return ok;
+}
 sayText = async function(text, lang = 'en', speaker = S.speaker, char = LOOK.char){
   if(LV.off || !window.WebAssembly) return sayTextServer(text, lang, speaker, char);
   stopAudio(); const my = ++sayGen;
@@ -3237,12 +3256,12 @@ sayWord = async function(text){
   unlock(); stopAudio(); const my = ++sayGen, k = sayKey(text);
   const ready = sayDone.get(k);
   if(ready) return playBlob(ready);                                   // уже готово — без задержки
-  if(LV.off || !window.WebAssembly) return speakLocal(text, 'en');
-  if(!localReady){ speakLocal(text, 'en'); preSay(text); return; }    // свой голос ещё качается — сразу голос браузера
+  if(LV.off || !window.WebAssembly) return speakLocal(text, langOf(text));
+  if(!localReady){ speakLocal(text, langOf(text)); preSay(text); return; }    // свой голос ещё качается — сразу голос браузера
   const i = sayQueue.findIndex(q => q.text === text); if(i > 0) sayQueue.unshift(...sayQueue.splice(i, 1));   // эту фразу — первой
   const blob = await (preSay(text) || null);
   if(blob && my === sayGen) return playBlob(blob);
-  if(!blob) speakLocal(text, 'en');
+  if(!blob) speakLocal(text, langOf(text));
 };
 
 
