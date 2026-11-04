@@ -6,7 +6,7 @@
 // • Разговор, уровень и план общие для бота и сайта; слова и ошибки копятся в english_words / english_mistakes.
 // Секреты (Supabase → Edge Functions → Secrets): TUTOR_BOT_TOKEN — токен бота от @BotFather; ANTHROPIC_API_KEY — необязательно (без него ответы через Groq, gpt-oss-120b);
 // GROQ_API_KEY — распознавание речи (Whisper) и живой голос (Orpheus) в Groq. Таблицы — english-tutor.sql.
-// Настройка (после того как секрет добавлен): открыть https://<проект>.supabase.co/functions/v1/english-tutor?setup=1
+// Настройка (после того как секрет добавлен): открыть https://<проект>.supabase.co/functions/v1/english-tutor?setup=<личный ключ из ссылки /site>
 // Проверка JWT выключена — Telegram не присылает JWT; вместо неё секретный заголовок вебхука и ключ/подпись у сайта.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -29,6 +29,14 @@ const hex = (b: ArrayBuffer | Uint8Array) => [...new Uint8Array(b)].map((x) => x
 const sha = async (s: string) => hex(await crypto.subtle.digest('SHA-256', enc(s)));
 const b64 = (u: Uint8Array) => { let s = ''; for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode(...u.subarray(i, i + 0x8000)); return btoa(s); };
 const today = () => new Date().toISOString().slice(0, 10);
+// ключ из запроса — только собственное поле словаря: SHOP['constructor'], SCENES['__proto__'] и т. п. раньше проходили проверку
+const has = (o: object, k: unknown): k is string => typeof k === 'string' && Object.hasOwn(o, k);
+// сравнение секретов без утечки по времени ответа
+const sameSecret = (a: unknown, b: string) => {
+  if (typeof a !== 'string' || a.length !== b.length) return false;
+  let d = 0; for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return d === 0;
+};
 
 const hookSecret = async () => (await sha('english-tutor:' + TOKEN)).slice(0, 48);
 const webKey = async () => (await sha('english-tutor-web:' + TOKEN)).slice(0, 40);
@@ -42,7 +50,7 @@ async function ownerInitData(initData: string) {
   if (!hash) return false;
   p.delete('hash');
   const check = [...p.entries()].sort(([a], [b]) => (a < b ? -1 : 1)).map(([k, v]) => `${k}=${v}`).join('\n');
-  if (hex(await hmac(await hmac('WebAppData', TOKEN), check)) !== hash) return false;
+  if (!sameSecret(hex(await hmac(await hmac('WebAppData', TOKEN), check)), hash)) return false;
   if (Date.now() / 1000 - Number(p.get('auth_date') || 0) > 7 * 86400) return false;
   try { return JSON.parse(p.get('user') || '{}').id === OWNER; } catch { return false; }
 }
@@ -235,7 +243,7 @@ async function askGroq(system: string, msgs: { role: string; content: string }[]
     const j = await r.json().catch(() => ({}));
     try {
       const out = JSON.parse(j?.choices?.[0]?.message?.content || '');
-      if (out?.reply) { out.words = Array.isArray(out.words) ? out.words : []; out.correction = out.correction?.fixed ? out.correction : null; out.emotion = MOODS[out.emotion] ? out.emotion : 'kind'; return out; }
+      if (out?.reply) { out.words = Array.isArray(out.words) ? out.words : []; out.correction = out.correction?.fixed ? out.correction : null; out.emotion = has(MOODS, out.emotion) ? out.emotion : 'kind'; return out; }
     } catch { /* ниже */ }
     console.error('groq', backup ? GROQ_LIGHT : GROQ_MODEL, r.status, JSON.stringify(j).slice(0, 400));
   }
@@ -388,8 +396,9 @@ async function remind(force = false) {
   const mins = tasks.reduce((a: number, t: any) => a + (Number(t.minutes) || 0), 0);
   const lines = tasks.length ? tasks.slice(0, 5).map((t: any) => `• ${t.note}${t.minutes ? ` — ${t.minutes} мин` : ''}`).join('\n') : '• урок дня в «Учёбе» — 15 мин';
   const text = `${plan && !tasks.length ? 'Сегодня по плану отдых, но пара минут с карточками не помешает.' : `Сегодня ещё не занимался(-ась). По плану${mins ? ` ${mins} мин` : ''}:`}\n${lines}${due ? `\n• повторить карточки: ${due}` : ''}`;
-  await tg('sendMessage', { chat_id: OWNER, text, reply_markup: { inline_keyboard: [[{ text: 'Начать', web_app: { url: SITE } }]] } });
+  // отметка «отправлено» — до отправки: иначе пачка одновременных вызовов ?remind успевала прислать несколько напоминаний
   if (!force) await patchStats(st, (y) => ({ ...y, remind: { ...y.remind, sent: day } }));
+  await tg('sendMessage', { chat_id: OWNER, text, reply_markup: { inline_keyboard: [[{ text: 'Начать', web_app: { url: SITE } }]] } });
   return 'sent';
 }
 // разнообразие вопросов: каждый раз — случайные темы из большого списка и список недавно заданных вопросов, которые нельзя повторять
@@ -524,7 +533,7 @@ const CHARS: Record<string, { noun: string; voice: string; orpheus: string; az: 
   dog: { noun: 'puppy', voice: 'puck', orpheus: 'austin', az: 'william', pitch: 8, rate: 6, trait: 'loyal, super friendly and energetic, loves walks, balls and praising the learner like a best friend' },
 };
 const CHAR_OF = new WeakMap<object, string>();   // кто сейчас разговаривает (персонаж владельца) — для копии чата «Болтовни»
-const charOf = (st: any) => { const c = CHAR_OF.get(st) || st.game?.equip?.char; return CHARS[c] ? c : 'bunny'; };
+const charOf = (st: any) => { const c = CHAR_OF.get(st) || st.game?.equip?.char; return has(CHARS, c) ? c : 'bunny'; };
 // голос персонажа: выбранный владельцем, иначе родной голос персонажа (у кролика — прежний общий выбор)
 function voiceFor(owner: any, c: string) {
   const v = owner.game?.voices?.[c] ?? (c === 'bunny' ? owner.speaker : undefined);
@@ -570,6 +579,7 @@ async function azureTts(text: string, voice: string, pitch: number, rate: number
   return buf.length ? buf : null;
 }
 async function tts(text: string, lang: string, speaker = 'hannah', emotion = 'kind', noun = 'bunny'): Promise<{ data: Uint8Array; mime: string } | null> {
+  if (!has(MOODS, emotion)) emotion = 'kind';   // «constructor», «toString»… из запроса ломали озвучку
   if (useAzure()) {   // один и тот же голос; не вышло — ещё раз, чужой голос не подставляем
     const ch = Object.values(CHARS).find((c) => c.noun === noun) || CHARS.bunny, [mp, mr] = MOOD_PROSODY[emotion] || [0, 0];
     const voice = AZURE_VOICES[speaker] || AZURE_VOICES[ch.az];
@@ -1109,12 +1119,12 @@ const scenes = Object.fromEntries(Object.entries(SCENES).map(([k, [n]]) => [k, n
 
 async function reply(out: any, voice: boolean, speaker: string, noun = 'bunny') {
   const audio = voice ? await tts(out.reply, out.english !== false ? 'en' : 'ru', speaker, out.emotion, noun) : null;
-  return { reply: out.reply, english: out.english !== false, emotion: MOODS[out.emotion] ? out.emotion : 'kind', fix: out.fix, words: out.words || [], assessment: out.assessment, audio: audio ? b64(audio.data) : null, mime: audio?.mime };
+  return { reply: out.reply, english: out.english !== false, emotion: has(MOODS, out.emotion) ? out.emotion : 'kind', fix: out.fix, words: out.words || [], assessment: out.assessment, audio: audio ? b64(audio.data) : null, mime: audio?.mime };
 }
 
 async function web(req: Request) {
   const b = await req.json().catch(() => ({}));
-  const ok = (b.key && b.key === await webKey()) || (b.initData && await ownerInitData(String(b.initData)));
+  const ok = (b.key && sameSecret(b.key, await webKey())) || (b.initData && await ownerInitData(String(b.initData)));
   if (!ok) return json({ error: 'auth' }, 401);
   const owner = await load(OWNER), voice = b.voice !== false;
   if (b.dry === true) owner.__dry = true;
@@ -1132,7 +1142,7 @@ async function web(req: Request) {
     case 'mode': {
       if (!friend) {
         if (!['free', 'test', 'coach', 'scenario'].includes(b.mode)) return json({ error: 'bad' }, 400);
-        st.mode = b.mode; if (SCENES[b.scene]) st.scene = b.scene;
+        st.mode = b.mode; if (has(SCENES, b.scene)) st.scene = b.scene;
       }
       st.history = [];
       const out = await turn(st, '');
@@ -1155,13 +1165,13 @@ async function web(req: Request) {
       return out ? json({ heard, level: owner.level, plan: owner.plan, stats: owner.stats, out: await reply(out, voice, voiceFor(owner, charOf(owner)), CHARS[charOf(owner)].noun), game: gameView(owner) }) : json({ error: 'failed', heard }, 502);
     }
     case 'tts': {
-      const c = CHARS[b.char] ? b.char : charOf(owner);
+      const c = has(CHARS, b.char) ? b.char : charOf(owner);
       const audio = await tts(String(b.text || '').slice(0, 1500), b.lang === 'ru' ? 'ru' : 'en', SPEAKERS.includes(b.speaker) ? b.speaker : voiceFor(owner, c), String(b.emotion || 'kind'), CHARS[c].noun);
       return json({ audio: audio ? b64(audio.data) : null, mime: audio?.mime });
     }
     case 'speaker': {
       if (!speakersNow().includes(b.speaker)) return json({ error: 'bad' }, 400);
-      const g = game(owner), c = CHARS[b.char] ? b.char : charOf(owner);
+      const g = game(owner), c = has(CHARS, b.char) ? b.char : charOf(owner);
       g.voices = { ...(g.voices || {}), [c]: b.speaker };
       if (c === 'bunny') owner.speaker = b.speaker;
       await save(owner);
@@ -1195,8 +1205,8 @@ async function web(req: Request) {
       return json({ ok: true, reward, game: gameView(owner) });
     }
     case 'buy': {
-      const g = game(owner), id = String(b.item || ''), price = SHOP[id];
-      if (price === undefined) return json({ error: 'bad' }, 400);
+      const g = game(owner), id = String(b.item || ''), price = has(SHOP, id) ? SHOP[id] : undefined;
+      if (price === undefined || !/^[a-z]+:[a-z]+$/.test(id)) return json({ error: 'bad' }, 400);
       if (LOCKED[id] && !g.owned.includes(id)) return json({ error: 'locked', level: LOCKED[id], game: gameView(owner) });
       if (!g.owned.includes(id)) {
         if (g.coins < price) return json({ error: 'no_coins', game: gameView(owner) });
@@ -1227,7 +1237,7 @@ async function web(req: Request) {
       return json({ ok: true, ...prize, game: gameView(owner) });
     }
     case 'exam_start': {
-      const kind = EXAMS[b.kind] ? b.kind : 'ielts', role = String(b.role || '').slice(0, 80).trim() || 'a junior specialist in their field';
+      const kind = has(EXAMS, b.kind) ? b.kind : 'ielts', role = String(b.role || '').slice(0, 80).trim() || 'a junior specialist in their field';
       const recent = (owner.stats?.exams || []).slice(-6).map((e: any) => e.topic).filter(Boolean).join('; ');
       const asked = (owner.stats?.askedQ || []).slice(-50);
       const themes = pickThemes(THEMES, 4).join(', ');
@@ -1243,7 +1253,7 @@ async function web(req: Request) {
       return json({ kind, items });
     }
     case 'sat_set': {
-      const section = SAT_SECTIONS[b.section] ? b.section : 'rw', n = Math.max(3, Math.min(15, Number(b.n) || 10));
+      const section = has(SAT_SECTIONS, b.section) ? b.section : 'rw', n = Math.max(3, Math.min(15, Number(b.n) || 10));
       const level = String(b.level || 'mixed');   // easy / medium / hard / mixed
       const weak = (owner.stats?.sat || []).filter((x: any) => x.section === section).slice(-3).flatMap((x: any) => x.weak || []);
       const seen = (owner.stats?.satSeen?.[section] || []).slice(-40);
@@ -1258,7 +1268,7 @@ async function web(req: Request) {
       return json({ section, items });
     }
     case 'sat_done': {
-      const section = SAT_SECTIONS[b.section] ? b.section : 'rw';
+      const section = has(SAT_SECTIONS, b.section) ? b.section : 'rw';
       const results = (Array.isArray(b.results) ? b.results : []).slice(0, 30).map((r: any) => ({ ok: !!r.ok, difficulty: String(r.difficulty || 'medium'), skill: String(r.skill || '').slice(0, 60) }));
       if (!results.length) return json({ error: 'bad' }, 400);
       const bySkill: Record<string, [number, number]> = {};
@@ -1377,7 +1387,7 @@ Questions: ${JSON.stringify(out.check.map((q: any) => ({ question: q.question, c
     }
     case 'lesson_done': {
       const skill = String(b.skill || '').slice(0, 60); if (!skill) return json({ error: 'bad' }, 400);
-      const score = Math.max(0, Number(b.score) | 0), total = Math.max(0, Number(b.total) | 0);
+      const total = Math.max(0, Math.min(50, Number(b.total) | 0)), score = Math.max(0, Math.min(total, Number(b.score) | 0));   // «10 из 3» больше не проходит
       // повторы: сколько раз проходил, лучший и последний результат
       await patchStats(owner, (x) => { const prev = x.lessons?.[skill] || {};
         const best = Math.max(prev.best ?? (prev.total ? prev.score / prev.total : 0), total ? score / total : 0);
@@ -1921,7 +1931,11 @@ Deno.serve(async (req) => {
   const u = new URL(req.url);
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
   if (!TOKEN) return new Response(JSON.stringify({ error: 'TUTOR_BOT_TOKEN is not set' }), { status: 500 });
-  if (req.method === 'GET' && u.searchParams.has('setup')) return new Response(JSON.stringify(await setup()), { headers: { 'Content-Type': 'application/json' } });
+  // настройка вебхука — только с личным ключом сайта (?setup=<ключ из /site>): раньше любой мог сбросить вебхук и очередь сообщений
+  if (req.method === 'GET' && u.searchParams.has('setup')) {
+    if (!sameSecret(u.searchParams.get('setup'), await webKey())) return new Response('forbidden', { status: 403 });
+    return new Response(JSON.stringify(await setup()), { headers: { 'Content-Type': 'application/json' } });
+  }
   if (u.searchParams.has('remind')) {
     return new Response(await remind().catch((e) => { console.error('remind', e); return 'error'; }));
   }
