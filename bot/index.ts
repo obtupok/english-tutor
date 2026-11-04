@@ -344,7 +344,7 @@ const tutorLenAsk = (t: string) =>
   : /(подробн|развёрнут|развернут|больше (деталей|объяснен|текста)|in (more )?detail|more detail)/i.test(t) ? 'long'
   : /(обычн(ой|ая|ую) длин|как раньше пиши|normal length)/i.test(t) ? 'normal' : null;
 // ответы ученика на тест с вариантами: «will have» — это (b) "will have finished", «b» — тоже. Модель сама это часто не видит,
-// поэтому к сообщению дописываем, какой вариант выбран в каждом пункте
+// поэтому краткие ответы переписываем в полные варианты: «5 → (b) will have finished»
 function choiceNote(prev: string, ans: string) {
   const items: string[][] = [];
   for (const line of prev.split('\n')) {
@@ -363,7 +363,7 @@ function choiceNote(prev: string, ans: string) {
     else out.push(`${i + 1} → «${a}» (не совпадает ни с одним вариантом)`);
   });
   if (hit * 2 < answers.length) return '';   // это не ответы на тест, а обычное сообщение
-  return `\n\n[Выбор ученика по вариантам: ${out.join('; ')}]`;
+  return `Мои ответы на тест:\n${out.join('\n')}`;
 }
 // счётчик ошибок по темам — для экрана «Где я ошибаюсь»
 const addMiss = (owner: any, keys: string[]) => keys.length ? patchStats(owner, (x) => {
@@ -1467,7 +1467,7 @@ Rules:
       const msgs = (Array.isArray(b.messages) ? b.messages : []).slice(-16)
         .map((m: any) => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: String(m.text || '').slice(0, 6000) })).filter((m: any) => m.content.trim());
       if (!msgs.length || msgs[msgs.length - 1].role !== 'user') return json({ error: 'bad' }, 400);
-      if (msgs.length > 1) msgs[msgs.length - 1].content += choiceNote(msgs[msgs.length - 2].content, msgs[msgs.length - 1].content);
+      if (msgs.length > 1) { const ch = choiceNote(msgs[msgs.length - 2].content, msgs[msgs.length - 1].content); if (ch) msgs[msgs.length - 1].content = ch; }
       const skills = (Array.isArray(b.skills) ? b.skills : []).filter((k: any) => /^[a-z0-9-]{2,20}$/.test(String(k?.id || ''))).slice(0, 80);
       const stt = owner.stats || {}, sp = stt.studyPlan, el = stt.examLast;
       const profile = [
@@ -1491,7 +1491,7 @@ HOW YOU TEACH
    ### Главная ловушка — the typical confusion as "❌ wrong → ✅ right" lines, plus a rule of thumb and signal words;
    ### Упражнения — blocks A, B, C (fill in the form, choose, translate from Russian), 8–13 items numbered straight through, answers NOT shown;
    end with «Присылай ответы — разберём.»
-3. Checking answers: go item by item — "1. had ✅ — короткое почему" or "2. is living ❌ → **has lived**: since 2020 — действие идёт до сих пор → Present Perfect." A note «[Выбор ученика по вариантам: …]» after the learner's answers is computed exactly — trust it: judge each item by the option it names, and never mention the note. In a multiple-choice task, an answer that is the start of exactly one option or its letter («will have» when only (b) "will have finished" starts that way) means the learner chose that option — mark it ✅ and just show the full form. A follow-up exercise always uses NEW sentences, never the same items again. Then the score («Правильно 4 из 6»), what the pattern of mistakes means (which topics are weak, honest and encouraging, 1–2 sentences), and the next step: a short follow-up task on the weak point, or the next part. Never call a wrong answer right; if an answer is partly right, say exactly which part.
+3. Checking answers: go item by item — "1. had ✅ — короткое почему" or "2. is living ❌ → **has lived**: since 2020 — действие идёт до сих пор → Present Perfect." In a multiple-choice task, an answer that is the start of exactly one option or its letter («will have» when only (b) "will have finished" starts that way) means the learner chose that option — mark it ✅ and just show the full form. A follow-up exercise always uses NEW sentences, never the same items again. Then the score («Правильно 4 из 6»), what the pattern of mistakes means (which topics are weak, honest and encouraging, 1–2 sentences), and the next step: a short follow-up task on the weak point, or the next part. Never call a wrong answer right; if an answer is partly right, say exactly which part.
 4. Checking writing: if the learner sends English text in reply to a writing task (or any text of their own), it is THEIR work to check — never answer with your own model text instead. Start with 1–2 sentences of specific praise, and name real progress if earlier texts in this chat show it. Then ### Ошибки grouped as **Грамматика**, **Стиль**, **Содержание** — each "❌ original → ✅ fixed" plus why in one line (for an essay also what examiners or admissions officers like or dislike). Then ### Исправленная версия — the learner's text corrected, keeping their ideas and roughly their level (not a native rewrite). Then the task: read it 2–3 times, close it, write it again from memory, compare, send it to you. Optionally ### Новые слова — 5–8 words that would make the text stronger, as "- **word** /IPA/ — перевод. *Short example.*"
    If the learner then asks whether they should «просто переписать», answer: not copying — read the corrected version 2–3 times noticing the places of their own mistakes, close it, write it from memory in their own words, compare and find where they slipped, send it to you to check (10–15 minutes); it fixes the grammar better than any exercise; tired → do it tomorrow first.
 5. Coaching: when the learner asks what or how to do something (including a task you gave earlier), give the concrete method in 2–4 steps and why it works (recall from memory, rewriting from memory, spaced repetition, speaking aloud and recording yourself), with how long it takes. If they seem tired, it is fine to say what to start with next time.
