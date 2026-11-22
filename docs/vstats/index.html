@@ -8,167 +8,207 @@
 <!-- Мини-апп бота видео @DFHGAPKLMO_bot: статистика всех аккаунтов. Данные — POST …/functions/v1/stories-bot/stats
      с initData Telegram (бот проверяет подпись и владельца). ?demo=1 — пример данных без бота. -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: var(--tg-theme-secondary-bg-color, #f2f3f5);
-    --card: var(--tg-theme-section-bg-color, var(--tg-theme-bg-color, #ffffff));
-    --text: var(--tg-theme-text-color, #16181d);
-    --hint: var(--tg-theme-hint-color, #8a8f98);
-    --link: var(--tg-theme-link-color, #2f7de1);
-    --accent: var(--tg-theme-button-color, #2f7de1);
-    --accent-text: var(--tg-theme-button-text-color, #ffffff);
-    --line: color-mix(in srgb, var(--hint) 22%, transparent);
-    --yt: #e5322d; --tt: #111111; --ig: #d6337f; --warn: #c7811a;
+    --bg: #f4f5f8; --card: #ffffff; --text: #12141a; --muted: #7c828d; --line: #eceef2; --soft: #f4f5f8;
+    --accent: #5b5bf0; --accent2: #8b5cf6; --ok: #16a34a; --warn: #d97706;
+    --yt: #ff0033; --tt: #111111; --ig: #e1306c;
   }
-  @media (prefers-color-scheme: dark) {
-    :root:not(.tg) { --bg: #101215; --card: #1b1e23; --text: #eceef1; --hint: #8d939c; --tt: #e9e9e9; }
-  }
-  html.tg-dark { --tt: #e9e9e9; }
+  :root.dark { --bg: #0f1115; --card: #191c22; --text: #f1f2f5; --muted: #8b919c; --line: #252932; --soft: #20242b; --tt: #f1f2f5; }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--text);
-    font: 15px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
-  main { max-width: 640px; margin: 0 auto; padding: 12px 16px 32px; }
-  header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 4px 2px 12px; }
-  h1 { font-size: 20px; margin: 0; letter-spacing: -.01em; }
-  .upd { color: var(--hint); font-size: 12.5px; }
-  button.ref { border: 0; background: var(--card); color: var(--link); font: inherit; font-weight: 600;
-    padding: 8px 12px; border-radius: 10px; cursor: pointer; }
-  button.ref:disabled { opacity: .5; }
-  .card { background: var(--card); border-radius: 14px; padding: 14px; margin-bottom: 12px; }
-  .label { color: var(--hint); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; font-weight: 600; margin-bottom: 8px; }
-  .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-  .tile .v { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
-  .tile .k { color: var(--hint); font-size: 12px; }
-  .row3 { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 14px; }
-  .row3 b { font-variant-numeric: tabular-nums; }
-  .chips { display: flex; gap: 6px; overflow-x: auto; margin: 0 0 12px; scrollbar-width: none; }
-  .chip { border: 0; font: inherit; font-size: 14px; padding: 7px 12px; border-radius: 999px; background: var(--card); color: var(--text); cursor: pointer; white-space: nowrap; }
-  .chip.on { background: var(--accent); color: var(--accent-text); }
-  .acc h2 { font-size: 17px; margin: 0; }
-  .acc .note { color: var(--hint); font-size: 13px; }
-  .bot { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0 4px; }
-  .pill { font-size: 12.5px; padding: 3px 8px; border-radius: 8px; background: color-mix(in srgb, var(--hint) 13%, transparent); }
-  .pill.warn { background: color-mix(in srgb, var(--warn) 18%, transparent); }
-  .pl { border-top: 1px solid var(--line); margin-top: 10px; padding-top: 10px; }
-  .plh { display: flex; align-items: center; gap: 8px; }
-  .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
-  .plh .n { font-weight: 600; }
-  .plh .who { color: var(--hint); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .nums { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; }
-  .nums div { font-variant-numeric: tabular-nums; font-weight: 600; }
-  .nums span { display: block; color: var(--hint); font-size: 11.5px; font-weight: 400; }
-  .err { color: var(--warn); font-size: 13px; margin-top: 6px; }
-  .off { color: var(--hint); font-size: 13px; margin-top: 10px; }
-  details { margin-top: 8px; }
-  summary { color: var(--link); font-size: 13.5px; cursor: pointer; list-style: none; }
-  summary::-webkit-details-marker { display: none; }
-  .vid { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 13.5px; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.4 Manrope, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased; }
+  main { max-width: 560px; margin: 0 auto; padding: 16px 16px 40px; }
+  .num { font-variant-numeric: tabular-nums; }
+
+  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  h1 { font-size: 24px; font-weight: 800; margin: 0; letter-spacing: -.02em; }
+  .upd { color: var(--muted); font-size: 13px; margin-top: 2px; }
+  .refresh { width: 40px; height: 40px; border-radius: 12px; border: 0; background: var(--card); color: var(--text); display: grid; place-items: center; cursor: pointer; }
+  .refresh svg { width: 20px; height: 20px; }
+  .refresh.spin svg { animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .hero { border-radius: 22px; padding: 20px; color: #fff; background: linear-gradient(135deg, var(--accent), var(--accent2)); margin-bottom: 12px; }
+  .hero .lbl { font-size: 13px; opacity: .85; font-weight: 600; }
+  .hero .big { font-size: 42px; font-weight: 800; letter-spacing: -.03em; line-height: 1.1; margin: 4px 0 16px; }
+  .hero .row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .hero .row div { background: rgba(255,255,255,.15); border-radius: 14px; padding: 10px 12px; }
+  .hero .row b { display: block; font-size: 18px; font-weight: 800; }
+  .hero .row span { font-size: 12px; opacity: .85; }
+
+  h2 { font-size: 17px; font-weight: 800; margin: 24px 2px 10px; letter-spacing: -.01em; }
+  .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .tile { background: var(--card); border-radius: 18px; padding: 14px 12px; }
+  .tile .ic { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; font-size: 16px; margin-bottom: 10px; }
+  .tile b { display: block; font-size: 24px; font-weight: 800; letter-spacing: -.02em; }
+  .tile span { color: var(--muted); font-size: 12.5px; }
+
+  .acc { background: var(--card); border-radius: 20px; padding: 16px; margin-bottom: 10px; }
+  .acc-head { display: flex; align-items: center; gap: 12px; }
+  .ava { width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 18px; flex: none; }
+  .acc-name { font-weight: 800; font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .acc-sub { color: var(--muted); font-size: 13px; }
+  .counts { display: flex; gap: 6px; margin: 14px 0 4px; }
+  .counts div { flex: 1; background: var(--soft); border-radius: 12px; padding: 8px 10px; }
+  .counts b { font-size: 16px; font-weight: 800; }
+  .counts span { display: block; color: var(--muted); font-size: 12px; }
+
+  .pl { display: flex; align-items: center; gap: 12px; padding: 12px 0 0; margin-top: 12px; border-top: 1px solid var(--line); }
+  .logo { width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center; flex: none; }
+  .logo svg { width: 20px; height: 20px; }
+  .pl-mid { flex: 1; min-width: 0; }
+  .pl-name { font-weight: 700; }
+  .pl-who { color: var(--muted); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pl-num { text-align: right; }
+  .pl-num b { font-size: 18px; font-weight: 800; display: block; }
+  .pl-num span { color: var(--muted); font-size: 12px; }
+  .note { margin-top: 8px; background: color-mix(in srgb, var(--warn) 12%, transparent); color: var(--warn); border-radius: 10px; padding: 7px 10px; font-size: 12.5px; font-weight: 600; }
+  .note small { display: block; font-weight: 500; opacity: .85; margin-top: 2px; }
+  .mini { display: flex; gap: 14px; color: var(--muted); font-size: 12.5px; margin: 6px 0 0 48px; }
+  .mini b { color: var(--text); font-weight: 700; }
+  .off { color: var(--muted); font-size: 13px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
+
+  .more { margin-top: 12px; width: 100%; border: 0; background: var(--soft); color: var(--text); font: inherit; font-weight: 700; font-size: 14px;
+    padding: 10px; border-radius: 12px; cursor: pointer; }
+  .vids { margin-top: 6px; }
+  .vid { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); text-decoration: none; color: inherit; }
   .vid:last-child { border-bottom: 0; }
-  .vid a { color: var(--text); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .vid .m { color: var(--hint); font-size: 12px; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
-  .vid .d { color: var(--hint); font-size: 12px; }
-  .tag { font-size: 10.5px; padding: 1px 5px; border-radius: 5px; background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--link); margin-right: 5px; }
-  .foot { color: var(--hint); font-size: 12px; text-align: center; margin-top: 4px; }
-  .state { text-align: center; color: var(--hint); padding: 48px 12px; }
-  .skel { height: 92px; border-radius: 14px; margin-bottom: 12px; background: var(--card); opacity: .6; animation: p 1.2s ease-in-out infinite; }
-  @keyframes p { 50% { opacity: .3; } }
-  @media (max-width: 380px) { .tile .v { font-size: 17px; } .tiles { gap: 4px; } }
+  .rank { width: 22px; color: var(--muted); font-weight: 800; font-size: 13px; flex: none; text-align: center; }
+  .vid-t { flex: 1; min-width: 0; }
+  .vid-t div { font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .vid-t span { color: var(--muted); font-size: 12px; }
+  .vid-v { text-align: right; font-weight: 800; font-size: 14px; white-space: nowrap; }
+  .vid-v span { display: block; color: var(--muted); font-size: 11.5px; font-weight: 500; }
+  .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 5px; vertical-align: 1px; }
+
+  .foot { color: var(--muted); font-size: 12px; text-align: center; margin-top: 18px; line-height: 1.5; }
+  .state { text-align: center; color: var(--muted); padding: 64px 16px; }
+  .skel { border-radius: 20px; background: var(--card); margin-bottom: 10px; animation: pulse 1.2s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: .45; } }
+  @media (max-width: 360px) { .hero .big { font-size: 36px; } .tile b { font-size: 20px; } }
 </style>
 </head>
 <body>
 <main>
   <header>
     <div><h1>Статистика</h1><div class="upd" id="upd">загрузка…</div></div>
-    <button class="ref" id="ref">Обновить</button>
+    <button class="refresh" id="ref" aria-label="Обновить"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></button>
   </header>
-  <div id="app"><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>
+  <div id="app"><div class="skel" style="height:190px"></div><div class="skel" style="height:110px"></div><div class="skel" style="height:220px"></div></div>
 </main>
 <script>
 const API = 'https://yxoakverustsnnglzdiy.supabase.co/functions/v1/stories-bot/stats';
-const PL = { yt: ['YouTube', 'var(--yt)'], tt: ['TikTok', 'var(--tt)'], ig: ['Instagram', 'var(--ig)'] };
+const ICONS = {
+  yt: '<svg viewBox="0 0 24 24" fill="#fff"><path d="M9.5 8.2v7.6L16 12z"/></svg>',
+  tt: '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M14 4v10.5a3.5 3.5 0 1 1-3.5-3.5"/><path d="M14 4c.4 2.4 2 4 4.5 4.2"/></svg>',
+  ig: '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><rect x="4" y="4" width="16" height="16" rx="5"/><circle cx="12" cy="12" r="3.6"/><circle cx="17" cy="7" r=".8" fill="#fff"/></svg>',
+};
+const PL = { yt: { name: 'YouTube', bg: 'var(--yt)' }, tt: { name: 'TikTok', bg: '#111' }, ig: { name: 'Instagram', bg: 'linear-gradient(135deg,#f58529,#dd2a7b 55%,#8134af)' } };
+const AVA = ['#5b5bf0', '#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 const tgApp = window.Telegram && Telegram.WebApp;
 const demo = new URLSearchParams(location.search).has('demo');
-let data = null, filter = 'all';
+const open = new Set();
+let data = null;
 
+const dark = tgApp && tgApp.initData ? tgApp.colorScheme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+if (dark) document.documentElement.classList.add('dark');
 if (tgApp && tgApp.initData) {
-  document.documentElement.classList.add('tg');
-  if (tgApp.colorScheme === 'dark') document.documentElement.classList.add('tg-dark');
   tgApp.ready(); tgApp.expand();
+  try { tgApp.setHeaderColor(dark ? '#0f1115' : '#f4f5f8'); tgApp.setBackgroundColor(dark ? '#0f1115' : '#f4f5f8'); } catch (e) {}
 }
 
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const fmt = (n) => n == null ? '—' : n >= 1e6 ? (n / 1e6).toFixed(n >= 1e7 ? 0 : 1).replace('.0', '') + 'M'
+const fmt = (n) => n == null ? '—' : n >= 1e6 ? (n / 1e6).toFixed(n >= 1e7 ? 0 : 1).replace('.0', '') + ' млн'
   : n >= 1e4 ? Math.round(n / 1e3) + 'K' : n >= 1e3 ? (n / 1e3).toFixed(1).replace('.0', '') + 'K' : String(n);
-const when = (iso) => iso ? new Date(iso).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }) : '';
-const ago = (iso) => { const m = Math.round((Date.now() - Date.parse(iso)) / 60000); return m < 1 ? 'только что' : m < 60 ? m + ' мин назад' : new Date(iso).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }); };
+const plural = (n, one, few, many) => { const a = n % 10, b = n % 100; return a === 1 && b !== 11 ? one : a >= 2 && a <= 4 && (b < 12 || b > 14) ? few : many; };
+const day = (iso) => iso ? new Date(iso).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }) : '';
+
+// понятный текст вместо технической ошибки сервера
+function problem(err) {
+  const e = err || '';
+  if (/TT_STATS|user\.info\.stats/.test(e)) return ['Нет доступа к статистике TikTok', 'Нужно разрешить статистику в приложении TikTok и переподключить аккаунт'];
+  if (/insights/.test(e)) return ['Просмотры скрыты', 'Instagram не дал доступ к просмотрам — лайки и комментарии видны'];
+  if (/истёк|переподключите|Invalid Credentials|expired/i.test(e)) return ['Доступ истёк', 'Переподключите площадку в боте: аккаунт → Площадки'];
+  return ['Не удалось загрузить', e.slice(0, 120)];
+}
 
 async function load() {
   const btn = document.getElementById('ref');
-  btn.disabled = true;
+  btn.classList.add('spin');
   try {
-    if (demo) data = DEMO();
+    if (demo) { await new Promise((r) => setTimeout(r, 300)); data = DEMO(); }
     else {
-      if (!tgApp || !tgApp.initData) throw new Error('Откройте страницу из бота @DFHGAPKLMO_bot — кнопка «Статистика».');
+      if (!tgApp || !tgApp.initData) throw new Error('Откройте страницу из бота — кнопка «Статистика» слева от поля ввода.');
       const r = await fetch(API, { method: 'POST', headers: { 'x-init-data': tgApp.initData } });
       const j = await r.json().catch(() => ({}));
-      if (!r.ok || j.error) throw new Error(j.error || 'Сервер ответил ' + r.status);
+      if (!r.ok || j.error) throw new Error(j.error || 'Сервер не ответил (' + r.status + ')');
       data = j;
     }
     render();
   } catch (e) {
     document.getElementById('upd').textContent = '';
     document.getElementById('app').innerHTML = `<div class="state">${esc(e.message || e)}</div>`;
-  } finally { btn.disabled = false; }
+  } finally { btn.classList.remove('spin'); }
 }
 
-function tiles(t) {
-  return `<div class="tiles">
-    <div class="tile"><div class="v">${fmt(t.followers)}</div><div class="k">подписчики</div></div>
-    <div class="tile"><div class="v">${fmt(t.views)}</div><div class="k">просмотры</div></div>
-    <div class="tile"><div class="v">${fmt(t.likes)}</div><div class="k">лайки</div></div>
-    <div class="tile"><div class="v">${fmt(t.comments)}</div><div class="k">комментарии</div></div></div>`;
-}
-
-function platBlock(pl, s) {
-  const [name, color] = PL[pl];
-  const head = `<div class="plh"><span class="dot" style="background:${color}"></span><span class="n">${name}</span>${s.name ? `<span class="who">${esc(s.name)}</span>` : ''}</div>`;
-  if (!s.ok) return `<div class="pl">${head}<div class="err">⚠️ ${esc(s.err || 'нет данных')}</div></div>`;
+function platRow(pl, s) {
+  const P = PL[pl];
+  const head = `<div class="logo" style="background:${P.bg}">${ICONS[pl]}</div>
+    <div class="pl-mid"><div class="pl-name">${P.name}</div><div class="pl-who">${esc(s.name || '')}</div></div>`;
+  if (!s.ok) { const [t, d] = problem(s.err); return `<div class="pl">${head}</div><div class="note">${t}<small>${esc(d)}</small></div>`; }
   const r = s.recent || {};
-  const extra = [s.totalViews != null ? `всего просмотров канала ${fmt(s.totalViews)}` : '', s.totalLikes != null ? `всего лайков ${fmt(s.totalLikes)}` : '',
-    s.videoCount != null ? `видео ${fmt(s.videoCount)}` : ''].filter(Boolean).join(' · ');
-  const vids = (s.videos || []).slice().sort((a, b) => (b.views ?? -1) - (a.views ?? -1) || Date.parse(b.date || 0) - Date.parse(a.date || 0));
-  const list = vids.map((v) => `<div class="vid"><a href="${esc(v.url)}" target="_blank" rel="noopener">${v.bot ? '<span class="tag">бот</span>' : ''}${esc(v.title || 'без названия')}</a>
-      <span class="m">👁 ${fmt(v.views)} · ❤ ${fmt(v.likes)} · 💬 ${fmt(v.comments)}</span><span class="d">${when(v.date)}</span><span></span></div>`).join('');
-  return `<div class="pl">${head}
-    <div class="nums"><div>${fmt(s.followers)}<span>подписчики</span></div><div>${fmt(r.views)}<span>просмотры</span></div>
-      <div>${fmt(r.likes)}<span>лайки</span></div><div>${fmt(r.comments)}<span>коммент.</span></div></div>
-    ${extra ? `<div class="off" style="margin-top:6px">${extra}</div>` : ''}
-    ${s.err ? `<div class="err">${esc(s.err)}</div>` : ''}
-    ${vids.length ? `<details><summary>Видео (${vids.length}) ›</summary>${list}</details>` : ''}</div>`;
+  const hasViews = r.views != null;   // нет просмотров (Instagram без доступа) — крупно показываем лайки
+  let h = `<div class="pl">${head}<div class="pl-num"><b class="num">${fmt(hasViews ? r.views : r.likes)}</b><span>${hasViews ? 'просмотров' : 'лайков'}</span></div></div>
+    <div class="mini"><span><b class="num">${fmt(s.followers)}</b> подписч.</span>${hasViews ? `<span><b class="num">${fmt(r.likes)}</b> лайков</span>` : ''}<span><b class="num">${fmt(r.comments)}</b> комм.</span></div>`;
+  if (s.err) { const [t, d] = problem(s.err); h += `<div class="note">${t}<small>${esc(d)}</small></div>`; }
+  return h;
+}
+
+function topVideos(a) {
+  const all = [];
+  for (const pl of Object.keys(PL)) for (const v of (a.platforms[pl]?.videos || [])) all.push({ ...v, pl });
+  all.sort((x, y) => (y.views ?? -1) - (x.views ?? -1) || (y.likes ?? 0) - (x.likes ?? 0));
+  return all.slice(0, 10);
 }
 
 function render() {
   const d = data, T = d.totals;
-  document.getElementById('upd').textContent = 'обновлено ' + ago(d.updated);
-  const pick = filter === 'all' ? T : T.byPl[filter];
-  let h = `<div class="card"><div class="label">${filter === 'all' ? 'Все аккаунты' : PL[filter][0] + ' — все аккаунты'}</div>${tiles(pick)}
-    <div class="row3"><span>📂 в папке <b>${T.draft}</b></span><span>⏰ запланировано <b>${T.scheduled}</b></span>
-      <span>✅ опубликовано <b>${filter === 'all' ? T.published : T.byPl[filter].published}</b></span>${filter === 'all' ? `<span>за 7 дней <b>${T.week}</b></span>` : ''}</div></div>`;
-  h += `<div class="chips">${[['all', 'Все'], ...Object.entries(PL).map(([k, v]) => [k, v[0]])].map(([k, n]) =>
-    `<button class="chip${filter === k ? ' on' : ''}" data-f="${k}">${n}</button>`).join('')}</div>`;
-  for (const a of d.accounts) {
-    const b = a.bot, pls = Object.keys(PL).filter((pl) => (filter === 'all' || filter === pl) && a.platforms[pl]?.connected);
-    h += `<div class="card acc"><h2>${esc(a.name)}</h2>${a.note ? `<div class="note">${esc(a.note)}</div>` : ''}
-      <div class="bot"><span class="pill">📂 ${b.draft} в папке</span><span class="pill">⏰ ${b.scheduled}</span><span class="pill">✅ ${b.published} опубликовано</span>
-        ${b.publishing ? `<span class="pill">⏳ ${b.publishing}</span>` : ''}${b.errors ? `<span class="pill warn">⚠️ ошибок ${b.errors}</span>` : ''}</div>
-      ${pls.map((pl) => platBlock(pl, a.platforms[pl])).join('')}
-      ${pls.length ? '' : `<div class="off">${filter === 'all' ? 'Площадки не подключены — бот → аккаунт → 🔗 Площадки.' : PL[filter][0] + ' не подключён.'}</div>`}</div>`;
-  }
+  document.getElementById('upd').textContent = 'обновлено в ' + new Date(d.updated).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  let h = `<div class="hero">
+    <div class="lbl">Просмотры · все аккаунты</div>
+    <div class="big num">${fmt(T.views)}</div>
+    <div class="row"><div><b class="num">${fmt(T.followers)}</b><span>подписчики</span></div>
+      <div><b class="num">${fmt(T.likes)}</b><span>лайки</span></div><div><b class="num">${fmt(T.comments)}</b><span>комментарии</span></div></div></div>`;
+
+  h += `<h2>Видео в боте</h2><div class="tiles">
+    <div class="tile"><div class="ic" style="background:color-mix(in srgb,#0ea5e9 15%,transparent)">📂</div><b class="num">${T.draft}</b><span>в папке</span></div>
+    <div class="tile"><div class="ic" style="background:color-mix(in srgb,#f59e0b 15%,transparent)">⏰</div><b class="num">${T.scheduled}</b><span>запланировано</span></div>
+    <div class="tile"><div class="ic" style="background:color-mix(in srgb,#16a34a 15%,transparent)">✅</div><b class="num">${T.published}</b><span>опубликовано${T.week ? `, ${T.week} за неделю` : ''}</span></div></div>`;
+
+  h += `<h2>Аккаунты</h2>`;
+  d.accounts.forEach((a, i) => {
+    const on = Object.keys(PL).filter((pl) => a.platforms[pl]?.connected), off = Object.keys(PL).filter((pl) => !a.platforms[pl]?.connected);
+    const vids = topVideos(a), b = a.bot;
+    h += `<div class="acc"><div class="acc-head"><div class="ava" style="background:${AVA[i % AVA.length]}">${esc((a.name || '?').trim()[0].toUpperCase())}</div>
+      <div style="min-width:0"><div class="acc-name">${esc(a.name)}</div><div class="acc-sub">${a.note ? esc(a.note) + ' · ' : ''}${on.length ? on.length + ' ' + plural(on.length, 'площадка', 'площадки', 'площадок') : 'площадки не подключены'}</div></div></div>
+      <div class="counts"><div><b class="num">${b.draft}</b><span>в папке</span></div><div><b class="num">${b.scheduled}</b><span>в плане</span></div><div><b class="num">${b.published}</b><span>вышло</span></div></div>
+      ${on.map((pl) => platRow(pl, a.platforms[pl])).join('')}
+      ${off.length && on.length ? `<div class="off">Не подключены: ${off.map((pl) => PL[pl].name).join(', ')}</div>` : ''}
+      ${!on.length ? `<div class="off">Подключить: бот → аккаунт → 🔗 Площадки</div>` : ''}
+      ${vids.length ? `<button class="more" data-id="${a.id}">${open.has(a.id) ? 'Скрыть видео' : 'Лучшие видео'}</button>` : ''}
+      ${open.has(a.id) ? `<div class="vids">${vids.map((v, k) => `<a class="vid" href="${esc(v.url)}" target="_blank" rel="noopener"><span class="rank">${k + 1}</span>
+        <div class="vid-t"><div>${esc(v.title || 'Без названия')}</div><span><i class="dot" style="background:${PL[v.pl].bg}"></i>${PL[v.pl].name} · ${day(v.date)}</span></div>
+        <div class="vid-v num">${v.views != null ? fmt(v.views) : fmt(v.likes)}<span>${v.views != null ? 'просм.' : 'лайков'}</span></div></a>`).join('')}</div>` : ''}
+    </div>`;
+  });
   if (!d.accounts.length) h += '<div class="state">Аккаунтов пока нет.</div>';
-  h += `<div class="foot">Просмотры, лайки и комментарии — сумма по последним ${d.recentN} видео на каждой площадке. «бот» — выложено через бота.</div>`;
+  h += `<div class="foot">Просмотры, лайки и комментарии считаются по последним ${d.recentN} видео каждой площадки.</div>`;
   const app = document.getElementById('app');
   app.innerHTML = h;
-  app.querySelectorAll('.chip').forEach((c) => c.onclick = () => { filter = c.dataset.f; render(); });
+  app.querySelectorAll('.more').forEach((el) => el.onclick = () => { const id = +el.dataset.id; open.has(id) ? open.delete(id) : open.add(id); render(); });
 }
 
 document.getElementById('ref').onclick = load;
@@ -193,7 +233,7 @@ function DEMO() {
   const T = { draft: 52, scheduled: 9, published: 53, week: 17, followers: 0, views: 0, likes: 0, comments: 0, byPl: {} };
   for (const pl of ['yt', 'tt', 'ig']) {
     const t = T.byPl[pl] = { accounts: 0, followers: 0, views: 0, likes: 0, comments: 0, published: A.reduce((a, x) => a + x.bot.byPl[pl], 0) };
-    for (const a of A) { const s = a.platforms[pl]; if (!s.ok) continue; t.accounts++; t.followers += s.followers || 0; t.views += s.recent.views; t.likes += s.recent.likes; t.comments += s.recent.comments; }
+    for (const a of A) { const s = a.platforms[pl]; if (!s.ok) continue; t.accounts++; t.followers += s.followers || 0; t.views += s.recent.views || 0; t.likes += s.recent.likes; t.comments += s.recent.comments; }
     T.followers += t.followers; T.views += t.views; T.likes += t.likes; T.comments += t.comments;
   }
   return { updated: new Date().toISOString(), recentN: 20, accounts: A, totals: T };
