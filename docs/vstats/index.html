@@ -112,6 +112,15 @@
   .next b { font-weight: 700; }
   .accline { color: var(--muted); font-size: 12.5px; margin-top: 10px; }
   .accline b { color: var(--text); }
+  .tabs { display: flex; background: var(--card); border-radius: 14px; padding: 4px; margin-bottom: 12px; position: sticky; top: 8px; z-index: 3; }
+  .tabs button { flex: 1; border: 0; background: none; color: var(--muted); font: inherit; font-weight: 700; font-size: 14px; padding: 9px; border-radius: 10px; cursor: pointer; }
+  .tabs button.on { background: var(--soft); color: var(--text); }
+  .lastv { display: block; margin: 10px 0 0 48px; background: var(--soft); border-radius: 12px; padding: 10px 12px; text-decoration: none; color: inherit; }
+  @media (max-width: 380px) { .lastv { margin-left: 0; } }
+  .lastv .lt { color: var(--muted); font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; }
+  .lastv .ln { font-weight: 700; font-size: 14px; margin: 2px 0 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lastv .lm { display: flex; gap: 12px; font-size: 12.5px; color: var(--muted); flex-wrap: wrap; }
+  .lastv .lm b { color: var(--text); }
   .foot { color: var(--muted); font-size: 12px; text-align: center; margin-top: 18px; line-height: 1.5; }
   .state { text-align: center; color: var(--muted); padding: 64px 16px; }
   .skel { border-radius: 20px; background: var(--card); margin-bottom: 10px; animation: pulse 1.2s ease-in-out infinite; }
@@ -139,6 +148,8 @@ const AVA = ['#5b5bf0', '#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '
 const tgApp = window.Telegram && Telegram.WebApp;
 const demo = new URLSearchParams(location.search).has('demo');
 const open = new Set();
+let tab = 'all';
+try { tab = localStorage.getItem('vstats_tab') || 'all'; } catch (e) {}
 let data = null;
 
 const dark = tgApp && tgApp.initData ? tgApp.colorScheme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
@@ -187,12 +198,26 @@ function platRow(pl, s) {
   const head = `<div class="logo" style="background:${P.bg}">${ICONS[pl]}</div>
     <div class="pl-mid"><div class="pl-name">${P.name}</div><div class="pl-who">${esc(s.name || '')}</div></div>`;
   if (!s.ok) { const [t, d] = problem(s.err); return `<div class="pl">${head}</div><div class="note">${t}<small>${esc(d)}</small></div>`; }
-  const r = s.recent || {};
+  const r = { ...(s.recent || {}) };
+  if (s.totalViews != null) r.views = s.totalViews;   // всего за всё время, где площадка отдаёт
+  if (s.totalLikes != null) r.likes = s.totalLikes;
   const hasViews = r.views != null;   // нет просмотров (Instagram без доступа) — крупно показываем лайки
   let h = `<div class="pl">${head}<div class="pl-num"><b class="num">${fmt(hasViews ? r.views : r.likes)}</b><span>${hasViews ? 'просмотров' : 'лайков'}</span></div></div>
     <div class="mini"><span><b class="num">${fmt(s.followers)}</b> подписч.</span>${hasViews ? `<span><b class="num">${fmt(r.likes)}</b> лайков</span>` : ''}<span><b class="num">${fmt(r.comments)}</b> комм.</span></div>`;
   if (s.err) { const [t, d] = problem(s.err); h += `<div class="note">${t}<small>${esc(d)}</small></div>`; }
-  return h;
+  return h + lastOnPlatform(s);
+}
+
+// последнее видео на этом канале + сравнение со средним по каналу
+function lastOnPlatform(s) {
+  const vs = s.videos || [], v = vs.find((x) => x.date) || vs[0];
+  if (!v) return '';
+  const wv = vs.filter((x) => x.views != null), avg = wv.length > 1 ? wv.reduce((a, x) => a + x.views, 0) / wv.length : null;
+  let cmp = '';
+  if (avg && v.views != null) { const k = v.views / avg; cmp = k >= 1.1 ? `<span class="up">▲ ${k.toFixed(1).replace('.0', '')}× от среднего</span>` : k <= 0.9 ? `<span class="down">▼ ${Math.round(k * 100)}% от среднего</span>` : '<span>как обычно</span>'; }
+  return `<a class="lastv" href="${esc(v.url || '#')}" target="_blank" rel="noopener"><div class="lt">Последнее · ${ago(v.date)}</div>
+    <div class="ln">${esc(v.title || 'Без названия')}</div>
+    <div class="lm">${v.views != null ? `<span><b class="num">${fmt(v.views)}</b> просм.</span>` : ''}<span><b class="num">${fmt(v.likes)}</b> лайков</span><span><b class="num">${fmt(v.comments)}</b> комм.</span>${cmp}</div></a>`;
 }
 
 function topVideos(a) {
@@ -257,7 +282,9 @@ function platformsBlock(T) {
 function render() {
   const d = data, T = d.totals, g = T.growth;
   document.getElementById('upd').textContent = 'обновлено в ' + new Date(d.updated).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-  let h = `<div class="hero">
+  let h = `<div class="tabs"><button data-tab="all" class="${tab === 'all' ? 'on' : ''}">Обзор</button><button data-tab="ch" class="${tab === 'ch' ? 'on' : ''}">Каналы</button></div>`;
+  if (tab === 'all') {
+  h += `<div class="hero">
     <div class="lbl">Просмотры · все аккаунты</div>
     <div class="big num">${fmt(T.views)}</div>
     ${g ? `<div class="chip">${sign(g.views)} за ${Date.now() - Date.parse(g.since) > 20 * 3600e3 ? 'сутки' : 'с ' + new Date(g.since).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}${g.followers ? ' · ' + sign(g.followers) + ' подписч.' : ''}</div>` : ''}
@@ -269,8 +296,7 @@ function render() {
     <div class="tile"><div class="ic" style="background:color-mix(in srgb,#ec4899 15%,transparent)">❤️</div><b class="num">${T.er == null ? '—' : T.er + '%'}</b><span>вовлечённость</span></div>
     <div class="tile"><div class="ic" style="background:color-mix(in srgb,#10b981 15%,transparent)">🎬</div><b class="num">${T.count || 0}</b><span>видео в подсчёте</span></div></div>`;
 
-  if (T.last) h += `<h2>Последнее видео</h2>` + videoCard('Новое', T.last, T.avg);
-  if (T.best7 && (!T.last || T.best7.id !== T.last.id)) h += `<h2>Лучшее за неделю</h2>` + videoCard('Топ', T.best7, T.avg);
+  if (T.best7) h += `<h2>Лучшее за неделю</h2>` + videoCard('Топ', T.best7, T.avg);
   h += chart(T);
   h += platformsBlock(T);
 
@@ -281,14 +307,13 @@ function render() {
   if (T.next) h += `<div class="next">⏰<div>Следующее: <b>${when(T.next.at)}</b> — ${esc(T.next.title)} <span style="color:var(--muted)">· ${esc(T.next.account)}${T.next.mode === 'remind' ? ' · напоминание' : ''}</span></div></div>`;
   if (T.errors) h += `<div class="note" style="margin-top:8px">⚠️ Ошибок публикации: ${T.errors}<small>Откройте видео в боте — там написано, что пошло не так</small></div>`;
 
-  h += `<h2>Аккаунты</h2>`;
+  } else {
   d.accounts.forEach((a, i) => {
     const on = Object.keys(PL).filter((pl) => a.platforms[pl]?.connected), off = Object.keys(PL).filter((pl) => !a.platforms[pl]?.connected);
     const vids = topVideos(a), b = a.bot, ag = a.growth;
     h += `<div class="acc"><div class="acc-head"><div class="ava" style="background:${AVA[i % AVA.length]}">${esc((a.name || '?').trim()[0].toUpperCase())}</div>
       <div style="min-width:0"><div class="acc-name">${esc(a.name)}</div><div class="acc-sub">${a.note ? esc(a.note) + ' · ' : ''}${on.length ? on.length + ' ' + plural(on.length, 'площадка', 'площадки', 'площадок') : 'площадки не подключены'}</div></div></div>
       <div class="counts"><div><b class="num">${b.draft}</b><span>в папке</span></div><div><b class="num">${b.scheduled}</b><span>в плане</span></div><div><b class="num">${b.published}</b><span>вышло</span></div></div>
-      ${a.last ? `<div class="accline">🆕 <b>${esc(a.last.title || 'Без названия')}</b> — ${fmt(a.last.views)} просм. · ${ago(a.last.date)}</div>` : ''}
       ${a.avg != null || ag ? `<div class="accline">${a.avg != null ? `В среднем <b>${fmt(a.avg)}</b> на видео` : ''}${a.er != null ? ` · вовлечённость <b>${a.er}%</b>` : ''}${ag ? ` · за сутки <b class="up">${sign(ag.views)}</b>${ag.followers ? ` / ${sign(ag.followers)} подп.` : ''}` : ''}</div>` : ''}
       ${a.next ? `<div class="accline">⏰ Дальше: <b>${when(a.next.at)}</b> — ${esc(a.next.title)}</div>` : ''}
       ${on.map((pl) => platRow(pl, a.platforms[pl])).join('')}
@@ -301,9 +326,11 @@ function render() {
     </div>`;
   });
   if (!d.accounts.length) h += '<div class="state">Аккаунтов пока нет.</div>';
-  h += `<div class="foot">Просмотры, лайки и комментарии считаются по последним ${d.recentN} видео каждой площадки.<br>Вовлечённость = (лайки + комментарии) / просмотры.</div>`;
+  }
+  h += `<div class="foot">Просмотры и лайки — всего за всё время (YouTube — канал, TikTok — все видео); комментарии и Instagram — по последним видео.<br>Вовлечённость = (лайки + комментарии) / просмотры.</div>`;
   const app = document.getElementById('app');
   app.innerHTML = h;
+  app.querySelectorAll('.tabs button').forEach((el) => el.onclick = () => { tab = el.dataset.tab; try { localStorage.setItem('vstats_tab', tab); } catch (e) {} render(); scrollTo(0, 0); });
   app.querySelectorAll('.more').forEach((el) => el.onclick = () => { const id = +el.dataset.id; open.has(id) ? open.delete(id) : open.add(id); render(); });
   const ch = document.getElementById('chart'), tip = document.getElementById('tip');
   if (ch) ch.querySelectorAll('.bar').forEach((el) => {
