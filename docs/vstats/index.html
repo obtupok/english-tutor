@@ -84,6 +84,34 @@
   .vid-v span { display: block; color: var(--muted); font-size: 11.5px; font-weight: 500; }
   .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 5px; vertical-align: 1px; }
 
+  .chip { display: inline-block; background: rgba(255,255,255,.2); border-radius: 99px; padding: 3px 10px; font-size: 13px; font-weight: 700; margin: -8px 0 14px; }
+  .card { background: var(--card); border-radius: 20px; padding: 16px; margin-bottom: 10px; }
+  .vc-top { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12.5px; font-weight: 600; }
+  .vc-title { font-weight: 800; font-size: 16px; margin: 6px 0 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; color: inherit; text-decoration: none; }
+  .vc-nums { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .vc-nums div { background: var(--soft); border-radius: 12px; padding: 8px 10px; }
+  .vc-nums b { display: block; font-size: 17px; font-weight: 800; }
+  .vc-nums span { color: var(--muted); font-size: 11.5px; }
+  .vs { margin-top: 10px; font-size: 13px; font-weight: 600; }
+  .up { color: var(--ok); } .down { color: var(--warn); }
+  .chart { display: flex; align-items: flex-end; gap: 4px; height: 120px; margin-top: 12px; position: relative; }
+  .bar { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; height: 100%; cursor: default; }
+  .bar i { display: block; background: var(--accent); border-radius: 4px 4px 0 0; min-height: 2px; }
+  .bar.today i { background: var(--accent2); }
+  .bar.empty i { background: var(--line); }
+  .bar:hover i { filter: brightness(1.15); }
+  .axis { display: flex; justify-content: space-between; color: var(--muted); font-size: 11px; margin-top: 6px; }
+  .ch-head { display: flex; justify-content: space-between; align-items: baseline; }
+  .ch-head b { font-size: 20px; font-weight: 800; }
+  .ch-head span { color: var(--muted); font-size: 12.5px; }
+  .tip { position: absolute; top: -6px; transform: translate(-50%, -100%); background: var(--text); color: var(--bg); font-size: 12px; font-weight: 600;
+    padding: 5px 8px; border-radius: 8px; white-space: nowrap; pointer-events: none; display: none; z-index: 2; }
+  .plrow { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .plrow:last-child { border-bottom: 0; }
+  .next { display: flex; gap: 10px; align-items: center; background: var(--card); border-radius: 16px; padding: 12px 14px; margin-top: 8px; font-size: 14px; }
+  .next b { font-weight: 700; }
+  .accline { color: var(--muted); font-size: 12.5px; margin-top: 10px; }
+  .accline b { color: var(--text); }
   .foot { color: var(--muted); font-size: 12px; text-align: center; margin-top: 18px; line-height: 1.5; }
   .state { text-align: center; color: var(--muted); padding: 64px 16px; }
   .skel { border-radius: 20px; background: var(--card); margin-bottom: 10px; animation: pulse 1.2s ease-in-out infinite; }
@@ -174,27 +202,95 @@ function topVideos(a) {
   return all.slice(0, 10);
 }
 
+const sign = (n) => n == null ? '' : (n > 0 ? '+' : n < 0 ? '−' : '') + fmt(Math.abs(n));
+function ago(iso) {
+  if (!iso) return '';
+  const m = (Date.now() - Date.parse(iso)) / 60e3;
+  return m < 60 ? Math.max(1, Math.round(m)) + ' мин назад' : m < 1440 ? Math.round(m / 60) + ' ч назад' : m < 2880 ? 'вчера' : day(iso);
+}
+const when = (iso) => new Date(iso).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+
+// карточка одного видео: последнее / лучшее за неделю
+function videoCard(label, v, avg) {
+  if (!v) return '';
+  const P = PL[v.pl], er = v.views ? ((v.likes || 0) + (v.comments || 0)) / v.views * 100 : null;
+  let cmp = '';
+  if (avg && v.views != null) {
+    const k = v.views / avg;
+    cmp = k >= 1.1 ? `<div class="vs up">▲ в ${k.toFixed(1).replace('.0', '')}× больше среднего (${fmt(avg)})</div>`
+      : k <= 0.9 ? `<div class="vs down">▼ ${Math.round(k * 100)}% от среднего (${fmt(avg)})</div>` : `<div class="vs">≈ как обычно (${fmt(avg)})</div>`;
+  }
+  return `<div class="card"><div class="vc-top"><i class="dot" style="background:${P.bg}"></i>${label} · ${P.name} · ${ago(v.date)}</div>
+    <a class="vc-title" href="${esc(v.url || '#')}" target="_blank" rel="noopener">${esc(v.title || 'Без названия')}</a>
+    <div class="vc-nums"><div><b class="num">${fmt(v.views)}</b><span>просмотры</span></div><div><b class="num">${fmt(v.likes)}</b><span>лайки</span></div>
+    <div><b class="num">${fmt(v.comments)}</b><span>комм.</span></div><div><b class="num">${er == null ? '—' : er.toFixed(1) + '%'}</b><span>вовлеч.</span></div></div>${cmp}</div>`;
+}
+
+// столбики за 14 дней: прирост просмотров по снимкам; пока истории нет — просмотры видео по дню выхода
+function chart(T) {
+  const days = T.days || [];
+  if (!days.length) return '';
+  const hist = days.filter((d) => d.views != null).length >= 2;
+  const val = (d) => hist ? d.views : d.viewsByRelease;
+  const max = Math.max(1, ...days.map((d) => val(d) || 0)), total = days.reduce((s, d) => s + (val(d) || 0), 0);
+  const today = days[days.length - 1].day;
+  const bars = days.map((d, i) => {
+    const v = val(d), h = v ? Math.max(3, v / max * 100) : 0;
+    const tip = `${day(d.day + 'T12:00:00')}: ${v == null ? 'нет данных' : fmt(v) + ' просм.'}${d.published ? ' · вышло ' + d.published : ''}`;
+    return `<div class="bar${d.day === today ? ' today' : ''}${v == null ? ' empty' : ''}" data-tip="${esc(tip)}" data-i="${i}"><i style="height:${v == null ? 2 : h}%"></i></div>`;
+  }).join('');
+  return `<h2>${hist ? 'Просмотры по дням' : 'Просмотры по дню выхода видео'}</h2><div class="card">
+    <div class="ch-head"><b class="num">${fmt(total)}</b><span>${hist ? 'прирост за 14 дней' : 'у видео, вышедших за 14 дней'}</span></div>
+    <div class="chart" id="chart">${bars}<div class="tip" id="tip"></div></div>
+    <div class="axis"><span>${day(days[0].day + 'T12:00:00')}</span><span>сегодня</span></div>
+    ${hist ? '' : '<div class="accline">Прирост по дням появится, когда бот накопит историю (снимок каждые 3 часа).</div>'}</div>`;
+}
+
+function platformsBlock(T) {
+  const rows = Object.keys(PL).map((pl) => ({ pl, t: T.byPl?.[pl] })).filter((x) => x.t && (x.t.accounts || x.t.published));
+  if (!rows.length) return '';
+  return `<h2>По площадкам</h2><div class="card">${rows.map(({ pl, t }) => `<div class="plrow"><div class="logo" style="background:${PL[pl].bg}">${ICONS[pl]}</div>
+    <div class="pl-mid"><div class="pl-name">${PL[pl].name}</div><div class="pl-who">${t.accounts ? fmt(t.followers) + ' подписч. · ' + fmt(t.likes) + ' лайков' : 'статистика недоступна'} · ботом ${t.published}</div></div>
+    <div class="pl-num"><b class="num">${fmt(t.views || !t.likes ? t.views : t.likes)}</b><span>${t.views || !t.likes ? 'просмотров' : 'лайков'}</span></div></div>`).join('')}</div>`;
+}
+
 function render() {
-  const d = data, T = d.totals;
+  const d = data, T = d.totals, g = T.growth;
   document.getElementById('upd').textContent = 'обновлено в ' + new Date(d.updated).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
   let h = `<div class="hero">
     <div class="lbl">Просмотры · все аккаунты</div>
     <div class="big num">${fmt(T.views)}</div>
+    ${g ? `<div class="chip">${sign(g.views)} за ${Date.now() - Date.parse(g.since) > 20 * 3600e3 ? 'сутки' : 'с ' + new Date(g.since).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}${g.followers ? ' · ' + sign(g.followers) + ' подписч.' : ''}</div>` : ''}
     <div class="row"><div><b class="num">${fmt(T.followers)}</b><span>подписчики</span></div>
       <div><b class="num">${fmt(T.likes)}</b><span>лайки</span></div><div><b class="num">${fmt(T.comments)}</b><span>комментарии</span></div></div></div>`;
+
+  h += `<div class="tiles">
+    <div class="tile"><div class="ic" style="background:color-mix(in srgb,#5b5bf0 15%,transparent)">👁</div><b class="num">${fmt(T.avg)}</b><span>в среднем на видео</span></div>
+    <div class="tile"><div class="ic" style="background:color-mix(in srgb,#ec4899 15%,transparent)">❤️</div><b class="num">${T.er == null ? '—' : T.er + '%'}</b><span>вовлечённость</span></div>
+    <div class="tile"><div class="ic" style="background:color-mix(in srgb,#10b981 15%,transparent)">🎬</div><b class="num">${T.count || 0}</b><span>видео в подсчёте</span></div></div>`;
+
+  if (T.last) h += `<h2>Последнее видео</h2>` + videoCard('Новое', T.last, T.avg);
+  if (T.best7 && (!T.last || T.best7.id !== T.last.id)) h += `<h2>Лучшее за неделю</h2>` + videoCard('Топ', T.best7, T.avg);
+  h += chart(T);
+  h += platformsBlock(T);
 
   h += `<h2>Видео в боте</h2><div class="tiles">
     <div class="tile"><div class="ic" style="background:color-mix(in srgb,#0ea5e9 15%,transparent)">📂</div><b class="num">${T.draft}</b><span>в папке</span></div>
     <div class="tile"><div class="ic" style="background:color-mix(in srgb,#f59e0b 15%,transparent)">⏰</div><b class="num">${T.scheduled}</b><span>запланировано</span></div>
     <div class="tile"><div class="ic" style="background:color-mix(in srgb,#16a34a 15%,transparent)">✅</div><b class="num">${T.published}</b><span>опубликовано${T.week ? `, ${T.week} за неделю` : ''}</span></div></div>`;
+  if (T.next) h += `<div class="next">⏰<div>Следующее: <b>${when(T.next.at)}</b> — ${esc(T.next.title)} <span style="color:var(--muted)">· ${esc(T.next.account)}${T.next.mode === 'remind' ? ' · напоминание' : ''}</span></div></div>`;
+  if (T.errors) h += `<div class="note" style="margin-top:8px">⚠️ Ошибок публикации: ${T.errors}<small>Откройте видео в боте — там написано, что пошло не так</small></div>`;
 
   h += `<h2>Аккаунты</h2>`;
   d.accounts.forEach((a, i) => {
     const on = Object.keys(PL).filter((pl) => a.platforms[pl]?.connected), off = Object.keys(PL).filter((pl) => !a.platforms[pl]?.connected);
-    const vids = topVideos(a), b = a.bot;
+    const vids = topVideos(a), b = a.bot, ag = a.growth;
     h += `<div class="acc"><div class="acc-head"><div class="ava" style="background:${AVA[i % AVA.length]}">${esc((a.name || '?').trim()[0].toUpperCase())}</div>
       <div style="min-width:0"><div class="acc-name">${esc(a.name)}</div><div class="acc-sub">${a.note ? esc(a.note) + ' · ' : ''}${on.length ? on.length + ' ' + plural(on.length, 'площадка', 'площадки', 'площадок') : 'площадки не подключены'}</div></div></div>
       <div class="counts"><div><b class="num">${b.draft}</b><span>в папке</span></div><div><b class="num">${b.scheduled}</b><span>в плане</span></div><div><b class="num">${b.published}</b><span>вышло</span></div></div>
+      ${a.last ? `<div class="accline">🆕 <b>${esc(a.last.title || 'Без названия')}</b> — ${fmt(a.last.views)} просм. · ${ago(a.last.date)}</div>` : ''}
+      ${a.avg != null || ag ? `<div class="accline">${a.avg != null ? `В среднем <b>${fmt(a.avg)}</b> на видео` : ''}${a.er != null ? ` · вовлечённость <b>${a.er}%</b>` : ''}${ag ? ` · за сутки <b class="up">${sign(ag.views)}</b>${ag.followers ? ` / ${sign(ag.followers)} подп.` : ''}` : ''}</div>` : ''}
+      ${a.next ? `<div class="accline">⏰ Дальше: <b>${when(a.next.at)}</b> — ${esc(a.next.title)}</div>` : ''}
       ${on.map((pl) => platRow(pl, a.platforms[pl])).join('')}
       ${off.length && on.length ? `<div class="off">Не подключены: ${off.map((pl) => PL[pl].name).join(', ')}</div>` : ''}
       ${!on.length ? `<div class="off">Подключить: бот → аккаунт → 🔗 Площадки</div>` : ''}
@@ -205,10 +301,16 @@ function render() {
     </div>`;
   });
   if (!d.accounts.length) h += '<div class="state">Аккаунтов пока нет.</div>';
-  h += `<div class="foot">Просмотры, лайки и комментарии считаются по последним ${d.recentN} видео каждой площадки.</div>`;
+  h += `<div class="foot">Просмотры, лайки и комментарии считаются по последним ${d.recentN} видео каждой площадки.<br>Вовлечённость = (лайки + комментарии) / просмотры.</div>`;
   const app = document.getElementById('app');
   app.innerHTML = h;
   app.querySelectorAll('.more').forEach((el) => el.onclick = () => { const id = +el.dataset.id; open.has(id) ? open.delete(id) : open.add(id); render(); });
+  const ch = document.getElementById('chart'), tip = document.getElementById('tip');
+  if (ch) ch.querySelectorAll('.bar').forEach((el) => {
+    const show = () => { tip.textContent = el.dataset.tip; tip.style.display = 'block';
+      const x = el.offsetLeft + el.offsetWidth / 2, w = tip.offsetWidth / 2; tip.style.left = Math.min(ch.clientWidth - w, Math.max(w, x)) + 'px'; };
+    el.onmouseenter = show; el.onclick = show; el.onmouseleave = () => tip.style.display = 'none';
+  });
 }
 
 document.getElementById('ref').onclick = load;
@@ -236,6 +338,18 @@ function DEMO() {
     for (const a of A) { const s = a.platforms[pl]; if (!s.ok) continue; t.accounts++; t.followers += s.followers || 0; t.views += s.recent.views || 0; t.likes += s.recent.likes; t.comments += s.recent.comments; }
     T.followers += t.followers; T.views += t.views; T.likes += t.likes; T.comments += t.comments;
   }
+  // последнее / лучшее / среднее / прирост — как считает бот
+  const summ = (vs) => { const d = vs.filter((x) => x.date).sort((x, y) => Date.parse(y.date) - Date.parse(x.date)), w = vs.filter((x) => x.views != null);
+    const views = w.reduce((s, x) => s + x.views, 0), act = w.reduce((s, x) => s + x.likes + x.comments, 0);
+    return { last: d[0] || null, best7: [...w].sort((x, y) => y.views - x.views)[0] || null, avg: w.length ? Math.round(views / w.length) : null, er: views ? Math.round(act / views * 1000) / 10 : null, count: vs.length }; };
+  const vidsOf = (a) => ['yt', 'tt', 'ig'].flatMap((pl) => a.platforms[pl].ok ? a.platforms[pl].videos.map((x) => ({ ...x, pl })) : []);
+  const since = new Date(Date.now() - 864e5).toISOString();
+  A.forEach((a, i) => Object.assign(a, summ(vidsOf(a)), { growth: i < 2 ? { views: [5400, 21000][i], followers: [38, 112][i], since } : null,
+    next: i < 2 ? { at: new Date(Date.now() + (i + 1) * 3 * 3600e3).toISOString(), mode: 'publish', title: ['Часть 8/22 · Сосед за стеной', 'Часть 4/10 · AITA за свадьбу'][i] } : null }));
+  Object.assign(T, summ(A.flatMap(vidsOf)), { growth: { views: 26400, followers: 150, since }, errors: 1,
+    next: { ...A[0].next, account: A[0].name },
+    days: Array.from({ length: 14 }, (_, i) => ({ day: new Date(Date.now() - (13 - i) * 864e5).toLocaleDateString('sv-SE'), views: i < 3 ? null : Math.round(3000 + 9000 * Math.abs(Math.sin(i * 1.7)) + i * 900),
+      followers: 10 + i, published: i % 3, videos: 0, viewsByRelease: 0 })) });
   return { updated: new Date().toISOString(), recentN: 20, accounts: A, totals: T };
 }
 </script>
